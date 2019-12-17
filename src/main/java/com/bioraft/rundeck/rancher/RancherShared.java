@@ -49,6 +49,7 @@ public class RancherShared {
 	public static final String CONFIG_TAGS = "tags";
 	public static final String CONFIG_LABELS_INCLUDE_ATTRIBUTES = "labels-copied-to-attribs";
 	public static final String CONFIG_LABELS_INCLUDE_TAGS = "labels-copied-to-tags";
+	public static final String CONFIG_EXECUTOR_TIMEOUT = "rancher-node-executor-timeout";
 
 	public static final String SERVICE_PROVIDER_NAME = "rancher";
 

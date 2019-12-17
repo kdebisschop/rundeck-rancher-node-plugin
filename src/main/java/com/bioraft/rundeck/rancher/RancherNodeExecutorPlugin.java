@@ -24,16 +24,19 @@ import java.util.Map;
 
 import javax.xml.bind.DatatypeConverter;
 
+import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
+import com.dtolabs.rundeck.core.execution.utils.ResolverUtil;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyUtil;
 import com.dtolabs.rundeck.core.storage.ResourceMeta;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
@@ -53,12 +56,26 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
 	private String accessKey;
 	private String secretKey;
 
+	private Framework framework;
+
 	static {
 		DescriptionBuilder builder = DescriptionBuilder.builder();
 		builder.name(RancherShared.SERVICE_PROVIDER_NAME);
 		builder.title("Rancher Node Executor");
 		builder.description("Executes a command on a remote rancher node.");
+
+		builder.property(PropertyUtil.integer(RancherShared.CONFIG_EXECUTOR_TIMEOUT, "Maximum execution time",
+				"Terminate execution after specified number of seconds", true, "300"));
+
+		builder.mapping(RancherShared.CONFIG_EXECUTOR_TIMEOUT, "project." + RancherShared.CONFIG_EXECUTOR_TIMEOUT);
+		builder.frameworkMapping(RancherShared.CONFIG_EXECUTOR_TIMEOUT,
+				"framework." + RancherShared.CONFIG_EXECUTOR_TIMEOUT);
+
 		DESC = builder.build();
+	}
+
+	public RancherNodeExecutorPlugin(Framework framework) {
+		this.framework = framework;
 	}
 
 	@Override
@@ -78,20 +95,23 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
 		}
 
 		ExecutionListener listener = context.getExecutionListener();
-		
+
 		String url = nodeAttributes.get("execute");
 
 		Map<String, String> jobContext = context.getDataContext().get("job");
 		String temp = this.baseName(command, jobContext);
 
+		int timeout = ResolverUtil.resolveIntProperty(RancherShared.CONFIG_EXECUTOR_TIMEOUT, 300, node,
+				context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
+				context.getFramework());
 		try {
-			RancherWebSocketListener.runJob(url, accessKey, secretKey, command, listener, temp);
+			RancherWebSocketListener.runJob(url, accessKey, secretKey, command, listener, temp, timeout);
 		} catch (IOException e) {
 			return NodeExecutorResultImpl.createFailure(StepFailureReason.IOFailure, e.getMessage(), node);
 		} catch (InterruptedException e) {
 			return NodeExecutorResultImpl.createFailure(StepFailureReason.Interrupted, e.getMessage(), node);
 		}
-		
+
 		String[] pidFile = this.readLogFile(temp + ".pid", url).split(" +");
 		if (pidFile.length > 1 && Integer.parseInt(pidFile[1]) == 0) {
 			return NodeExecutorResultImpl.createSuccess(node);

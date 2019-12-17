@@ -27,7 +27,7 @@ Features:
 
 Configuration:
 
- - Node executor and file copier do not require separate configuration.
+ - Node executor has configurable timeout.
  - Authentication tokens for node executor and file copier are in password storage.
  - The path for authentication tokens is specified in the node source configuration.
  - Users will need to add those keys to storage in addition to entering them as password
@@ -55,7 +55,6 @@ Should be considered beta. Probably limited to text files.
 
 ## Known Bugs
  
- - Node Executor fails with java.lang.ArrayIndexOutOfBoundsException after 15 minutes.
  - File Copier handles only test files.
 
 ## Compatibility

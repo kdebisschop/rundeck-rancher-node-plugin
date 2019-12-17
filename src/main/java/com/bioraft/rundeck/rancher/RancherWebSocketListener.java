@@ -57,7 +57,7 @@ import okio.ByteString;
  */
 public final class RancherWebSocketListener extends WebSocketListener {
 
-	// Try to use a single HTTP client across methds.
+	// Try to use a single HTTP client across methods.
 	private OkHttpClient client;
 
 	//URL of the Rancher API end point.
@@ -124,7 +124,7 @@ public final class RancherWebSocketListener extends WebSocketListener {
 	 * @throws InterruptedException
 	 */
 	public static void runJob(String url, String accessKey, String secretKey, String[] command,
-			ExecutionListener listener, String temp) throws IOException, InterruptedException {
+			ExecutionListener listener, String temp, int timeout) throws IOException, InterruptedException {
 		String file = " >>" + temp + ".pid; ";
 		// Prefix STDERR lines with STDERR_TOK to decode in logging step.
 		String job = "( " + String.join(" ", command) + ") 2> >(while read line;do echo \"" + STDERR_TOK
@@ -132,7 +132,7 @@ public final class RancherWebSocketListener extends WebSocketListener {
 		String remote = "printf $$" + file + job + "printf ' %s' $?" + file;
 		// Note that bash is required to support adding a prefix token to STDERR.
 		String[] cmd = { "bash", "-c", remote };
-		new RancherWebSocketListener().runJob(url, accessKey, secretKey, listener, cmd);
+		new RancherWebSocketListener().runJob(url, accessKey, secretKey, listener, cmd, timeout);
 	}
 
 	/**
@@ -181,7 +181,7 @@ public final class RancherWebSocketListener extends WebSocketListener {
 	 * @throws IOException
 	 * @throws InterruptedException
 	 */
-	private void runJob(String url, String accessKey, String secretKey, ExecutionListener listener, String[] command)
+	private void runJob(String url, String accessKey, String secretKey, ExecutionListener listener, String[] command, int timeout)
 			throws IOException, InterruptedException {
 		client = new OkHttpClient.Builder().pingInterval(50, TimeUnit.SECONDS).callTimeout(0, TimeUnit.HOURS).build();
 
@@ -200,7 +200,8 @@ public final class RancherWebSocketListener extends WebSocketListener {
 
 		// Trigger shutdown of the dispatcher's executor so process exits cleanly.
 		client.dispatcher().executorService().shutdown();
-		client.dispatcher().executorService().awaitTermination(900, TimeUnit.SECONDS);
+		// Any job will terminate after this time. Should be configurable?
+		client.dispatcher().executorService().awaitTermination(timeout, TimeUnit.SECONDS);
 	}
 
 	/**
