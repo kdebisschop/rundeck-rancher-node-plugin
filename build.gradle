@@ -85,7 +85,7 @@ jar {
         attributes 'Rundeck-Plugin-Rundeck-Compatibility-Version': '3.x'
         attributes 'Rundeck-Plugin-Tags': 'java,WorkflowNodeStep'
         attributes 'Rundeck-Plugin-License': 'Apache 2.0'
-        attributes 'Rundeck-Plugin-Source-Link': 'https://github.com/'
+        attributes 'Rundeck-Plugin-Source-Link': 'https://github.com/kdebisschop/rundeck-rancher-node-plugin'
         attributes 'Rundeck-Plugin-Target-Host-Compatibility': 'all'
         attributes 'Rundeck-Plugin-Version': rundeckPluginVersion
         attributes 'Rundeck-Plugin-Archive': 'true'
