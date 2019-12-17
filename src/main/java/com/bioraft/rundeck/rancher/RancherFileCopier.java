@@ -24,17 +24,23 @@
 
 package com.bioraft.rundeck.rancher;
 
-import java.io.ByteArrayInputStream;
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 
+import org.apache.tools.ant.Project;
+
+import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
+import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
+import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
 import com.dtolabs.rundeck.core.execution.service.FileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.plugins.Plugin;
@@ -53,8 +59,38 @@ import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
 public class RancherFileCopier implements FileCopier {
 
 	@Override
-	public String copyFileStream(final ExecutionContext context, final InputStream input, final INodeEntry node,
+	public String copyFileStream(final ExecutionContext context, InputStream input, INodeEntry node,
 			final String destination) throws FileCopierException {
+
+		return copyFile(context, null, input, null, node);
+	}
+
+	@Override
+	public String copyFile(final ExecutionContext context, File scriptfile, INodeEntry node, final String destination)
+			throws FileCopierException {
+		return copyFile(context, scriptfile, null, null, node);
+	}
+
+	@Override
+	public String copyScriptContent(ExecutionContext context, String script, INodeEntry node, final String destination)
+			throws FileCopierException {
+
+		return copyFile(context, null, null, script, node);
+	}
+
+	private String copyFile(final ExecutionContext context, final File scriptfile, final InputStream input,
+			final String script, final INodeEntry node) throws FileCopierException {
+		return copyFile(context, scriptfile, input, script, node, null);
+
+	}
+
+	private String copyFile(final ExecutionContext context, final File scriptfile, final InputStream input,
+			final String script, final INodeEntry node, final String destinationPath) throws FileCopierException {
+
+		Project project = new Project();
+
+		final String remotefile;
+
 		Map<String, String> nodeAttributes = node.getAttributes();
 		String accessKey;
 		String secretKey;
@@ -64,50 +100,87 @@ public class RancherFileCopier implements FileCopier {
 		} catch (IOException e) {
 			throw new FileCopierException(e.getMessage(), RancherFileCopierFailureReason.AuthenticationFailure);
 		}
-		String url = nodeAttributes.get("execute");
 
-		try {
-			RancherWebSocketListener.putFile(url, accessKey, secretKey, input, destination);
-		} catch (IOException | InterruptedException e) {
-			throw new FileCopierException(e.getMessage(), RancherFileCopierFailureReason.ConnectionFailure);
+		if (null == destinationPath) {
+			String identity = null != context.getDataContext() && null != context.getDataContext().get("job")
+					? context.getDataContext().get("job").get("execid")
+					: null;
+			remotefile = BaseFileCopier.generateRemoteFilepathForNode(node,
+					context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
+					context.getFramework(), (null != scriptfile ? scriptfile.getName() : "dispatch-script"), null,
+					identity);
+		} else {
+			remotefile = destinationPath;
 		}
-		return destination;
-	}
+		// write to a local temp file or use the input file
+		final File localTempfile = null != scriptfile ? scriptfile
+				: BaseFileCopier.writeTempFile(context, scriptfile, input, script);
 
-	@Override
-	public String copyFile(final ExecutionContext context, final File file, final INodeEntry node,
-			final String destination) throws FileCopierException {
-		FileInputStream fileStream = null;
+		/**
+		 * Copy the file over
+		 */
+		context.getExecutionListener().log(3, "copying file: '" + localTempfile.getAbsolutePath() + "' to: '"
+				+ node.getNodename() + ":" + remotefile + "'");
+
+		String[] command = {"env", "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+				"RANCHER_ENVIRONMENT=" + nodeAttributes.get("environment"),
+				"RANCHER_DOCKER_HOST=" + nodeAttributes.get("hostId"),
+				"RANCHER_URL=" + nodeAttributes.get("execute").replaceFirst("/projects/.*$", ""),
+				"RANCHER_ACCESS_KEY=" + accessKey, "RANCHER_SECRET_KEY=" + secretKey, "rancher", "docker", "cp",
+				localTempfile.getAbsolutePath(), nodeAttributes.get("externalId") + ":" + remotefile};
+		context.getExecutionListener().log(3, String.join(" ", command));
+		
+		boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
+		String errormsg = null;
 		try {
-			fileStream = new FileInputStream(file);
-			return copyFileStream(context, fileStream, node, destination);
-		} catch (FileNotFoundException fnf) {
-			throw new FileCopierException(fnf.getMessage(), RancherFileCopierFailureReason.ConnectionFailure);
+			ProcessBuilder builder = new ProcessBuilder();
+			if (isWindows) {
+				builder.command("cmd.exe", "/c", "dir");
+			} else {
+				builder.command(command);
+//				builder.command("env", "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+//						"RANCHER_ENVIRONMENT=" + nodeAttributes.get("environment"),
+//						"RANCHER_DOCKER_HOST=" + nodeAttributes.get("hostId"),
+//						"RANCHER_URL=" + nodeAttributes.get("execute").replaceFirst("/projects/.*$", ""),
+//						"RANCHER_ACCESS_KEY=" + accessKey, "RANCHER_SECRET_KEY=" + secretKey, "rancher", "docker", "cp",
+//						localTempfile.getAbsolutePath(), nodeAttributes.get("externalId") + ":" + remotefile);
+			}
+			builder.directory(new File(System.getProperty("user.home")));
+			Process process = builder.start();
+			StreamGobbler streamGobbler = new StreamGobbler(process.getInputStream(), System.out::println);
+			Executors.newSingleThreadExecutor().submit(streamGobbler);
+			int exitCode = process.waitFor();
+			assert exitCode == 0;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		} finally {
-			if (fileStream != null) {
-				try {
-					fileStream.close();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+			if (null == scriptfile) {
+				if (!ScriptfileUtils.releaseTempFile(localTempfile)) {
+					context.getExecutionListener().log(Constants.WARN_LEVEL,
+							"Unable to remove local temp file: " + localTempfile.getAbsolutePath());
 				}
 			}
 		}
+
+		return remotefile;
 	}
 
-	@Override
-	public String copyScriptContent(final ExecutionContext context, final String script, final INodeEntry node,
-			final String destination) throws FileCopierException {
-		ByteArrayInputStream scriptStream = new ByteArrayInputStream(script.getBytes());
-		try {
-			return copyFileStream(context, scriptStream, node, destination);
-		} finally {
-			try {
-				scriptStream.close();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+	private static class StreamGobbler implements Runnable {
+		private InputStream inputStream;
+		private Consumer<String> consumer;
+
+		public StreamGobbler(InputStream inputStream, Consumer<String> consumer) {
+			this.inputStream = inputStream;
+			this.consumer = consumer;
+		}
+
+		@Override
+		public void run() {
+			new BufferedReader(new InputStreamReader(inputStream)).lines().forEach(consumer);
 		}
 	}
 

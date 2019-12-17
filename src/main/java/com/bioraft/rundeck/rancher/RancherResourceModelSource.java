@@ -193,6 +193,8 @@ public class RancherResourceModelSource implements ResourceModelSource {
 			nodeEntry.setHostname(node.get("hostId").asText());
 			nodeEntry.setUsername("root");
 			nodeEntry.setAttribute("id", node.get("id").asText());
+			nodeEntry.setAttribute("externalId", node.get("externalId").asText());
+			nodeEntry.setAttribute("hostId", node.get("hostId").asText());			
 			nodeEntry.setAttribute("file-copier", "rancher");
 			nodeEntry.setAttribute("node-executor", "rancher");
 			nodeEntry.setAttribute("type", node.get("kind").asText());
