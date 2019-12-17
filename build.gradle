@@ -1,0 +1,100 @@
+plugins {
+    id 'pl.allegro.tech.build.axion-release' version '1.10.1'
+    id 'java'
+}
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'idea'
+
+sourceCompatibility = 1.8
+defaultTasks 'clean','build'
+ext.rundeckPluginVersion = '1.2'
+ext.pluginClassNames='com.bioraft.rundeck.rancher.RancherNodeExecutorPlugin,com.bioraft.rundeck.rancher.RancherFileCopier,com.bioraft.rundeck.rancher.RancherResourceModelSourceFactory'
+ext.pluginName = 'Rancher Node Plugins'
+ext.pluginDescription = 'Interface with Rancher environments'
+
+scmVersion {
+    ignoreUncommittedChanges = true
+    tag {
+        prefix = ''
+        versionSeparator = ''
+        def origDeserialize=deserialize
+        //apend .0 to satisfy semver if the tag version is only X.Y
+        deserialize = { config, position, tagName ->
+            def orig = origDeserialize(config, position, tagName)
+            if (orig.split('\\.').length < 3) {
+                orig += ".0"
+            }
+            orig
+        }
+    }
+}
+project.version = scmVersion.version
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+configurations{
+    //declare custom pluginLibs configuration to include only libs for this plugin
+    pluginLibs
+
+    //declare compile to extend from pluginLibs so it inherits the dependencies
+    compile{
+        extendsFrom pluginLibs
+    }
+}
+
+dependencies {
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.10.1'
+    
+    implementation group: 'com.squareup.okhttp3', name: 'okhttp', version: '3.14.4'
+
+    implementation (
+        'org.rundeck:rundeck-core:3.0+',
+        'org.rundeck:rundeck-storage-api:3.0+'
+    )
+	
+    testImplementation group: 'junit', name: 'junit', version:'4.12'
+
+    testImplementation (
+            'org.mockito:mockito-all:1.9.5',
+            'org.powermock:powermock-module-junit4:1.5',
+            'org.powermock:powermock-api-mockito:1.5'
+    )
+}
+
+
+// task to copy plugin libs to output/lib dir
+task copyToLib(type: Copy) {
+    into "$buildDir/output/lib"
+    from configurations.pluginLibs
+}
+
+jar {
+    from "$buildDir/output"
+    manifest {
+        def libList = configurations.pluginLibs.collect{'lib/'+it.name}.join(' ')
+
+        attributes 'Rundeck-Plugin-Classnames': pluginClassNames
+        attributes 'Rundeck-Plugin-File-Version': archiveVersion
+        attributes 'Rundeck-Plugin-Name': pluginName
+        attributes 'Rundeck-Plugin-Description': pluginDescription
+        attributes 'Rundeck-Plugin-Rundeck-Compatibility-Version': '3.x'
+        attributes 'Rundeck-Plugin-Tags': 'java,WorkflowNodeStep'
+        attributes 'Rundeck-Plugin-License': 'Apache 2.0'
+        attributes 'Rundeck-Plugin-Source-Link': 'https://github.com/'
+        attributes 'Rundeck-Plugin-Target-Host-Compatibility': 'all'
+        attributes 'Rundeck-Plugin-Version': rundeckPluginVersion
+        attributes 'Rundeck-Plugin-Archive': 'true'
+        attributes 'Rundeck-Plugin-Libs': "${libList}"
+
+    }
+    dependsOn(copyToLib)
+}
+
+wrapper {
+    gradleVersion = '6.0.1'
+}
