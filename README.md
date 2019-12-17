@@ -46,7 +46,18 @@ Features:
 ### Rancher File Copier
 
 Should be considered beta. Probably limited to text files.
+
+## Road Map
+
+ - 0.6.x Make File Copier binary-safe.
+ - 0.7 Provide container upgrade node step plugin.
+ - 0.9.x Provide reasonable if not complete test coverage prior to 1.x
+
+## Known Bugs
  
+ - Node Executor fails with java.lang.ArrayIndexOutOfBoundsException after 15 minutes.
+ - File Copier handles only test files.
+
 ## Compatibility
  
- This has been tested with Rundeck 3.x and Rancher 1.6.
+This has been tested with Rundeck 3.1.3 and Rancher 1.6.26.
