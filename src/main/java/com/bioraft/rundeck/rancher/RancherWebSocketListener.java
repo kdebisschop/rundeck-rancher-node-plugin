@@ -17,11 +17,11 @@
 package com.bioraft.rundeck.rancher;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.io.StringReader;
+import java.nio.file.Files;
 import java.util.Base64;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -35,7 +35,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.ByteSource;
-import com.google.common.io.CharStreams;
 import com.google.common.primitives.Bytes;
 
 import okhttp3.Credentials;
@@ -60,7 +59,7 @@ public final class RancherWebSocketListener extends WebSocketListener {
 	// Try to use a single HTTP client across methods.
 	private OkHttpClient client;
 
-	//URL of the Rancher API end point.
+	// URL of the Rancher API end point.
 	private String url;
 
 	// The Rancher API access key.
@@ -76,14 +75,16 @@ public final class RancherWebSocketListener extends WebSocketListener {
 	private StringBuilder output;
 
 	// Docker message frames do not necessarily coincide with Rancher. When a Docker
-	// frame is continued in the next Rancher message, this header allows us to decode
+	// frame is continued in the next Rancher message, this header allows us to
+	// decode
 	// the rest of the Docker frame.
 	private byte[] nextHeader;
 
 	// Log listener from Rundeck.
 	private ExecutionListener listener;
 
-	// These are used to reconstruct STDERR since it is lost in the stream from Rancher.
+	// These are used to reconstruct STDERR since it is lost in the stream from
+	// Rancher.
 	private static final String STDERR_TOK = "STDERR_6v9ZvwThpU1FtyrlIBf4UIC8";
 	private static final int STDERR_TOKLEN = STDERR_TOK.length() + 1;
 	private int currentOutputChannel = -1;
@@ -163,9 +164,9 @@ public final class RancherWebSocketListener extends WebSocketListener {
 	 * @throws IOException
 	 * @throws InterruptedException
 	 */
-	public static void putFile(String url, String accessKey, String secretKey, InputStream input, String destination)
+	public static void putFile(String url, String accessKey, String secretKey, File file, String destination)
 			throws IOException, InterruptedException {
-		new RancherWebSocketListener().put(url, accessKey, secretKey, input, destination);
+		new RancherWebSocketListener().put(url, accessKey, secretKey, file, destination);
 	}
 
 	/**
@@ -181,8 +182,8 @@ public final class RancherWebSocketListener extends WebSocketListener {
 	 * @throws IOException
 	 * @throws InterruptedException
 	 */
-	private void runJob(String url, String accessKey, String secretKey, ExecutionListener listener, String[] command, int timeout)
-			throws IOException, InterruptedException {
+	private void runJob(String url, String accessKey, String secretKey, ExecutionListener listener, String[] command,
+			int timeout) throws IOException, InterruptedException {
 		client = new OkHttpClient.Builder().pingInterval(50, TimeUnit.SECONDS).callTimeout(0, TimeUnit.HOURS).build();
 
 		this.url = url;
@@ -192,7 +193,8 @@ public final class RancherWebSocketListener extends WebSocketListener {
 		this.listener = listener;
 		this.nextHeader = new byte[0];
 
-		// Even though we are passing data back to an external listener, we need to buffer
+		// Even though we are passing data back to an external listener, we need to
+		// buffer
 		// the message stream so we can pick out lines that are part of STDERR.
 		output = new StringBuilder();
 
@@ -239,7 +241,8 @@ public final class RancherWebSocketListener extends WebSocketListener {
 	/**
 	 * Put a file onto the server.
 	 * 
-	 * Neither STDIN or STDOUT are attached. The file is sent as a payload with the post command.
+	 * Neither STDIN or STDOUT are attached. The file is sent as a payload with the
+	 * post command.
 	 * 
 	 * @param url
 	 * @param accessKey
@@ -249,35 +252,44 @@ public final class RancherWebSocketListener extends WebSocketListener {
 	 * @throws IOException
 	 * @throws InterruptedException
 	 */
-	private void put(String url, String accessKey, String secretKey, InputStream input, String file)
+	private void put(String url, String accessKey, String secretKey, File input, String file)
 			throws IOException, InterruptedException {
-		String text = null;
-		try (final Reader reader = new InputStreamReader(input)) {
-			text = CharStreams.toString(reader);
-		}
-
-		// Create a random UUID to use as a marker for a HEREDOC.
+		// Create a random UUID to use as a marker for a HEREDOC and as a temporary file name.
 		String marker = UUID.randomUUID().toString();
-		
-		// The command cats a HEREDOC to the desired file. Note the quote that ensures
-		// the contents are not interpreted as shell variables.
-		String[] command = { "sh", "-c", "cat <<'" + marker + "'>" + file + "\n" + text + marker };
 
+		Base64.Encoder encoder = Base64.getEncoder();
+		String encoded = encoder.encodeToString(Files.readAllBytes(input.toPath()));
 		output = new StringBuilder();
-
-		client = new OkHttpClient.Builder().build();
 
 		this.url = url;
 		this.accessKey = accessKey;
 		this.secretKey = secretKey;
+
+		int encodedSize = encoded.length();
+		int chunkSize = 5000;
+		String redirector = ">";
+		for (int i = 0; i < encodedSize; i = i + chunkSize) {
+			String text = encoded.substring(i, Math.min(i + chunkSize, encodedSize));
+			// The command cats a HEREDOC to the desired file. Note the quote that ensures
+			// the contents are not interpreted as shell variables.
+			String[] command = { "sh", "-c",
+					"cat <<'" + marker + "'" + redirector + "/tmp/" + marker + "\n" + text + "\n" + marker };
+			this.runCommand(command, 50);
+			redirector = ">>";
+		}
+
+		String[] command = { "sh", "-c", "base64 -d /tmp/" + marker + " > " + file + "; rm /tmp/" + marker };
+		this.runCommand(command, 1);
+	}
+
+	private void runCommand(String[] command, int timeout) throws IOException, InterruptedException {
+		client = new OkHttpClient.Builder().build();
 		this.commandList = command;
-
 		client.newWebSocket(this.buildRequest(false, false), this);
-
-		// Trigger shutdown of the dispatcher's executor so process exits cleanly.
 		client.dispatcher().executorService().shutdown();
-		client.dispatcher().executorService().awaitTermination(5, TimeUnit.SECONDS);
-
+		if (timeout > 0) {
+			client.dispatcher().executorService().awaitTermination(timeout, TimeUnit.MILLISECONDS);
+		}
 	}
 
 	/**
@@ -338,6 +350,7 @@ public final class RancherWebSocketListener extends WebSocketListener {
 
 	/**
 	 * Logs a Docker stream passed through Rancher.
+	 * 
 	 * @param webSocket
 	 * @param bytes
 	 */
@@ -349,7 +362,8 @@ public final class RancherWebSocketListener extends WebSocketListener {
 			MessageReader reader = new MessageReader(stream);
 			while ((message = reader.nextMessage()) != null) {
 				// If logging to RunDeck, we send lines beginning with STRDERR_TOK to ERR_LEVEL.
-				// To do that, we make a BufferedReader and process it line-by-line in log function.
+				// To do that, we make a BufferedReader and process it line-by-line in log
+				// function.
 				if (listener != null) {
 					stringReader = new BufferedReader(new StringReader(new String(message.content.array())));
 					log(currentOutputChannel, stringReader);
@@ -366,8 +380,8 @@ public final class RancherWebSocketListener extends WebSocketListener {
 	}
 
 	/**
-	 * Read a Buffer line by line and send lines prefixed by STDERR_TOK to the WARN_LEVEL
-	 * channel of RunDeck's console.
+	 * Read a Buffer line by line and send lines prefixed by STDERR_TOK to the
+	 * WARN_LEVEL channel of RunDeck's console.
 	 *
 	 * @param level
 	 * @param message
@@ -387,7 +401,7 @@ public final class RancherWebSocketListener extends WebSocketListener {
 		}
 		output = new StringBuilder();
 	}
-	
+
 	/**
 	 * Buffer lines sent to RunDeck's logger so they are sent together and not
 	 * line-by-line.

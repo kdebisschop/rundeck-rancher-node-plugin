@@ -45,11 +45,12 @@ Features:
 
 ### Rancher File Copier
 
-Should be considered beta. Probably limited to text files.
+Copies files to a mode. Can be configured to use Rancher CLI if it is installed and available.
+Otherwise assemble file from Base64-encoded parts transmitted via Rancher API.
 
 ## Road Map
 
- - 0.6.x Make File Copier binary-safe.
+ - 0.6.6 Make File Copier binary-safe.
  - 0.7 Provide container upgrade node step plugin.
  - 0.9.x Provide reasonable if not complete test coverage prior to 1.x
 
