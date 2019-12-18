@@ -254,7 +254,8 @@ public final class RancherWebSocketListener extends WebSocketListener {
 	 */
 	private void put(String url, String accessKey, String secretKey, File input, String file)
 			throws IOException, InterruptedException {
-		// Create a random UUID to use as a marker for a HEREDOC and as a temporary file name.
+		// Create a random UUID to use as a marker for a HEREDOC and as a temporary file
+		// name.
 		String marker = UUID.randomUUID().toString();
 
 		Base64.Encoder encoder = Base64.getEncoder();

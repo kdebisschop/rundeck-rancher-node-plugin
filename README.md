@@ -40,23 +40,22 @@ Executes jobs on remote Docker containers managed by the Rancher host.
 
 Features:
 
- - Can select first container in a service so only one needs to run.
+ - Can select first container in a service so only one needs to run (filter by "seen:1").
  - Reconstructs the STDERR channel that is missing in output from Rancher API.
 
 ### Rancher File Copier
 
-Copies files to a mode. Can be configured to use Rancher CLI if it is installed and available.
-Otherwise assemble file from Base64-encoded parts transmitted via Rancher API.
+Copies files to a node. Can be configured to use Rancher CLI if it is installed and
+available. Otherwise assembles file from Base64-encoded parts transmitted via Rancher
+API.
+
+To distribute to all containers in a stack's service, omit the filter for "seen".
 
 ## Road Map
 
  - 0.6.6 Make File Copier binary-safe.
  - 0.7 Provide container upgrade node step plugin.
  - 0.9.x Provide reasonable if not complete test coverage prior to 1.x
-
-## Known Bugs
- 
- - File Copier handles only test files.
 
 ## Compatibility
  
