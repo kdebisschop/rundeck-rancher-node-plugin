@@ -52,26 +52,26 @@ public class RancherResourceModelSource implements ResourceModelSource {
 
 	// URL to Rancher API.
 	private String url;
-	
+
 	// HTTP client is shared among methods.
 	private OkHttpClient client;
-	
+
 	// Tags that will be applied to all nodes (comma-separated).
 	private String tags;
-	
+
 	// Regular expression for labels to include as node attributes.
 	private String attributeInclude;
-	
+
 	// Regular expression for labels to include as tags.
 	private String tagInclude;
-	
+
 	// Regular expression for stacks to include in result set.
 	private String stackInclude;
 
 	// The set of nodes that will be returned by getNodes().
 	private NodeSetImpl iNodeEntries;
 
-	// The node being built. 
+	// The node being built.
 	private NodeEntryImpl nodeEntry;
 
 	// Labels read from the node.
@@ -109,7 +109,7 @@ public class RancherResourceModelSource implements ResourceModelSource {
 		attributeInclude = configuration.getProperty(RancherShared.CONFIG_LABELS_INCLUDE_ATTRIBUTES, "");
 		tagInclude = configuration.getProperty(RancherShared.CONFIG_LABELS_INCLUDE_TAGS, "");
 		stackInclude = configuration.getProperty(RancherShared.CONFIG_STACK_FILTER, "");
-		
+
 		iNodeEntries = new NodeSetImpl();
 		String environmentIds = configuration.getProperty(RancherShared.CONFIG_ENVIRONMENT_IDS);
 		for (String environmentId : environmentIds.split("[ ,]+")) {
@@ -136,7 +136,7 @@ public class RancherResourceModelSource implements ResourceModelSource {
 			System.out.println(e.getMessage());
 			System.out.println(e.getCause().getMessage());
 		}
-		
+
 		try {
 			data = this.getContainers(environmentId);
 		} catch (IOException e) {
@@ -173,9 +173,9 @@ public class RancherResourceModelSource implements ResourceModelSource {
 						if (stack != null && !stack.matches(stackInclude)) {
 							continue;
 						}
-					}					
+					}
 				}
-				
+
 				if (configuration.getProperty(RancherShared.CONFIG_LIMIT_ONE_CONTAINER) != null) {
 					if (labels.hasNonNull("io.rancher.stack_service.name")) {
 						String stackService = labels.get("io.rancher.stack_service.name").textValue();
@@ -187,12 +187,14 @@ public class RancherResourceModelSource implements ResourceModelSource {
 
 				this.processLabels(node);
 			}
-			
+
 			String name = environmentName + "_" + node.get("name").asText();
 			nodeEntry.setNodename(name);
 			nodeEntry.setHostname(node.get("hostId").asText());
 			nodeEntry.setUsername("root");
 			nodeEntry.setAttribute("id", node.get("id").asText());
+			nodeEntry.setAttribute("externalId", node.get("externalId").asText());
+			nodeEntry.setAttribute("hostId", node.get("hostId").asText());
 			nodeEntry.setAttribute("file-copier", "rancher");
 			nodeEntry.setAttribute("node-executor", "rancher");
 			nodeEntry.setAttribute("type", node.get("kind").asText());
@@ -216,7 +218,7 @@ public class RancherResourceModelSource implements ResourceModelSource {
 					System.out.println(node.toPrettyString());
 				} else {
 					iNodeEntries.putNode(nodeEntry);
-				} 
+				}
 			} catch (IllegalArgumentException e) {
 				System.out.println(e.getMessage());
 				System.out.println(e.getCause().getMessage());
@@ -303,8 +305,8 @@ public class RancherResourceModelSource implements ResourceModelSource {
 	}
 
 	/**
-	 * Sets an attribute from a label with a name defined by the text after the last dot
-	 * in the label name.
+	 * Sets an attribute from a label with a name defined by the text after the last
+	 * dot in the label name.
 	 * 
 	 * @param label The name of the label we are considering.
 	 */
@@ -319,6 +321,7 @@ public class RancherResourceModelSource implements ResourceModelSource {
 
 	/**
 	 * Determine whether an attribute should be set for a given label.
+	 * 
 	 * @param label
 	 * @param value
 	 */
@@ -329,8 +332,8 @@ public class RancherResourceModelSource implements ResourceModelSource {
 	}
 
 	/**
-	 * Sets a tag from a label with a name defined by the text after the last dot
-	 * in the label name.
+	 * Sets a tag from a label with a name defined by the text after the last dot in
+	 * the label name.
 	 * 
 	 * @param label The name of the label we are considering.
 	 */
@@ -343,7 +346,7 @@ public class RancherResourceModelSource implements ResourceModelSource {
 	/**
 	 * Gets the part of a string after the last occurrence of pattern.
 	 *
-	 * @param string The string we are splitting.
+	 * @param string  The string we are splitting.
 	 * @param pattern The pattern the split with.
 	 * @return The part of the string after the last separator.
 	 */

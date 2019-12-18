@@ -57,19 +57,21 @@ public class RancherResourceModelSourceFactory implements ResourceModelSourceFac
 		builder.property(PropertyUtil.string(RancherShared.CONFIG_ENVIRONMENT_IDS, "Environment IDs",
 				"List of environments to include, comma-separated", true, null));
 
-		builder.property(PropertyUtil.string(RancherShared.CONFIG_ACCESSKEY, "Access Key",
-				"The Rancher API Access Key", true, null, null, null,
+		builder.property(PropertyUtil.string(RancherShared.CONFIG_ACCESSKEY, "Access Key", "The Rancher API Access Key",
+				true, null, null, null,
 				Collections.singletonMap("displayType", (Object) StringRenderingConstants.DisplayType.PASSWORD)));
 
-		builder.property(PropertyUtil.string(RancherShared.CONFIG_SECRETKEY, "Secret Key",
-				"The Rancher API Secret Key", true, null, null, null,
+		builder.property(PropertyUtil.string(RancherShared.CONFIG_SECRETKEY, "Secret Key", "The Rancher API Secret Key",
+				true, null, null, null,
 				Collections.singletonMap("displayType", (Object) StringRenderingConstants.DisplayType.PASSWORD)));
 
 		builder.property(PropertyUtil.string(RancherShared.CONFIG_ACCESSKEY_PATH, "Access Key Storage Path",
-				"Path in Rundeck Storage for the Rancher API Access Key (e.g. keys/rancher/access.key)", true, "keys/rancher/access.key"));
+				"Path in Rundeck Storage for the Rancher API Access Key (e.g. keys/rancher/access.key)", true,
+				"keys/rancher/access.key"));
 
 		builder.property(PropertyUtil.string(RancherShared.CONFIG_SECRETKEY_PATH, "Secret Key Storage Path",
-				"Path in Rundeck Storage for the Rancher API Secret Key (e.g. keys/rancher/secret.key)", true, "keys/rancher/secret.key"));
+				"Path in Rundeck Storage for the Rancher API Secret Key (e.g. keys/rancher/secret.key)", true,
+				"keys/rancher/secret.key"));
 
 		builder.property(PropertyUtil.string(RancherShared.CONFIG_STACK_FILTER, "Stack Filter",
 				"A regular expression for stacks to be included", true, "^.*$"));

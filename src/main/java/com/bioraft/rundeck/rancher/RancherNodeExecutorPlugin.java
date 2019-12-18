@@ -24,7 +24,6 @@ import java.util.Map;
 
 import javax.xml.bind.DatatypeConverter;
 
-import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
@@ -56,8 +55,6 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
 	private String accessKey;
 	private String secretKey;
 
-	private Framework framework;
-
 	static {
 		DescriptionBuilder builder = DescriptionBuilder.builder();
 		builder.name(RancherShared.SERVICE_PROVIDER_NAME);
@@ -72,10 +69,6 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
 				"framework." + RancherShared.CONFIG_EXECUTOR_TIMEOUT);
 
 		DESC = builder.build();
-	}
-
-	public RancherNodeExecutorPlugin(Framework framework) {
-		this.framework = framework;
 	}
 
 	@Override
