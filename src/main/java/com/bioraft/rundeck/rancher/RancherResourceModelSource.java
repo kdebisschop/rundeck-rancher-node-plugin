@@ -212,6 +212,8 @@ public class RancherResourceModelSource implements ResourceModelSource {
 			if (actions.hasNonNull("upgrade")) {
 				nodeEntry.setAttribute("upgrade", actions.get("upgrade").asText());
 			}
+			nodeEntry.setAttribute("services", node.get("links").get("services").asText());
+			nodeEntry.setAttribute("self", node.get("links").get("self").asText());
 
 			try {
 				if (nodeEntry.getNodename() == null) {
