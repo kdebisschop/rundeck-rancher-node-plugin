@@ -98,37 +98,15 @@ public class RancherUpgradeService implements NodeStepPlugin {
 
 		String upgradeUrl = service.get("data").get(0).get("actions").get("upgrade").asText();
 		JsonNode upgrade = service.get("data").get(0).get("upgrade");
-		
-		ObjectNode labelObject = (ObjectNode) upgrade.get("inServiceStrategy").get("launchConfig").get("labels");
-		for (String keyValue : labels.split(";")) {
-			String[] values = keyValue.split(":");
-			labelObject.put(values[0], values[1]);
-		}
-		
+
+		this.setLabels(upgrade);
+
 		((ObjectNode) upgrade.get("inServiceStrategy")).put("startFirst", true);
 
-		// Add new secrets if so configured.
-		if (secrets != null && secrets.length() > 0) {
-			ObjectNode launchObject = (ObjectNode) upgrade.get("inServiceStrategy").get("launchConfig");
-			ArrayNode secretsArray = launchObject.putArray("secrets");
-			if (upgrade.get("inServiceStrategy").get("launchConfig").has("secrets")) {
-				
-				Iterator<JsonNode> elements = upgrade.get("inServiceStrategy").get("launchConfig").get("secrets")
-						.elements();
-				while (elements.hasNext()) {
-					JsonNode secretObject = elements.next();
-					System.out.println(secretObject.toString());
-					if (!secretObject.get("secretId").asText().equals(secrets)) {
-						secretsArray.add(secretObject);
-					}
-				}
-			}
-			try {
-				secretsArray.add(this.buildSecret(secrets));
-			} catch (JsonProcessingException e) {
-				throw new NodeStepException("Failed mapping new secret", e, UpgradeFailureReason.InvalidJson,
-						node.getNodename());
-			}
+		try {
+			this.addSecrets(upgrade);
+		} catch (JsonProcessingException e) {
+			throw new NodeStepException("Failed add secret", e, UpgradeFailureReason.InvalidJson, node.getNodename());
 		}
 
 		try {
@@ -145,13 +123,42 @@ public class RancherUpgradeService implements NodeStepPlugin {
 		return;
 	}
 
+	private void setLabels(JsonNode upgrade) {
+		ObjectNode labelObject = (ObjectNode) upgrade.get("inServiceStrategy").get("launchConfig").get("labels");
+		for (String keyValue : labels.split(";")) {
+			String[] values = keyValue.split(":");
+			labelObject.put(values[0], values[1]);
+		}
+	}
+
+	private void addSecrets(JsonNode upgrade) throws JsonProcessingException {
+		if (secrets != null && secrets.length() > 0) {
+			ObjectNode launchObject = (ObjectNode) upgrade.get("inServiceStrategy").get("launchConfig");
+			ArrayNode secretsArray = launchObject.putArray("secrets");
+			if (upgrade.get("inServiceStrategy").get("launchConfig").has("secrets")) {
+
+				Iterator<JsonNode> elements = upgrade.get("inServiceStrategy").get("launchConfig").get("secrets")
+						.elements();
+				while (elements.hasNext()) {
+					JsonNode secretObject = elements.next();
+					System.out.println(secretObject.toString());
+					if (!secretObject.get("secretId").asText().equals(secrets)) {
+						secretsArray.add(secretObject);
+					}
+				}
+			}
+			secretsArray.add(this.buildSecret(secrets));
+		}
+	}
+
 	private JsonNode buildSecret(String secretId) throws JsonProcessingException {
 		String json = "{ \"type\": \"secretReference\", \"gid\": \"0\", \"mode\": \"444\", \"name\": \"\", \"secretId\": \""
 				+ secretId + "\", \"uid\": \"0\"}";
 		return (new ObjectMapper()).readTree(json);
 	}
 
-	private JsonNode doUpgrade(OkHttpClient client, String accessKey, String secretKey, String upgradeUrl, String upgrade) throws IOException, InterruptedException {
+	private JsonNode doUpgrade(OkHttpClient client, String accessKey, String secretKey, String upgradeUrl,
+			String upgrade) throws IOException, InterruptedException {
 		JsonNode service = apiPost(client, accessKey, secretKey, upgradeUrl, upgrade.toString());
 		String state = "unknown";
 		String link = service.get("links").get("self").asText();
@@ -182,7 +189,7 @@ public class RancherUpgradeService implements NodeStepPlugin {
 		}
 		return service;
 	}
-	
+
 	/**
 	 * Gets the web socket end point and connection token for an execute request.
 	 *
