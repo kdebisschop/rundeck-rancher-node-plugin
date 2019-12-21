@@ -26,7 +26,6 @@ import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.plugins.Plugin;
-import com.dtolabs.rundeck.core.storage.ResourceMeta;
 import com.dtolabs.rundeck.plugins.PluginLogger;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
@@ -47,144 +46,175 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 /**
- * Workflow Node Step Plug-in to choose one of two values to uplift into a step
- * variable.
+ * Workflow Node Step Plug-in to upgrade a service associated with a node.
  *
  * @author Karl DeBisschop <kdebisschop@gmail.com>
- * @since 2019-12-11
+ * @since 2019-12-20
  */
 @Plugin(name = RancherShared.SERVICE_PROVIDER_NAME, service = ServiceNameConstants.WorkflowNodeStep)
-@PluginDescription(title = "Rancher Service Upgrade Node Plugin", description = "Upgrades the service associated with the selected nodes.")
+@PluginDescription(title = "Rancher Service Upgrade Node Plugin", description = "Upgrades the service associated with the selected node.")
 public class RancherUpgradeService implements NodeStepPlugin {
 
-	@PluginProperty(name = "dockerImage", title = "Docker Image", description = "The fully specified Docker image to upgrade to.", required = true)
-	private String group;
+	@PluginProperty(title = "Docker Image", description = "The fully specified Docker image to upgrade to.", required = false)
+	private String dockerImage;
 
-	@PluginProperty(name = "labels", title = "Labels", description = "Pairs of 'label:value' separated by semicolons", required = true)
+	@PluginProperty(title = "Labels", description = "Pairs of 'label:value' separated by semicolons", required = true)
 	private String labels;
 
-	@PluginProperty(name = "secrets", title = "Secrets", description = "Keys for secrets separated by semicolons", required = false)
+	@PluginProperty(title = "Secrets", description = "Keys for secrets separated by commas or spaces", required = false)
 	private String secrets;
 
+	@PluginProperty(title = "Start before stopping", description = "Start new container(s) before stopping old", required = true, defaultValue = "true")
+	private boolean startFirst;
+
+	private String nodeName;
+
+	private ExecutionContext executionContext;
+	
+	private PluginLogger logger;
+
 	@Override
-	public void executeNodeStep(PluginStepContext context, Map<String, Object> configuration, INodeEntry node)
+	public void executeNodeStep(PluginStepContext ctx, Map<String, Object> cfg, INodeEntry node)
 			throws NodeStepException {
-		String accessKey;
-		String secretKey;
 		JsonNode service;
-		// avoid creating several instances, should be singleton
+
+		this.nodeName = node.getNodename();
+		this.executionContext = ctx.getExecutionContext();
+		this.logger = ctx.getLogger();
+
 		OkHttpClient client = new OkHttpClient();
-
 		Map<String, String> attributes = node.getAttributes();
-		String servicesLink = attributes.get("services");
-		ExecutionContext executionContext = context.getExecutionContext();
-		try {
-			accessKey = this.loadStoragePathData(executionContext, attributes.get(RancherShared.CONFIG_ACCESSKEY_PATH));
-			secretKey = this.loadStoragePathData(executionContext, attributes.get(RancherShared.CONFIG_SECRETKEY_PATH));
-		} catch (IOException e) {
-			throw new NodeStepException(e, UpgradeFailureReason.NoKeyStorage, node.getNodename());
-		}
 
-		for (String key : executionContext.getDataContext().get("option").keySet()) {
-			System.out.println(key);
-		}
-		try {
-			service = apiGet(client, accessKey, secretKey, servicesLink);
-		} catch (IOException e) {
-			throw new NodeStepException("IOException", UpgradeFailureReason.NoServiceObject, node.getNodename());
-		} catch (Exception e) {
-			throw new NodeStepException("Status Exception", UpgradeFailureReason.NoServiceObject, node.getNodename());
-		}
+		String accessKey = this.loadStoragePathData(attributes.get(RancherShared.CONFIG_ACCESSKEY_PATH));
+		String secretKey = this.loadStoragePathData(attributes.get(RancherShared.CONFIG_SECRETKEY_PATH));
 
+		service = apiGet(client, accessKey, secretKey, attributes.get("services"));
 		String upgradeUrl = service.get("data").get(0).get("actions").get("upgrade").asText();
 		JsonNode upgrade = service.get("data").get(0).get("upgrade");
 
+		if (dockerImage != null && dockerImage.length() > 0) {
+			logger.log(Constants.INFO_LEVEL, "Setting image to " + dockerImage);
+			((ObjectNode) upgrade.get("inServiceStrategy").get("launchConfig")).put("imageUuid", "docker:" + dockerImage);
+		}
+		((ObjectNode) upgrade.get("inServiceStrategy")).put("startFirst", startFirst);
 		this.setLabels(upgrade);
+		this.addSecrets(upgrade);
 
-		((ObjectNode) upgrade.get("inServiceStrategy")).put("startFirst", true);
+		service = doUpgrade(client, accessKey, secretKey, upgradeUrl, upgrade.toString());
 
-		try {
-			this.addSecrets(upgrade);
-		} catch (JsonProcessingException e) {
-			throw new NodeStepException("Failed add secret", e, UpgradeFailureReason.InvalidJson, node.getNodename());
-		}
-
-		try {
-			service = doUpgrade(client, accessKey, secretKey, upgradeUrl, upgrade.toString());
-		} catch (InterruptedException e) {
-			throw new NodeStepException(e, UpgradeFailureReason.Interrupted, node.getNodename());
-		} catch (IOException e) {
-			throw new NodeStepException(e, UpgradeFailureReason.UpgradeFailure, node.getNodename());
-		}
-
-		PluginLogger logger = context.getLogger();
-		logger.log(Constants.INFO_LEVEL, service.toString());
+		logger.log(Constants.INFO_LEVEL, "Upgraded " + nodeName);
 
 		return;
 	}
 
+	/**
+	 * Adds/modifies labels based on the step's labels setting.
+	 * 
+	 * @param upgrade JsonNode representing the target upgraded configuration.
+	 */
 	private void setLabels(JsonNode upgrade) {
 		ObjectNode labelObject = (ObjectNode) upgrade.get("inServiceStrategy").get("launchConfig").get("labels");
 		for (String keyValue : labels.split(";")) {
 			String[] values = keyValue.split(":");
 			labelObject.put(values[0], values[1]);
+			logger.log(Constants.INFO_LEVEL, "Setting label " + values[0] + " to " + values[1]);
 		}
 	}
 
-	private void addSecrets(JsonNode upgrade) throws JsonProcessingException {
+	/**
+	 * Add or replace secrets.
+	 * 
+	 * @param upgrade JsonNode representing the target upgraded configuration.
+	 * @throws NodeStepException
+	 */
+	private void addSecrets(JsonNode upgrade) throws NodeStepException {
 		if (secrets != null && secrets.length() > 0) {
-			ObjectNode launchObject = (ObjectNode) upgrade.get("inServiceStrategy").get("launchConfig");
+			JsonNode launchConfig = upgrade.get("inServiceStrategy").get("launchConfig");
+			ObjectNode launchObject = (ObjectNode) launchConfig;
 			ArrayNode secretsArray = launchObject.putArray("secrets");
-			if (upgrade.get("inServiceStrategy").get("launchConfig").has("secrets")) {
 
-				Iterator<JsonNode> elements = upgrade.get("inServiceStrategy").get("launchConfig").get("secrets")
-						.elements();
+			// Copy existing secrets, skipping any that we want to add or overwrite.
+			if (launchConfig.has("secrets")) {
+				Iterator<JsonNode> elements = launchConfig.get("secrets").elements();
 				while (elements.hasNext()) {
 					JsonNode secretObject = elements.next();
-					System.out.println(secretObject.toString());
 					if (!secretObject.get("secretId").asText().equals(secrets)) {
 						secretsArray.add(secretObject);
 					}
 				}
 			}
-			secretsArray.add(this.buildSecret(secrets));
+
+			// Add in the new or replacement secrets specified in the step.
+			for (String secretId : secrets.split("/[,; ]+/")) {
+				secretsArray.add(this.buildSecret(secretId));
+				logger.log(Constants.INFO_LEVEL, "Adding secret map to " + secretId);
+			}
 		}
 	}
 
-	private JsonNode buildSecret(String secretId) throws JsonProcessingException {
+	/**
+	 * Builds a JsonNode object for insertion into the secrets array.
+	 * 
+	 * @param secretId
+	 * @return
+	 * @throws NodeStepException
+	 */
+	private JsonNode buildSecret(String secretId) throws NodeStepException {
 		String json = "{ \"type\": \"secretReference\", \"gid\": \"0\", \"mode\": \"444\", \"name\": \"\", \"secretId\": \""
 				+ secretId + "\", \"uid\": \"0\"}";
-		return (new ObjectMapper()).readTree(json);
+		try {
+			return (new ObjectMapper()).readTree(json);
+		} catch (JsonProcessingException e) {
+			throw new NodeStepException("Failed add secret", e, UpgradeFailureReason.InvalidJson, this.nodeName);
+		}
 	}
 
+	/**
+	 * Performs the actual upgrade.
+	 * 
+	 * @param client
+	 * @param accessKey
+	 * @param secretKey
+	 * @param upgradeUrl
+	 * @param upgrade
+	 * @return
+	 * @throws NodeStepException
+	 */
 	private JsonNode doUpgrade(OkHttpClient client, String accessKey, String secretKey, String upgradeUrl,
-			String upgrade) throws IOException, InterruptedException {
+			String upgrade) throws NodeStepException {
 		JsonNode service = apiPost(client, accessKey, secretKey, upgradeUrl, upgrade.toString());
 		String state = "unknown";
 		String link = service.get("links").get("self").asText();
 
 		// Poll until upgraded.
+		logger.log(Constants.INFO_LEVEL, "Upgrading " + service.path("name"));
 		while (!state.equals("upgraded")) {
-			Thread.sleep(5000);
+			try {
+				Thread.sleep(5000);
+			} catch (InterruptedException e) {
+				throw new NodeStepException(e, UpgradeFailureReason.Interrupted, nodeName);
+			}
 			service = apiGet(client, accessKey, secretKey, link);
 			state = service.get("state").asText();
 			link = service.get("links").get("self").asText();
-			System.out.println(state);
 		}
 
 		// Finish the upgrade.
+		logger.log(Constants.INFO_LEVEL, "Finishing upgrade " + service.path("name"));
 		link = service.get("actions").get("finishupgrade").asText();
 		service = apiPost(client, accessKey, secretKey, link, "");
 		state = service.get("state").asText();
-		System.out.println(state);
 		link = service.get("links").get("self").asText();
 		while (!state.equals("active")) {
 			service = apiGet(client, accessKey, secretKey, link);
 			state = service.get("state").asText();
 			link = service.get("links").get("self").asText();
-			System.out.println(state);
 			if (!state.equals("active")) {
-				Thread.sleep(5000);
+				try {
+					Thread.sleep(5000);
+				} catch (InterruptedException e) {
+					throw new NodeStepException(e, UpgradeFailureReason.Interrupted, nodeName);
+				}
 			}
 		}
 		return service;
@@ -193,10 +223,15 @@ public class RancherUpgradeService implements NodeStepPlugin {
 	/**
 	 * Gets the web socket end point and connection token for an execute request.
 	 *
+	 * @param client
+	 * @param accessKey
+	 * @param secretKey
+	 * @param url
 	 * @return
-	 * @throws Exception
+	 * @throws NodeStepException
 	 */
-	private JsonNode apiGet(OkHttpClient client, String accessKey, String secretKey, String url) throws IOException {
+	private JsonNode apiGet(OkHttpClient client, String accessKey, String secretKey, String url)
+			throws NodeStepException {
 		try {
 			Request request = new Request.Builder().url(url)
 					.addHeader("Authorization", Credentials.basic(accessKey, secretKey)).build();
@@ -207,19 +242,23 @@ public class RancherUpgradeService implements NodeStepPlugin {
 			ObjectMapper mapper = new ObjectMapper();
 			return mapper.readTree(response.body().string());
 		} catch (IOException e) {
-			System.out.println(e.getMessage());
-			throw e;
+			throw new NodeStepException(e.getMessage(), e, UpgradeFailureReason.NoServiceObject, nodeName);
 		}
 	}
 
 	/**
 	 * Gets the web socket end point and connection token for an execute request.
 	 *
+	 * @param client
+	 * @param accessKey
+	 * @param secretKey
+	 * @param url
+	 * @param body
 	 * @return
-	 * @throws IOException
+	 * @throws NodeStepException
 	 */
 	private JsonNode apiPost(OkHttpClient client, String accessKey, String secretKey, String url, String body)
-			throws IOException {
+			throws NodeStepException {
 		RequestBody postBody = RequestBody.create(MediaType.parse("application/json"), body);
 		try {
 			Request request = new Request.Builder().url(url).post(postBody)
@@ -228,28 +267,29 @@ public class RancherUpgradeService implements NodeStepPlugin {
 			ObjectMapper mapper = new ObjectMapper();
 			return mapper.readTree(response.body().string());
 		} catch (IOException e) {
-			System.out.println(e.getMessage());
-			throw e;
+			throw new NodeStepException(e.getMessage(), e, UpgradeFailureReason.UpgradeFailure, nodeName);
 		}
 	}
 
 	/**
 	 * Get a (secret) value from password storage.
 	 *
-	 * @param context
-	 * @param passwordStoragePath
+	 * @param path
 	 * @return
+	 * @throws NodeStepException
 	 * @throws IOException
 	 */
-	private String loadStoragePathData(final ExecutionContext context, final String passwordStoragePath)
-			throws IOException {
-		if (null == passwordStoragePath) {
+	private String loadStoragePathData(final String path) throws NodeStepException {
+		if (null == path) {
 			return null;
 		}
-		ResourceMeta contents = context.getStorageTree().getResource(passwordStoragePath).getContents();
-		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-		contents.writeContent(byteArrayOutputStream);
-		return new String(byteArrayOutputStream.toByteArray());
+		ByteArrayOutputStream stream = new ByteArrayOutputStream();
+		try {
+			executionContext.getStorageTree().getResource(path).getContents().writeContent(stream);
+		} catch (Exception e) {
+			throw new NodeStepException(e, UpgradeFailureReason.NoKeyStorage, nodeName);
+		}
+		return new String(stream.toByteArray());
 	}
 
 	private enum UpgradeFailureReason implements FailureReason {
