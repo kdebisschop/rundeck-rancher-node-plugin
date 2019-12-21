@@ -112,7 +112,7 @@ public class RancherUpgradeService implements NodeStepPlugin {
 	}
 
 	/**
-	 * Adds/modifies labels based on the step's labels setting.
+	 * Adds/modifies environment variables.
 	 * 
 	 * @param upgrade JsonNode representing the target upgraded configuration.
 	 */
