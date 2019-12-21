@@ -212,6 +212,8 @@ public class RancherResourceModelSource implements ResourceModelSource {
 			if (actions.hasNonNull("upgrade")) {
 				nodeEntry.setAttribute("upgrade", actions.get("upgrade").asText());
 			}
+			nodeEntry.setAttribute("services", node.get("links").get("services").asText());
+			nodeEntry.setAttribute("self", node.get("links").get("self").asText());
 
 			try {
 				if (nodeEntry.getNodename() == null) {
@@ -313,9 +315,11 @@ public class RancherResourceModelSource implements ResourceModelSource {
 	private void setAttributeForLabel(String label) {
 		String attribute = this.last(label, "[.]");
 		if (labels.hasNonNull(label)) {
-			nodeEntry.setAttribute(attribute, labels.get(label).asText());
-		} else {
-			nodeEntry.setAttribute(attribute, "false");
+			if (attribute.equals("description")) {
+				nodeEntry.setDescription(labels.get(label).asText());
+			} else {
+				nodeEntry.setAttribute(attribute, labels.get(label).asText());
+			}
 		}
 	}
 
@@ -327,7 +331,12 @@ public class RancherResourceModelSource implements ResourceModelSource {
 	 */
 	private void setAttributeForLabel(String label, String value) {
 		if (attributeInclude.length() > 0 && label.matches(attributeInclude)) {
-			nodeEntry.setAttribute(this.last(label, "[.]"), value);
+			String attribute = this.last(label, "[.]");
+			if (attribute.equals("description")) {
+				nodeEntry.setDescription(value);
+			} else {
+				nodeEntry.setAttribute(this.last(attribute, "[.]"), value);
+			}
 		}
 	}
 

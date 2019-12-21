@@ -10,7 +10,7 @@ apply plugin: 'idea'
 sourceCompatibility = 1.8
 defaultTasks 'clean','build'
 ext.rundeckPluginVersion = '1.2'
-ext.pluginClassNames='com.bioraft.rundeck.rancher.RancherNodeExecutorPlugin,com.bioraft.rundeck.rancher.RancherFileCopier,com.bioraft.rundeck.rancher.RancherResourceModelSourceFactory'
+ext.pluginClassNames='com.bioraft.rundeck.rancher.RancherNodeExecutorPlugin,com.bioraft.rundeck.rancher.RancherFileCopier,com.bioraft.rundeck.rancher.RancherResourceModelSourceFactory,com.bioraft.rundeck.rancher.RancherUpgradeService'
 ext.pluginName = 'Rancher Node Plugins'
 ext.pluginDescription = 'Interface with Rancher environments'
 
