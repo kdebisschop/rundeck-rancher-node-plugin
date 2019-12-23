@@ -58,10 +58,10 @@ public class RancherUpgradeService implements NodeStepPlugin {
 	@PluginProperty(title = "Docker Image", description = "The fully specified Docker image to upgrade to.", required = false)
 	private String dockerImage;
 
-	@PluginProperty(title = "Labels", description = "Pairs of 'label:value' separated by semicolons", required = true)
+	@PluginProperty(title = "Labels", description = "Pairs of 'label:value' separated by semicolons", required = false)
 	private String labels;
 
-	@PluginProperty(title = "Environment", description = "Pairs of 'variable:value' separated by semicolons", required = true)
+	@PluginProperty(title = "Environment", description = "Pairs of 'variable:value' separated by semicolons", required = false)
 	private String envVars;
 
 	@PluginProperty(title = "Secrets", description = "Keys for secrets separated by commas or spaces", required = false)
@@ -73,7 +73,7 @@ public class RancherUpgradeService implements NodeStepPlugin {
 	private String nodeName;
 
 	private ExecutionContext executionContext;
-	
+
 	private PluginLogger logger;
 
 	@Override
@@ -97,7 +97,8 @@ public class RancherUpgradeService implements NodeStepPlugin {
 
 		if (dockerImage != null && dockerImage.length() > 0) {
 			logger.log(Constants.INFO_LEVEL, "Setting image to " + dockerImage);
-			((ObjectNode) upgrade.get("inServiceStrategy").get("launchConfig")).put("imageUuid", "docker:" + dockerImage);
+			((ObjectNode) upgrade.get("inServiceStrategy").get("launchConfig")).put("imageUuid",
+					"docker:" + dockerImage);
 		}
 		((ObjectNode) upgrade.get("inServiceStrategy")).put("startFirst", startFirst);
 		this.setEnvVars(upgrade);
@@ -117,11 +118,13 @@ public class RancherUpgradeService implements NodeStepPlugin {
 	 * @param upgrade JsonNode representing the target upgraded configuration.
 	 */
 	private void setEnvVars(JsonNode upgrade) {
-		ObjectNode envObject = (ObjectNode) upgrade.get("inServiceStrategy").get("launchConfig").get("environment");
-		for (String keyValue : envVars.split(";")) {
-			String[] values = keyValue.split(":");
-			envObject.put(values[0], values[1]);
-			logger.log(Constants.INFO_LEVEL, "Setting environment variable " + values[0] + " to " + values[1]);
+		if (envVars != null && envVars.length() > 0) {
+			ObjectNode envObject = (ObjectNode) upgrade.get("inServiceStrategy").get("launchConfig").get("environment");
+			for (String keyValue : envVars.split(";")) {
+				String[] values = keyValue.split(":");
+				envObject.put(values[0], values[1]);
+				logger.log(Constants.INFO_LEVEL, "Setting environment variable " + values[0] + " to " + values[1]);
+			}
 		}
 	}
 
@@ -131,11 +134,13 @@ public class RancherUpgradeService implements NodeStepPlugin {
 	 * @param upgrade JsonNode representing the target upgraded configuration.
 	 */
 	private void setLabels(JsonNode upgrade) {
-		ObjectNode labelObject = (ObjectNode) upgrade.get("inServiceStrategy").get("launchConfig").get("labels");
-		for (String keyValue : labels.split(";")) {
-			String[] values = keyValue.split(":");
-			labelObject.put(values[0], values[1]);
-			logger.log(Constants.INFO_LEVEL, "Setting label " + values[0] + " to " + values[1]);
+		if (labels != null && labels.length() > 0) {
+			ObjectNode labelObject = (ObjectNode) upgrade.get("inServiceStrategy").get("launchConfig").get("labels");
+			for (String keyValue : labels.split(";")) {
+				String[] values = keyValue.split(":");
+				labelObject.put(values[0], values[1]);
+				logger.log(Constants.INFO_LEVEL, "Setting label " + values[0] + " to " + values[1]);
+			}
 		}
 	}
 
