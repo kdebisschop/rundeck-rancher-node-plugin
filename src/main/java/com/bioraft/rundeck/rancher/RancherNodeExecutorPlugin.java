@@ -18,11 +18,7 @@ package com.bioraft.rundeck.rancher;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Map;
-
-import javax.xml.bind.DatatypeConverter;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
@@ -124,17 +120,9 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
 	 * @return
 	 */
 	private String baseName(String[] command, Map<String, String> jobContext) {
-		MessageDigest md;
-		try {
-			md = MessageDigest.getInstance("MD5");
-			md.update(String.join(" ", command).getBytes());
-			byte[] digest = md.digest();
-			String md5 = DatatypeConverter.printHexBinary(digest);
-			return "/tmp/" + jobContext.get("project") + "_" + jobContext.get("execid") + "_" + md5;
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-			return "/tmp/rundeck_job";
-		}
+		long time = System.currentTimeMillis();
+		int hash = command.hashCode();
+		return "/tmp/" + jobContext.get("project") + "_" + jobContext.get("execid") + time + "_" + hash;
 	}
 
 	/**
