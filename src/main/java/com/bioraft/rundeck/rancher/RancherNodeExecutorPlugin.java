@@ -101,7 +101,14 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
 			return NodeExecutorResultImpl.createFailure(StepFailureReason.Interrupted, e.getMessage(), node);
 		}
 
-		String[] pidFile = this.readLogFile(temp + ".pid", url).split(" +");
+		String[] pidFile;
+		try {
+			pidFile = this.readLogFile(temp + ".pid", url).split(" +");
+		} catch (IOException e) {
+			return NodeExecutorResultImpl.createFailure(StepFailureReason.IOFailure, e.getMessage(), node);
+		} catch (InterruptedException e) {
+			return NodeExecutorResultImpl.createFailure(StepFailureReason.Interrupted, e.getMessage(), node);
+		}
 		if (pidFile.length > 1 && Integer.parseInt(pidFile[1]) == 0) {
 			return NodeExecutorResultImpl.createSuccess(node);
 		} else {
@@ -131,16 +138,12 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
 	 * @param file The full path to the file.
 	 * @param url  The URL for executing jobs on the desired container.
 	 * @return The contents of the file as a string.
+	 * @throws InterruptedException
+	 * @throws IOException
 	 */
-	private String readLogFile(String file, String url) {
+	private String readLogFile(String file, String url) throws IOException, InterruptedException {
 		StringBuilder output = new StringBuilder();
-		try {
-			RancherWebSocketListener.getFile(url, accessKey, secretKey, output, file);
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+		RancherWebSocketListener.getFile(url, accessKey, secretKey, output, file);
 		return output.toString();
 	}
 
