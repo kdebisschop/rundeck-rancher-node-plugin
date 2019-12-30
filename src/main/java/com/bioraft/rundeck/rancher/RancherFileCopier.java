@@ -46,6 +46,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory;
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyUtil;
 import com.dtolabs.rundeck.core.storage.ResourceMeta;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
@@ -74,9 +75,10 @@ public class RancherFileCopier implements FileCopier, Describable {
 				"A search path on the Rundeck host that finds rancher, docker, sh, and base64 (e.g., /usr/local/bin:/usr/bin:/bin)",
 				false, ""));
 
-		builder.mapping(RancherShared.CONFIG_RANCHER_CLI_PATH, "project." + RancherShared.CONFIG_RANCHER_CLI_PATH);
+		builder.mapping(RancherShared.CONFIG_RANCHER_CLI_PATH,
+				PropertyResolverFactory.PROJECT_PREFIX + RancherShared.CONFIG_RANCHER_CLI_PATH);
 		builder.frameworkMapping(RancherShared.CONFIG_RANCHER_CLI_PATH,
-				"framework." + RancherShared.CONFIG_RANCHER_CLI_PATH);
+				PropertyResolverFactory.FRAMEWORK_PREFIX + RancherShared.CONFIG_RANCHER_CLI_PATH);
 
 		DESC = builder.build();
 	}

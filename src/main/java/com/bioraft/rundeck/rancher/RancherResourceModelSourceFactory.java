@@ -16,8 +16,7 @@
 
 package com.bioraft.rundeck.rancher;
 
-import com.bioraft.rundeck.rancher.RancherShared;
-
+import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
 import com.dtolabs.rundeck.core.resources.ResourceModelSource;
@@ -38,10 +37,8 @@ import java.util.Properties;
  */
 @Plugin(name = RancherShared.SERVICE_PROVIDER_NAME, service = ServiceNameConstants.ResourceModelSource)
 public class RancherResourceModelSourceFactory implements ResourceModelSourceFactory, Describable {
-	@Override
-	public ResourceModelSource createResourceModelSource(Properties configuration) throws ConfigurationException {
-		return new RancherResourceModelSource(configuration);
-	}
+
+	private Framework framework;
 
 	static final Description DESC;
 
@@ -100,6 +97,15 @@ public class RancherResourceModelSourceFactory implements ResourceModelSourceFac
 				"A regular expression for labels whose values will be used as tags for a node", false, ""));
 
 		DESC = builder.build();
+	}
+
+	public RancherResourceModelSourceFactory(final Framework framework) {
+		this.framework = framework;
+	}
+
+	@Override
+	public ResourceModelSource createResourceModelSource(Properties configuration) throws ConfigurationException {
+		return new RancherResourceModelSource(framework, configuration);
 	}
 
 	public Description getDescription() {

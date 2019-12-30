@@ -31,6 +31,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory;
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyUtil;
 import com.dtolabs.rundeck.core.storage.ResourceMeta;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
@@ -60,9 +61,10 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
 		builder.property(PropertyUtil.integer(RancherShared.CONFIG_EXECUTOR_TIMEOUT, "Maximum execution time",
 				"Terminate execution after specified number of seconds", true, "300"));
 
-		builder.mapping(RancherShared.CONFIG_EXECUTOR_TIMEOUT, "project." + RancherShared.CONFIG_EXECUTOR_TIMEOUT);
+		builder.mapping(RancherShared.CONFIG_EXECUTOR_TIMEOUT,
+				PropertyResolverFactory.PROJECT_PREFIX + RancherShared.CONFIG_EXECUTOR_TIMEOUT);
 		builder.frameworkMapping(RancherShared.CONFIG_EXECUTOR_TIMEOUT,
-				"framework." + RancherShared.CONFIG_EXECUTOR_TIMEOUT);
+				PropertyResolverFactory.FRAMEWORK_PREFIX + RancherShared.CONFIG_EXECUTOR_TIMEOUT);
 
 		DESC = builder.build();
 	}

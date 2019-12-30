@@ -105,7 +105,7 @@ public class RancherUpgradeService implements NodeStepPlugin {
 		this.setLabels(upgrade);
 		this.addSecrets(upgrade);
 
-		service = doUpgrade(client, accessKey, secretKey, upgradeUrl, upgrade.toString());
+		doUpgrade(client, accessKey, secretKey, upgradeUrl, upgrade.toString());
 
 		logger.log(Constants.INFO_LEVEL, "Upgraded " + nodeName);
 
@@ -203,7 +203,7 @@ public class RancherUpgradeService implements NodeStepPlugin {
 	 * @return
 	 * @throws NodeStepException
 	 */
-	private JsonNode doUpgrade(OkHttpClient client, String accessKey, String secretKey, String upgradeUrl,
+	private void doUpgrade(OkHttpClient client, String accessKey, String secretKey, String upgradeUrl,
 			String upgrade) throws NodeStepException {
 		JsonNode service = apiPost(client, accessKey, secretKey, upgradeUrl, upgrade.toString());
 		String state = "unknown";
@@ -240,7 +240,6 @@ public class RancherUpgradeService implements NodeStepPlugin {
 				}
 			}
 		}
-		return service;
 	}
 
 	/**
