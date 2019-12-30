@@ -74,9 +74,6 @@ public class RancherResourceModelSource implements ResourceModelSource {
 	// The set of nodes that will be returned by getNodes().
 	private NodeSetImpl iNodeEntries;
 
-	// Labels read from the node.
-	private JsonNode labels;
-
 	// Track how many times each stack_service has been seen.
 	Map<String, Integer> seen;
 
@@ -217,6 +214,9 @@ public class RancherResourceModelSource implements ResourceModelSource {
 		// Tag set for the node being built.
 		private HashSet<String> tagset;
 
+		// Labels read from the node.
+		private JsonNode labels;
+
 		public RancherNode(String environmentName, JsonNode node) {
 			nodeEntry = new NodeEntryImpl();
 			if (tags == null) {
@@ -252,7 +252,10 @@ public class RancherResourceModelSource implements ResourceModelSource {
 			nodeEntry.setAttribute("services", node.get("links").get("services").asText());
 			nodeEntry.setAttribute("self", node.get("links").get("self").asText());
 
-			this.processLabels(node);
+			if (node.hasNonNull("labels")) {
+				labels = node.get("labels");
+				this.processLabels(node);
+			}
 		}
 
 		public NodeEntryImpl getNodeEntry() {
