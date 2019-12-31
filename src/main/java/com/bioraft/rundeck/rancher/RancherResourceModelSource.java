@@ -36,10 +36,12 @@ import com.dtolabs.rundeck.core.resources.ResourceModelSourceException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import okhttp3.Call;
 import okhttp3.Credentials;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.Request.Builder;
 import okhttp3.Response;
 
 /**
@@ -86,18 +88,32 @@ public class RancherResourceModelSource implements ResourceModelSource {
 	/**
 	 * The required object constructor.
 	 *
+	 * @param framework
 	 * @param configuration
 	 */
 	public RancherResourceModelSource(Framework framework, Properties configuration) {
+		this.init(framework, configuration, new OkHttpClient());
+	}
+
+	/**
+	 * Constructor for unit testing.
+	 *
+	 * @param framework
+	 * @param configuration
+	 * @param client
+	 */
+	public RancherResourceModelSource(Framework framework, Properties configuration, OkHttpClient client) {
+		this.init(framework, configuration, client);
+	}
+
+	private void init(Framework framework, Properties configuration, OkHttpClient client) {
+		this.client = client;
 		this.configuration = configuration;
 		tags = configuration.getProperty("tags");
 		url = configuration.getProperty(RancherShared.CONFIG_ENDPOINT, "");
 		attributeInclude = configuration.getProperty(RancherShared.CONFIG_LABELS_INCLUDE_ATTRIBUTES, "");
 		tagInclude = configuration.getProperty(RancherShared.CONFIG_LABELS_INCLUDE_TAGS, "");
 		stackInclude = configuration.getProperty(RancherShared.CONFIG_STACK_FILTER, "");
-
-		// avoid creating several instances, should be singleton
-		client = new OkHttpClient();
 	}
 
 	@Override
@@ -149,9 +165,9 @@ public class RancherResourceModelSource implements ResourceModelSource {
 				}
 			}
 
+			RancherNode rancherNode = new RancherNode();
 			try {
-				RancherNode rancherNode = new RancherNode(environmentName, node);
-				NodeEntryImpl nodeEntry = rancherNode.getNodeEntry();
+				NodeEntryImpl nodeEntry = rancherNode.getNodeEntry(environmentName, node);
 
 				if (count != 0) {
 					nodeEntry.setAttribute("seen", count.toString());
@@ -166,7 +182,8 @@ public class RancherResourceModelSource implements ResourceModelSource {
 				}
 			} catch (IllegalArgumentException e) {
 				Framework.logger.log(Level.WARN, e.getMessage());
-				Framework.logger.log(Level.WARN, e.getCause().getMessage());
+			} catch (NullPointerException e) {
+				Framework.logger.log(Level.WARN, e.getMessage());
 			}
 		}
 	}
@@ -217,48 +234,45 @@ public class RancherResourceModelSource implements ResourceModelSource {
 		// Labels read from the node.
 		private JsonNode labels;
 
-		public RancherNode(String environmentName, JsonNode node) {
+		public RancherNode() {
 			nodeEntry = new NodeEntryImpl();
 			if (tags == null) {
 				tagset = new HashSet<String>();
 			} else {
 				tagset = new HashSet<String>(Arrays.asList(tags.split("\\s*,\\s*")));
 			}
+		}
 
+		public NodeEntryImpl getNodeEntry(String environmentName, JsonNode node) throws NullPointerException {
 			String name = environmentName + "_" + node.get("name").asText();
 			nodeEntry.setNodename(name);
-			nodeEntry.setHostname(node.get("hostId").asText());
+			nodeEntry.setHostname(node.path("hostId").asText());
 			nodeEntry.setUsername("root");
-			nodeEntry.setAttribute("id", node.get("id").asText());
-			nodeEntry.setAttribute("externalId", node.get("externalId").asText());
-			nodeEntry.setAttribute("hostId", node.get("hostId").asText());
+			nodeEntry.setAttribute("id", node.path("id").asText());
+			nodeEntry.setAttribute("externalId", node.path("externalId").asText());
+			nodeEntry.setAttribute("hostId", node.path("hostId").asText());
 			nodeEntry.setAttribute("file-copier", RancherShared.SERVICE_PROVIDER_NAME);
 			nodeEntry.setAttribute("node-executor", RancherShared.SERVICE_PROVIDER_NAME);
-			nodeEntry.setAttribute("type", node.get("kind").asText());
-			nodeEntry.setAttribute("state", node.get("state").asText());
-			nodeEntry.setAttribute("account", node.get("accountId").asText());
+			nodeEntry.setAttribute("type", node.path("kind").asText());
+			nodeEntry.setAttribute("state", node.path("state").asText());
+			nodeEntry.setAttribute("account", node.path("accountId").asText());
 			nodeEntry.setAttribute("environment", environmentName);
-			nodeEntry.setAttribute("image", node.get("imageUuid").asText());
+			nodeEntry.setAttribute("image", node.path("imageUuid").asText());
 			nodeEntry.setAttribute(accessKeyPath, configuration.getProperty(accessKeyPath));
 			nodeEntry.setAttribute(secretKeyPath, configuration.getProperty(secretKeyPath));
 
-			JsonNode actions = node.get("actions");
+			JsonNode actions = node.path("actions");
 			if (actions.hasNonNull("execute")) {
 				nodeEntry.setAttribute("execute", actions.get("execute").asText());
 			}
-			if (actions.hasNonNull("upgrade")) {
-				nodeEntry.setAttribute("upgrade", actions.get("upgrade").asText());
-			}
-			nodeEntry.setAttribute("services", node.get("links").get("services").asText());
-			nodeEntry.setAttribute("self", node.get("links").get("self").asText());
+			nodeEntry.setAttribute("services", node.path("links").path("services").asText());
+			nodeEntry.setAttribute("self", node.path("links").path("self").asText());
 
 			if (node.hasNonNull("labels")) {
 				labels = node.get("labels");
 				this.processLabels(node);
 			}
-		}
 
-		public NodeEntryImpl getNodeEntry() {
 			return nodeEntry;
 		}
 
@@ -401,15 +415,19 @@ public class RancherResourceModelSource implements ResourceModelSource {
 
 		ArrayList<JsonNode> data = new ArrayList<>();
 		while (!path.equals("null")) {
-			Request request = new Request.Builder().url(path)
-					.addHeader("Authorization", Credentials.basic(accessKey, secretKey)).build();
-			Response response = client.newCall(request).execute();
+			Builder requestBuilder = new Request.Builder().url(path);
+			requestBuilder.addHeader("Authorization", Credentials.basic(accessKey, secretKey));
+			Response response = client.newCall(requestBuilder.build()).execute();
 			String json = response.body().string();
 			JsonNode root = objectMapper.readTree(json);
-			path = root.get("pagination").get("next").asText();
 			Iterator<JsonNode> instances = root.get("data").elements();
 			while (instances.hasNext()) {
 				data.add(instances.next());
+			}
+			if (root.has("pagination") && root.get("pagination").has("next")) {
+				path = root.get("pagination").get("next").asText();
+			} else {
+				path = "null";
 			}
 		}
 		return data;
@@ -429,9 +447,11 @@ public class RancherResourceModelSource implements ResourceModelSource {
 		HttpUrl.Builder urlBuilder = HttpUrl.parse(url + "/projects/" + environment).newBuilder();
 		String path = urlBuilder.build().toString();
 
-		Request request = new Request.Builder().url(path)
-				.addHeader("Authorization", Credentials.basic(accessKey, secretKey)).build();
-		Response response = client.newCall(request).execute();
+		Builder requestBuilder = new Request.Builder().url(path);
+		requestBuilder.addHeader("Authorization", Credentials.basic(accessKey, secretKey));
+
+		Call call = client.newCall(requestBuilder.build());
+		Response response = call.execute();
 		String json = response.body().string();
 
 		ObjectMapper objectMapper = new ObjectMapper();
