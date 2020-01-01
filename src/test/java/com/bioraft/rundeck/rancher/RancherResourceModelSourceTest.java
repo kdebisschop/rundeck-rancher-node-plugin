@@ -22,6 +22,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Properties;
 
 import org.junit.Before;
@@ -30,7 +32,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceException;
@@ -53,9 +54,6 @@ import okhttp3.ResponseBody;
 @RunWith(MockitoJUnitRunner.class)
 public class RancherResourceModelSourceTest {
 
-	@Mock
-	Framework framework;
-
 	Properties configuration;
 
 	@Mock
@@ -65,7 +63,11 @@ public class RancherResourceModelSourceTest {
 	Call call;
 
 	RancherResourceModelSource source;
-	
+
+	private final static String environment = "myEnvironment";
+	private final static String nodeType = "container";
+	private final static String serviceState = "running";
+
 	@Before
 	public void setUp() {
 		configuration = new Properties();
@@ -90,18 +92,91 @@ public class RancherResourceModelSourceTest {
 
 	@Test
 	public void processOneNode() throws ResourceModelSourceException, IOException {
-		String json1 = "{\"name\": \"myEnvironment\"}";
-		String json2 = "{\"data\":[" + item("name1") + "]}";
-		when(call.execute()).thenReturn(response(json1), response(json2), response(json2));
+		String json1 = "{\"name\": \"" + environment + "\"}";
+		String json2 = "{\"data\":[" + item("1") + "]}";
+		when(call.execute()).thenReturn(response(json1), response(json2));
 
-		source = new RancherResourceModelSource(framework, configuration, client);
+		source = new RancherResourceModelSource(configuration, client);
 		INodeSet nodeList = source.getNodes();
 
 		verify(call, times(2)).execute();
-		
+
 		assertEquals(1, nodeList.getNodes().size());
 		INodeEntry node = nodeList.iterator().next();
 		assertEquals("myEnvironment_name1", node.getNodename());
+		assertEquals("hostId1", node.getHostname());
+		assertEquals("root", node.getUsername());
+		Map<String, String> attributes = node.getAttributes();
+		assertEquals("externalId1", attributes.get("externalId"));
+		assertEquals(serviceState, attributes.get("state"));
+	}
+
+	@Test
+	public void processTwoNodes() throws ResourceModelSourceException, IOException {
+		String json1 = "{\"name\": \"" + environment + "\"}";
+		String json2 = "{\"data\":[" + item("1") + "," + item("2") + "]}";
+		when(call.execute()).thenReturn(response(json1), response(json2));
+
+		source = new RancherResourceModelSource(configuration, client);
+		INodeSet nodeList = source.getNodes();
+
+		verify(call, times(2)).execute();
+
+		assertEquals(2, nodeList.getNodes().size());
+		Iterator<INodeEntry> iterator = nodeList.iterator();
+		INodeEntry node;
+		Map<String, String> attributes;
+
+		node = iterator.next();
+		assertEquals("myEnvironment_name1", node.getNodename());
+		assertEquals("hostId1", node.getHostname());
+		assertEquals("root", node.getUsername());
+		attributes = node.getAttributes();
+		assertEquals("externalId1", attributes.get("externalId"));
+		assertEquals(serviceState, attributes.get("state"));
+
+		node = iterator.next();
+		assertEquals("myEnvironment_name2", node.getNodename());
+		assertEquals("hostId2", node.getHostname());
+		assertEquals("root", node.getUsername());
+		attributes = node.getAttributes();
+		assertEquals("externalId2", attributes.get("externalId"));
+		assertEquals(serviceState, attributes.get("state"));
+	}
+
+	@Test
+	public void processContinued() throws ResourceModelSourceException, IOException {
+		String json1 = "{\"name\": \"" + environment + "\"}";
+		String url = configuration.getProperty(RancherShared.CONFIG_ENDPOINT);
+		String json2 = "{\"data\":[" + item("1") + "], \"pagination\": {\"next\": \"" + url +"\"}}";
+		String json3 = "{\"data\":[" + item("2") + "]}";
+		when(call.execute()).thenReturn(response(json1), response(json2), response(json3));
+
+		source = new RancherResourceModelSource(configuration, client);
+		INodeSet nodeList = source.getNodes();
+
+		verify(call, times(3)).execute();
+
+		assertEquals(2, nodeList.getNodes().size());
+		Iterator<INodeEntry> iterator = nodeList.iterator();
+		INodeEntry node;
+		Map<String, String> attributes;
+
+		node = iterator.next();
+		assertEquals("myEnvironment_name1", node.getNodename());
+		assertEquals("hostId1", node.getHostname());
+		assertEquals("root", node.getUsername());
+		attributes = node.getAttributes();
+		assertEquals("externalId1", attributes.get("externalId"));
+		assertEquals(serviceState, attributes.get("state"));
+
+		node = iterator.next();
+		assertEquals("myEnvironment_name2", node.getNodename());
+		assertEquals("hostId2", node.getHostname());
+		assertEquals("root", node.getUsername());
+		attributes = node.getAttributes();
+		assertEquals("externalId2", attributes.get("externalId"));
+		assertEquals(serviceState, attributes.get("state"));
 	}
 
 	private Response response(String json) {
@@ -113,7 +188,22 @@ public class RancherResourceModelSourceTest {
 	}
 
 	private String item(String item) {
-		return "{\"state\": \"running\", \"name\": \"" + item + "\"}";
+		String accessKeyPath = RancherShared.CONFIG_ACCESSKEY_PATH;
+		String secretKeyPath = RancherShared.CONFIG_SECRETKEY_PATH;
+		return "{\"state\": \"" + serviceState + "\"" + //
+				",\"name\": \"name" + item + "\"" + //
+				",\"hostId\": \"hostId" + item + "\"" + //
+				",\"id\": \"id" + item + "\"" + //
+				",\"externalId\": \"externalId" + item + "\"" + //
+				",\"file-copier\": \"" + RancherShared.SERVICE_PROVIDER_NAME + "\"" + //
+				",\"node-executor\": \"" + RancherShared.SERVICE_PROVIDER_NAME + "\"" + //
+				",\"type\": \"" + nodeType + "\"" + //
+				",\"account\": \"" + configuration.getProperty(RancherShared.CONFIG_ENVIRONMENT_IDS) + "\"" + //
+				",\"environment\": \"" + environment + "\"" + //
+				",\"image\": \"image" + item + "\"" + //
+				",\"" + accessKeyPath + "\": \"" + accessKeyPath + item + "\"" + //
+				",\"" + secretKeyPath + "\": \"" + secretKeyPath + item + "\"" + //
+				"}";
 	}
 
 }

@@ -17,13 +17,7 @@
 package com.bioraft.rundeck.rancher;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 import org.apache.log4j.Level;
 
@@ -79,34 +73,26 @@ public class RancherResourceModelSource implements ResourceModelSource {
 	// Track how many times each stack_service has been seen.
 	Map<String, Integer> seen;
 
-	// Storage path for Rancher API access key.
-	private String accessKeyPath = RancherShared.CONFIG_ACCESSKEY_PATH;
-
-	// Storage path for Rancher API secret key.
-	private String secretKeyPath = RancherShared.CONFIG_SECRETKEY_PATH;
-
 	/**
 	 * The required object constructor.
 	 *
-	 * @param framework
-	 * @param configuration
+	 * @param configuration Configuration variables set in RancherResourceModelSourceFactory
 	 */
-	public RancherResourceModelSource(Framework framework, Properties configuration) {
-		this.init(framework, configuration, new OkHttpClient());
+	public RancherResourceModelSource(Properties configuration) {
+		this.init(configuration, new OkHttpClient());
 	}
 
 	/**
 	 * Constructor for unit testing.
 	 *
-	 * @param framework
-	 * @param configuration
-	 * @param client
+	 * @param configuration Configuration variables set in RancherResourceModelSourceFactory
+	 * @param client HTTP client used for unit testing.
 	 */
-	public RancherResourceModelSource(Framework framework, Properties configuration, OkHttpClient client) {
-		this.init(framework, configuration, client);
+	public RancherResourceModelSource(Properties configuration, OkHttpClient client) {
+		this.init(configuration, client);
 	}
 
-	private void init(Framework framework, Properties configuration, OkHttpClient client) {
+	private void init(Properties configuration, OkHttpClient client) {
 		this.client = client;
 		this.configuration = configuration;
 		tags = configuration.getProperty("tags");
@@ -116,12 +102,13 @@ public class RancherResourceModelSource implements ResourceModelSource {
 		stackInclude = configuration.getProperty(RancherShared.CONFIG_STACK_FILTER, "");
 	}
 
+	@SuppressWarnings("RedundantThrows")
 	@Override
 	public INodeSet getNodes() throws ResourceModelSourceException {
 		iNodeEntries = new NodeSetImpl();
 		String environmentIds = configuration.getProperty(RancherShared.CONFIG_ENVIRONMENT_IDS);
 		for (String environmentId : environmentIds.split("[ ,]+")) {
-			seen = new HashMap<String, Integer>();
+			seen = new HashMap<>();
 			getNodesForEnvironment(environmentId);
 		}
 		return iNodeEntries;
@@ -141,14 +128,12 @@ public class RancherResourceModelSource implements ResourceModelSource {
 			environmentName = environmentId;
 			Framework.logger.log(Level.WARN, "Failed getting environment name");
 			Framework.logger.log(Level.WARN, e.getMessage());
-			Framework.logger.log(Level.WARN, e.getCause().getMessage());
 		}
 
 		try {
 			data = this.getContainers(environmentId);
 		} catch (IOException e) {
 			Framework.logger.log(Level.WARN, e.getMessage());
-			Framework.logger.log(Level.WARN, e.getCause().getMessage());
 			return;
 		}
 
@@ -157,7 +142,7 @@ public class RancherResourceModelSource implements ResourceModelSource {
 				continue;
 			}
 
-			Integer count = 0;
+			int count = 0;
 			if (node.hasNonNull("labels")) {
 				count = countProcessableByLabel(node.get("labels"));
 				if (count == 0) {
@@ -170,7 +155,7 @@ public class RancherResourceModelSource implements ResourceModelSource {
 				NodeEntryImpl nodeEntry = rancherNode.getNodeEntry(environmentName, node);
 
 				if (count != 0) {
-					nodeEntry.setAttribute("seen", count.toString());
+					nodeEntry.setAttribute("seen", Integer.toString(count));
 				}
 
 				if (nodeEntry.getNodename() == null) {
@@ -180,9 +165,7 @@ public class RancherResourceModelSource implements ResourceModelSource {
 				} else {
 					iNodeEntries.putNode(nodeEntry);
 				}
-			} catch (IllegalArgumentException e) {
-				Framework.logger.log(Level.WARN, e.getMessage());
-			} catch (NullPointerException e) {
+			} catch (IllegalArgumentException | NullPointerException e) {
 				Framework.logger.log(Level.WARN, e.getMessage());
 			}
 		}
@@ -237,9 +220,9 @@ public class RancherResourceModelSource implements ResourceModelSource {
 		public RancherNode() {
 			nodeEntry = new NodeEntryImpl();
 			if (tags == null) {
-				tagset = new HashSet<String>();
+				tagset = new HashSet<>();
 			} else {
-				tagset = new HashSet<String>(Arrays.asList(tags.split("\\s*,\\s*")));
+				tagset = new HashSet<>(Arrays.asList(tags.split("\\s*,\\s*")));
 			}
 		}
 
@@ -250,7 +233,6 @@ public class RancherResourceModelSource implements ResourceModelSource {
 			nodeEntry.setUsername("root");
 			nodeEntry.setAttribute("id", node.path("id").asText());
 			nodeEntry.setAttribute("externalId", node.path("externalId").asText());
-			nodeEntry.setAttribute("hostId", node.path("hostId").asText());
 			nodeEntry.setAttribute("file-copier", RancherShared.SERVICE_PROVIDER_NAME);
 			nodeEntry.setAttribute("node-executor", RancherShared.SERVICE_PROVIDER_NAME);
 			nodeEntry.setAttribute("type", node.path("kind").asText());
@@ -258,7 +240,11 @@ public class RancherResourceModelSource implements ResourceModelSource {
 			nodeEntry.setAttribute("account", node.path("accountId").asText());
 			nodeEntry.setAttribute("environment", environmentName);
 			nodeEntry.setAttribute("image", node.path("imageUuid").asText());
+			// Storage path for Rancher API access key.
+			String accessKeyPath = RancherShared.CONFIG_ACCESSKEY_PATH;
 			nodeEntry.setAttribute(accessKeyPath, configuration.getProperty(accessKeyPath));
+			// Storage path for Rancher API secret key.
+			String secretKeyPath = RancherShared.CONFIG_SECRETKEY_PATH;
 			nodeEntry.setAttribute(secretKeyPath, configuration.getProperty(secretKeyPath));
 
 			JsonNode actions = node.path("actions");
@@ -318,7 +304,7 @@ public class RancherResourceModelSource implements ResourceModelSource {
 		 * @param label The name of the label we are considering.
 		 */
 		private void setAttributeForLabel(String label) {
-			String attribute = this.last(label, "[.]");
+			String attribute = this.last(label);
 			if (labels.hasNonNull(label)) {
 				if (attribute.equals("description")) {
 					nodeEntry.setDescription(labels.get(label).asText());
@@ -331,16 +317,16 @@ public class RancherResourceModelSource implements ResourceModelSource {
 		/**
 		 * Determine whether an attribute should be set for a given label.
 		 *
-		 * @param label
-		 * @param value
+		 * @param label The label to set.
+		 * @param value The value to assign to the label.
 		 */
 		private void setAttributeForLabel(String label, String value) {
 			if (attributeInclude.length() > 0 && label.matches(attributeInclude)) {
-				String attribute = this.last(label, "[.]");
+				String attribute = this.last(label);
 				if (attribute.equals("description")) {
 					nodeEntry.setDescription(value);
 				} else {
-					nodeEntry.setAttribute(this.last(attribute, "[.]"), value);
+					nodeEntry.setAttribute(this.last(attribute), value);
 				}
 			}
 		}
@@ -361,10 +347,9 @@ public class RancherResourceModelSource implements ResourceModelSource {
 		 * Gets the part of a string after the last occurrence of pattern.
 		 *
 		 * @param string  The string we are splitting.
-		 * @param pattern The pattern the split with.
 		 * @return The part of the string after the last separator.
 		 */
-		private String last(String string, String pattern) {
+		private String last(String string) {
 			String[] keyParts = string.split("[.]");
 			return keyParts[keyParts.length - 1];
 		}
@@ -374,7 +359,7 @@ public class RancherResourceModelSource implements ResourceModelSource {
 	 * Returns true if property is set to exclude relevant nodes.
 	 *
 	 * @param property The name of the configuration value we are examining.
-	 * @return
+	 * @return True if the property value is "Exclude"
 	 */
 	private boolean isExclude(String property) {
 		return configuration.getProperty(property, "Exclude").contentEquals("Exclude");
@@ -387,10 +372,10 @@ public class RancherResourceModelSource implements ResourceModelSource {
 	 * a service even when we are not limiting the project node set to the one
 	 * container per service.
 	 *
-	 * @param name
+	 * @param name The composite stack and service.
 	 */
 	private Integer countTimesSeen(String name) {
-		Integer count;
+		int count;
 		if (seen.get(name) == null) {
 			count = 1;
 		} else {
@@ -403,9 +388,9 @@ public class RancherResourceModelSource implements ResourceModelSource {
 	/**
 	 * Makes the underlying API call to get the list of nodes for the environment.
 	 *
-	 * @param environment
+	 * @param environment The Rancher accountId for the environment.
 	 * @return An array of JsonNodes representing the containers in the environment.
-	 * @throws IOException
+	 * @throws IOException when API request fails.
 	 */
 	private ArrayList<JsonNode> getContainers(String environment) throws IOException {
 		ObjectMapper objectMapper = new ObjectMapper();
@@ -418,6 +403,7 @@ public class RancherResourceModelSource implements ResourceModelSource {
 			Builder requestBuilder = new Request.Builder().url(path);
 			requestBuilder.addHeader("Authorization", Credentials.basic(accessKey, secretKey));
 			Response response = client.newCall(requestBuilder.build()).execute();
+			assert response.body() != null;
 			String json = response.body().string();
 			JsonNode root = objectMapper.readTree(json);
 			Iterator<JsonNode> instances = root.get("data").elements();
@@ -436,15 +422,15 @@ public class RancherResourceModelSource implements ResourceModelSource {
 	/**
 	 * Gets the environment name for the specified environment ID.
 	 *
-	 * @param environment The Rancher accointId for the environment.
+	 * @param environment The Rancher accountId for the environment.
 	 * @return The name of the indicated environment.
-	 * @throws IOException
+	 * @throws IOException when API request fails.
 	 */
 	private String getEnvironmentName(String environment) throws IOException {
 		String accessKey = configuration.getProperty(RancherShared.CONFIG_ACCESSKEY);
 		String secretKey = configuration.getProperty(RancherShared.CONFIG_SECRETKEY);
 
-		HttpUrl.Builder urlBuilder = HttpUrl.parse(url + "/projects/" + environment).newBuilder();
+		HttpUrl.Builder urlBuilder = Objects.requireNonNull(HttpUrl.parse(url + "/projects/" + environment)).newBuilder();
 		String path = urlBuilder.build().toString();
 
 		Builder requestBuilder = new Request.Builder().url(path);
@@ -452,6 +438,7 @@ public class RancherResourceModelSource implements ResourceModelSource {
 
 		Call call = client.newCall(requestBuilder.build());
 		Response response = call.execute();
+		assert response.body() != null;
 		String json = response.body().string();
 
 		ObjectMapper objectMapper = new ObjectMapper();

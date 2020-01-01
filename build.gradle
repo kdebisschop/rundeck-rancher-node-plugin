@@ -23,7 +23,7 @@ scmVersion {
         prefix = ''
         versionSeparator = ''
         def origDeserialize=deserialize
-        //apend .0 to satisfy semver if the tag version is only X.Y
+        //append .0 to satisfy semver if the tag version is only X.Y
         deserialize = { config, position, tagName ->
             def orig = origDeserialize(config, position, tagName)
             if (orig.split('\\.').length < 3) {
@@ -68,7 +68,6 @@ dependencies {
             'org.powermock:powermock-api-mockito:1.5'
     )
 }
-
 
 // task to copy plugin libs to output/lib dir
 task copyToLib(type: Copy) {

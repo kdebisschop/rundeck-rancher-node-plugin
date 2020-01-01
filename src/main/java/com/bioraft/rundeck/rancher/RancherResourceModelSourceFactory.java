@@ -16,17 +16,20 @@
 
 package com.bioraft.rundeck.rancher;
 
-import com.dtolabs.rundeck.core.common.Framework;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Properties;
+
 import com.dtolabs.rundeck.core.plugins.Plugin;
-import com.dtolabs.rundeck.core.plugins.configuration.*;
+import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
+import com.dtolabs.rundeck.core.plugins.configuration.Describable;
+import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyUtil;
+import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants;
 import com.dtolabs.rundeck.core.resources.ResourceModelSource;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Properties;
 
 /**
  * RancherResourceModelSourceFactory establishes parameters for Rancher node
@@ -37,8 +40,6 @@ import java.util.Properties;
  */
 @Plugin(name = RancherShared.SERVICE_PROVIDER_NAME, service = ServiceNameConstants.ResourceModelSource)
 public class RancherResourceModelSourceFactory implements ResourceModelSourceFactory, Describable {
-
-	private Framework framework;
 
 	static final Description DESC;
 
@@ -99,13 +100,9 @@ public class RancherResourceModelSourceFactory implements ResourceModelSourceFac
 		DESC = builder.build();
 	}
 
-	public RancherResourceModelSourceFactory(final Framework framework) {
-		this.framework = framework;
-	}
-
 	@Override
 	public ResourceModelSource createResourceModelSource(Properties configuration) throws ConfigurationException {
-		return new RancherResourceModelSource(framework, configuration);
+		return new RancherResourceModelSource(configuration);
 	}
 
 	public Description getDescription() {
