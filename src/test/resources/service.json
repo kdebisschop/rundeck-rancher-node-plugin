@@ -1,0 +1,275 @@
+{    "id": "1s56",
+    "type": "service",
+    "links": {
+        "self": "https://rancher.example.com/v2-beta/projects/1a10/services/1s56",
+        "account": "https://rancher.example.com/v2-beta/projects/1a10/services/1s56/account",
+        "consumedbyservices": "https://rancher.example.com/v2-beta/projects/1a10/services/1s56/consumedbyservices",
+        "consumedservices": "https://rancher.example.com/v2-beta/projects/1a10/services/1s56/consumedservices",
+        "instances": "https://rancher.example.com/v2-beta/projects/1a10/services/1s56/instances",
+        "networkDrivers": "https://rancher.example.com/v2-beta/projects/1a10/services/1s56/networkdrivers",
+        "serviceExposeMaps": "https://rancher.example.com/v2-beta/projects/1a10/services/1s56/serviceexposemaps",
+        "serviceLogs": "https://rancher.example.com/v2-beta/projects/1a10/services/1s56/servicelogs",
+        "stack": "https://rancher.example.com/v2-beta/projects/1a10/services/1s56/stack",
+        "storageDrivers": "https://rancher.example.com/v2-beta/projects/1a10/services/1s56/storagedrivers",
+        "containerStats": "https://rancher.example.com/v2-beta/projects/1a10/services/1s56/containerstats"
+    },
+    "actions": {
+        "upgrade": "https://rancher.example.com/v2-beta/projects/1a10/services/1s56/?action=upgrade",
+        "finishupgrade": "https://rancher.example.com/v2-beta/projects/1a10/services/1s56/?action=finishupgrade",
+        "restart": "https://rancher.example.com/v2-beta/projects/1a10/services/1s56/?action=restart",
+        "update": "https://rancher.example.com/v2-beta/projects/1a10/services/1s56/?action=update",
+        "remove": "https://rancher.example.com/v2-beta/projects/1a10/services/1s56/?action=remove",
+        "deactivate": "https://rancher.example.com/v2-beta/projects/1a10/services/1s56/?action=deactivate",
+        "removeservicelink": "https://rancher.example.com/v2-beta/projects/1a10/services/1s56/?action=removeservicelink",
+        "addservicelink": "https://rancher.example.com/v2-beta/projects/1a10/services/1s56/?action=addservicelink",
+        "setservicelinks": "https://rancher.example.com/v2-beta/projects/1a10/services/1s56/?action=setservicelinks"
+    },
+    "baseType": "service",
+    "name": "frontend",
+    "state": "active",
+    "accountId": "1a10",
+    "assignServiceIpAddress": false,
+    "createIndex": 62,
+    "created": "2019-09-12T06:48:39Z",
+    "createdTS": 1568270919000,
+    "currentScale": 1,
+    "description": null,
+    "externalId": null,
+    "fqdn": null,
+    "healthState": "healthy",
+    "instanceIds": [
+        "1i234"
+    ],
+    "kind": "service",
+    "launchConfig": {
+        "type": "launchConfig",
+        "dataVolumes": [
+            "/clientdata/mysite_dev/files:/var/www/html/sites/mysite/files",
+            "/clientdata/shared:/var/shared:ro",
+            "/var/backups/mysql/daily/raft3_prod_mysite:/var/restore:ro"
+        ],
+        "environment": {
+            "DOMAIN": "mysite.development.example.com",
+            "ENVIRONMENT": "development",
+            "SITE": "mysite"
+        },
+        "healthCheck": {
+            "type": "instanceHealthCheck",
+            "healthyThreshold": 2,
+            "initializingTimeout": 900000,
+            "interval": 12000,
+            "port": 80,
+            "reinitializingTimeout": 900000,
+            "responseTimeout": 2000,
+            "strategy": "none",
+            "unhealthyThreshold": 3
+        },
+        "imageUuid": "docker:nexus.example.com/frontend:v1.2.3_1",
+        "instanceTriggeredStop": "stop",
+        "kind": "container",
+        "labels": {
+            "com.example.group": "dev",
+            "com.example.service": "frontend",
+            "com.example.site": "mysite",
+            "io.rancher.service.hash": "0123456789012345678901234567890123456789",
+            "com.example.description": "mysite.development.example.com"
+        },
+        "logConfig": {
+            "type": "logConfig"
+        },
+        "networkMode": "managed",
+        "ports": [
+            "57372:80/tcp"
+        ],
+        "privileged": false,
+        "publishAllPorts": false,
+        "readOnly": false,
+        "runInit": false,
+        "secrets": [
+            {
+                "type": "secretReference",
+                "gid": "0",
+                "mode": "444",
+                "name": "",
+                "secretId": "1se1",
+                "uid": "0"
+            }
+        ],
+        "startOnCreate": true,
+        "stdinOpen": false,
+        "system": false,
+        "tty": false,
+        "version": "00000000-0000-0000-0000-000000000000",
+        "vcpu": 1,
+        "drainTimeoutMs": 0
+    },
+    "lbConfig": null,
+    "linkedServices": null,
+    "metadata": {
+        "io.rancher.service.hash": "0123456789012345678901234567890123456789"
+    },
+    "publicEndpoints": [
+        {
+            "type": "publicEndpoint",
+            "hostId": "1h70",
+            "instanceId": "1i234",
+            "ipAddress": "172.25.1.207",
+            "port": 57372,
+            "serviceId": "1s56"
+        }
+    ],
+    "removed": null,
+    "retainIp": null,
+    "scale": 1,
+    "scalePolicy": null,
+    "secondaryLaunchConfigs": [ ],
+    "selectorContainer": null,
+    "selectorLink": null,
+    "stackId": "1st3107",
+    "startOnCreate": false,
+    "system": false,
+    "transitioning": "no",
+    "transitioningMessage": null,
+    "transitioningProgress": null,
+    "upgrade": {
+        "type": "serviceUpgrade",
+        "inServiceStrategy": {
+            "type": "inServiceUpgradeStrategy",
+            "batchSize": 2,
+            "intervalMillis": 1000,
+            "launchConfig": {
+                "type": "launchConfig",
+                "dataVolumes": [
+                    "/clientdata/mysite_dev/files:/var/www/html/sites/mysite/files",
+                    "/clientdata/shared:/var/shared:ro",
+                    "/var/backups/mysql/daily/raft3_prod_mysite:/var/restore:ro"
+                ],
+                "environment": {
+                    "BASE_DOMAIN": "example.com",
+                    "DOMAIN": "mysite.development.example.com",
+                    "ENVIRONMENT": "development",
+                    "SITE": "mysite"
+                },
+                "healthCheck": {
+                    "type": "instanceHealthCheck",
+                    "healthyThreshold": 2,
+                    "initializingTimeout": 900000,
+                    "interval": 12000,
+                    "port": 80,
+                    "reinitializingTimeout": 900000,
+                    "responseTimeout": 2000,
+                    "strategy": "none",
+                    "unhealthyThreshold": 3
+                },
+                "imageUuid": "docker:nexus.example.com/frontend:v1.2.3_1",
+                "instanceTriggeredStop": "stop",
+                "kind": "container",
+                "labels": {
+                    "com.example.group": "dev",
+                    "com.example.service": "frontend",
+                    "com.example.site": "mysite",
+                    "io.rancher.service.hash": "0123456789012345678901234567890123456789",
+                    "com.example.description": "mysite.development.example.com"
+                },
+                "logConfig": {
+                    "type": "logConfig"
+                },
+                "networkMode": "managed",
+                "ports": [
+                    "57372:80/tcp"
+                ],
+                "privileged": false,
+                "publishAllPorts": false,
+                "readOnly": false,
+                "runInit": false,
+                "secrets": [
+                    {
+                        "type": "secretReference",
+                        "gid": "0",
+                        "mode": "444",
+                        "name": "",
+                        "secretId": "1se1",
+                        "uid": "0"
+                    }
+                ],
+                "startOnCreate": true,
+                "stdinOpen": false,
+                "system": false,
+                "tty": false,
+                "version": "00000000-0000-0000-0000-000000000000",
+                "vcpu": 1,
+                "drainTimeoutMs": 0
+            },
+            "previousLaunchConfig": {
+                "type": "launchConfig",
+                "dataVolumes": [
+                    "/clientdata/mysite_dev/files:/var/www/html/sites/mysite/files",
+                    "/clientdata/shared:/var/shared:ro",
+                    "/var/backups/mysql/daily/raft3_prod_mysite:/var/restore:ro"
+                ],
+                "environment": {
+                    "BASE_DOMAIN": "example.com",
+                    "DOMAIN": "mysite.development.example.com",
+                    "ENVIRONMENT": "development",
+                    "SITE": "mysite"
+                },
+                "healthCheck": {
+                    "type": "instanceHealthCheck",
+                    "healthyThreshold": 2,
+                    "initializingTimeout": 900000,
+                    "interval": 12000,
+                    "port": 80,
+                    "reinitializingTimeout": 900000,
+                    "responseTimeout": 2000,
+                    "strategy": "none",
+                    "unhealthyThreshold": 3
+                },
+                "imageUuid": "docker:nexus.example.com/frontend:v3.9.84.2_1",
+                "instanceTriggeredStop": "stop",
+                "kind": "container",
+                "labels": {
+                    "com.example.group": "dev",
+                    "com.example.service": "frontend",
+                    "com.example.site": "mysite",
+                    "io.rancher.service.hash": "0123456789012345678901234567890123456789",
+                    "com.example.description": "mysite.development.example.com"
+                },
+                "logConfig": {
+                    "type": "logConfig"
+                },
+                "networkMode": "managed",
+                "ports": [
+                    "57372:80/tcp"
+                ],
+                "privileged": false,
+                "publishAllPorts": false,
+                "readOnly": false,
+                "runInit": false,
+                "secrets": [
+                    {
+                        "type": "secretReference",
+                        "gid": "0",
+                        "mode": "444",
+                        "name": "",
+                        "secretId": "1se1",
+                        "uid": "0"
+                    }
+                ],
+                "startOnCreate": true,
+                "stdinOpen": false,
+                "system": false,
+                "tty": false,
+                "version": "00000000-0000-0000-0000-000000000000",
+                "vcpu": 1,
+                "drainTimeoutMs": 0
+            },
+            "previousSecondaryLaunchConfigs": [ ],
+            "secondaryLaunchConfigs": [ ],
+            "startFirst": true
+        },
+        "toServiceStrategy": null
+    },
+    "uuid": "00000000-0000-0000-0000-000000000000",
+    "vip": null
+
+}
