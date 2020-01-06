@@ -1,5 +1,6 @@
 plugins {
-    id 'pl.allegro.tech.build.axion-release' version '1.10.1'
+    id 'pl.allegro.tech.build.axion-release' version '1.10.3'
+    id 'com.github.johnrengelman.shadow' version '5.2.0'
     id 'java'
 }
 
@@ -7,8 +8,12 @@ apply plugin: 'java'
 apply plugin: 'eclipse'
 apply plugin: 'idea'
 
-sourceCompatibility = 1.8
-defaultTasks 'clean','build'
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+defaultTasks 'clean','test','shadowJar'
 ext.rundeckPluginVersion = '1.2'
 ext.pluginClassNames='com.bioraft.rundeck.rancher.RancherNodeExecutorPlugin,' +
 'com.bioraft.rundeck.rancher.RancherFileCopier,' +
@@ -20,12 +25,15 @@ ext.pluginDescription = 'Interface with Rancher environments'
 scmVersion {
     ignoreUncommittedChanges = true
     tag {
+        // Ignore tags that begin with <prefix><versionSeparator>, include all tags
+        // if prefix is empty.
         prefix = ''
         versionSeparator = ''
+
+        // Append .0 to satisfy SemVer if the tag version is only X.Y
         def origDeserialize=deserialize
-        //append .0 to satisfy semver if the tag version is only X.Y
         deserialize = { config, position, tagName ->
-            def orig = origDeserialize(config, position, tagName)
+            String orig = origDeserialize(config, position, tagName)
             if (orig.split('\\.').length < 3) {
                 orig += ".0"
             }
@@ -38,26 +46,37 @@ project.version = scmVersion.version
 repositories {
     mavenLocal()
     mavenCentral()
+    maven {
+        name = 'RancherJavaSDK'
+        url uri('https://maven.pkg.github.com/kdebisschop/rancher-java-sdk')
+    }
 }
 
-configurations{
+configurations {
     //declare custom pluginLibs configuration to include only libs for this plugin
     pluginLibs
 
     //declare compile to extend from pluginLibs so it inherits the dependencies
-    compile{
-        extendsFrom pluginLibs
+    implementation {
+        compileClasspath.extendsFrom(pluginLibs)
+    }
+
+    api {
+        compileClasspath.extendsFrom(implementation)
     }
 }
 
 dependencies {
+    implementation 'com.github.kdebisschop:rancher-java-sdk:2.0.5-kdebisschop'
+    api 'com.github.kdebisschop:rancher-java-sdk:2.0.5-kdebisschop'
+
+
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.10.1'
     
     implementation group: 'com.squareup.okhttp3', name: 'okhttp', version: '3.14.4'
 
     implementation (
-        'org.rundeck:rundeck-core:3.0+',
-        'org.rundeck:rundeck-storage-api:3.0+'
+        'org.rundeck:rundeck-core:3.0.+',
     )
 	
     testImplementation group: 'junit', name: 'junit', version:'4.12'
@@ -95,6 +114,14 @@ jar {
 
     }
     dependsOn(copyToLib)
+}
+
+shadowJar {
+    dependencies {
+        include 'com/bioraft/**'
+        include 'resources/*'
+        include 'io/**'
+    }
 }
 
 wrapper {

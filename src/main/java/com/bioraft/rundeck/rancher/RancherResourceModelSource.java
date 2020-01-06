@@ -96,7 +96,7 @@ public class RancherResourceModelSource implements ResourceModelSource {
 		this.client = client;
 		this.configuration = configuration;
 		tags = configuration.getProperty("tags");
-		url = configuration.getProperty(RancherShared.CONFIG_ENDPOINT, "");
+		url = configuration.getProperty(RancherShared.CONFIG_ENDPOINT);
 		attributeInclude = configuration.getProperty(RancherShared.CONFIG_LABELS_INCLUDE_ATTRIBUTES, "");
 		tagInclude = configuration.getProperty(RancherShared.CONFIG_LABELS_INCLUDE_TAGS, "");
 		stackInclude = configuration.getProperty(RancherShared.CONFIG_STACK_FILTER, "");

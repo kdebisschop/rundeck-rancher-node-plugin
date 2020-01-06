@@ -18,6 +18,7 @@ package com.bioraft.rundeck.rancher;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Map;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
@@ -120,17 +121,15 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
 	}
 
 	/**
-	 * Create a (nearly) unique file path without the extension.
-	 * 
-	 * 
+	 * Create a unique file path without the extension.
 	 *
 	 * @param command    The command array to be executed for the job.
 	 * @param jobContext The job context map.
-	 * @return
+	 * @return A unique filename for the PID and stsus of this step.
 	 */
 	private String baseName(String[] command, Map<String, String> jobContext) {
 		long time = System.currentTimeMillis();
-		int hash = command.hashCode();
+		int hash = Arrays.hashCode(command);
 		return "/tmp/" + jobContext.get("project") + "_" + jobContext.get("execid") + time + "_" + hash;
 	}
 
@@ -140,8 +139,8 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
 	 * @param file The full path to the file.
 	 * @param url  The URL for executing jobs on the desired container.
 	 * @return The contents of the file as a string.
-	 * @throws InterruptedException
-	 * @throws IOException
+	 * @throws InterruptedException When listener is interrupted.
+	 * @throws IOException When connection to Rancher fails.
 	 */
 	private String readLogFile(String file, String url) throws IOException, InterruptedException {
 		StringBuilder output = new StringBuilder();
@@ -152,10 +151,10 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
 	/**
 	 * Get a (secret) value from password storage.
 	 *
-	 * @param context
-	 * @param passwordStoragePath
-	 * @return
-	 * @throws IOException
+	 * @param context The execution object that contains a reference to Storage.
+	 * @param passwordStoragePath A path in Rundeck stage where value is stored.
+	 * @return The specified password.
+	 * @throws IOException When connection to Rundeck storage fails.
 	 */
 	private String loadStoragePathData(final ExecutionContext context, final String passwordStoragePath)
 			throws IOException {
