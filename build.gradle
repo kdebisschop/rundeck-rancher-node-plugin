@@ -23,7 +23,7 @@ ext.pluginName = 'Rancher Node Plugins'
 ext.pluginDescription = 'Interface with Rancher environments'
 
 scmVersion {
-    ignoreUncommittedChanges = true
+    ignoreUncommittedChanges = false
     tag {
         // Ignore tags that begin with <prefix><versionSeparator>, include all tags
         // if prefix is empty.
@@ -53,23 +53,15 @@ repositories {
 }
 
 configurations {
-    //declare custom pluginLibs configuration to include only libs for this plugin
     pluginLibs
 
-    //declare compile to extend from pluginLibs so it inherits the dependencies
     implementation {
         compileClasspath.extendsFrom(pluginLibs)
-    }
-
-    api {
-        compileClasspath.extendsFrom(implementation)
     }
 }
 
 dependencies {
     implementation 'com.github.kdebisschop:rancher-java-sdk:2.0.5-kdebisschop'
-    api 'com.github.kdebisschop:rancher-java-sdk:2.0.5-kdebisschop'
-
 
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.10.1'
     
@@ -118,9 +110,9 @@ jar {
 
 shadowJar {
     dependencies {
-        include 'com/bioraft/**'
-        include 'resources/*'
-        include 'io/**'
+        exclude(dependency {
+            it.moduleGroup != 'com.github.kdebisschop'
+        })
     }
 }
 
