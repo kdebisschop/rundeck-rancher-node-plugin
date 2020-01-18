@@ -30,6 +30,8 @@ import com.dtolabs.rundeck.plugins.PluginLogger;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty;
+import com.dtolabs.rundeck.plugins.descriptions.RenderingOption;
+import com.dtolabs.rundeck.plugins.descriptions.RenderingOptions;
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -46,24 +48,35 @@ import okhttp3.Request.Builder;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
+import static com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants.CODE_SYNTAX_MODE;
+import static com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants.DISPLAY_TYPE_KEY;
+
 /**
  * Workflow Node Step Plug-in to upgrade a service associated with a node.
  *
  * @author Karl DeBisschop <kdebisschop@gmail.com>
  * @since 2019-12-20
  */
-@Plugin(name = RancherShared.SERVICE_PROVIDER_NAME, service = ServiceNameConstants.WorkflowNodeStep)
-@PluginDescription(title = "Rancher Service Upgrade Node Plugin", description = "Upgrades the service associated with the selected node.")
+@Plugin(name = RancherShared.RANCHER_SERVICE_PROVIDER, service = ServiceNameConstants.WorkflowNodeStep)
+@PluginDescription(title = "Rancher - Upgrade Service/Node", description = "Upgrades the service associated with the selected node.")
 public class RancherUpgradeService implements NodeStepPlugin {
 
 	@PluginProperty(title = "Docker Image", description = "The fully specified Docker image to upgrade to.")
 	private String dockerImage;
 
-	@PluginProperty(title = "Labels", description = "Pairs of 'label:value' separated by semicolons")
+	@PluginProperty(title = "Service Labels", description = "JSON object of \"variable\": \"value\"")
+	@RenderingOptions({
+			@RenderingOption(key = DISPLAY_TYPE_KEY, value = "CODE"),
+			@RenderingOption(key = CODE_SYNTAX_MODE, value = "json"),
+	})
 	private String labels;
 
-	@PluginProperty(title = "Environment", description = "Pairs of 'variable:value' separated by semicolons")
-	private String envVars;
+	@PluginProperty(title = "Container OS Environment", description = "JSON object of \"variable\": \"value\"")
+	@RenderingOptions({
+			@RenderingOption(key = DISPLAY_TYPE_KEY, value = "CODE"),
+			@RenderingOption(key = CODE_SYNTAX_MODE, value = "json"),
+	})
+	private String environment;
 
 	@PluginProperty(title = "Secrets", description = "Keys for secrets separated by commas or spaces")
 	private String secrets;
@@ -125,6 +138,18 @@ public class RancherUpgradeService implements NodeStepPlugin {
 					"docker:" + dockerImage);
 		}
 		((ObjectNode) upgrade.get("inServiceStrategy")).put("startFirst", startFirst);
+		if ((environment == null || environment.isEmpty()) && cfg.containsKey("environment")) {
+			environment = (String) cfg.get("environment");
+		}
+
+		if ((labels == null || labels.isEmpty()) && cfg.containsKey("labels")) {
+			labels = (String) cfg.get("labels");
+		}
+
+		if ((secrets == null || secrets.isEmpty()) && cfg.containsKey("secrets")) {
+			secrets = (String) cfg.get("secrets");
+		}
+
 		this.setEnvVars(upgrade);
 		this.setLabels(upgrade);
 		this.addSecrets(upgrade);
@@ -140,9 +165,9 @@ public class RancherUpgradeService implements NodeStepPlugin {
 	 * @param upgrade JsonNode representing the target upgraded configuration.
 	 */
 	private void setEnvVars(JsonNode upgrade) {
-		if (envVars != null && envVars.length() > 0) {
+		if (environment != null && environment.length() > 0) {
 			ObjectNode envObject = (ObjectNode) upgrade.get("inServiceStrategy").get("launchConfig").get("environment");
-			for (String keyValue : envVars.split(";")) {
+			for (String keyValue : environment.split(";")) {
 				String[] values = keyValue.split(":");
 				envObject.put(values[0], values[1]);
 				logger.log(Constants.INFO_LEVEL, "Setting environment variable " + values[0] + " to " + values[1]);

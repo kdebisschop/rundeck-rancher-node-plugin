@@ -2,8 +2,10 @@ package com.bioraft.rundeck.rancher;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import okhttp3.*;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler;
 import org.apache.commons.httpclient.HttpMethod;
@@ -12,49 +14,81 @@ import org.apache.commons.httpclient.methods.*;
 import org.apache.commons.httpclient.params.HttpMethodParams;
 
 import java.io.*;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.Objects;
 
-public abstract class HttpClient {
+public class HttpClient {
 
-    private final String accesskey;
+    private final String accessKey;
     private final String secretKey;
-    private final String endpoint;
+    private final OkHttpClient client;
 
-    public HttpClient(String endpoint, String accesskey, String secretKey) {
-        this.accesskey = accesskey;
+    public HttpClient(String accessKey, String secretKey) {
+        this.accessKey = accessKey;
         this.secretKey = secretKey;
-        this.endpoint = endpoint;
+        client = new OkHttpClient();
     }
 
-    protected <T> T get(String url, Class<T> responseClass) throws IOException {
-        GetMethod deleteMethod = new GetMethod(endpoint + url);
-        return execute(deleteMethod, responseClass);
+    protected JsonNode get(String url) throws IOException {
+        return this.get(url, null);
     }
 
-    protected <T> T delete(String url, Class<T> responseClass) throws IOException {
-        DeleteMethod deleteMethod = new DeleteMethod(endpoint + url);
-        return execute(deleteMethod, responseClass);
+    protected JsonNode get(String url, Map<String, String> query) throws IOException {
+        HttpUrl.Builder urlBuilder = Objects.requireNonNull(HttpUrl.parse(url)).newBuilder();
+        if (query != null) {
+            query.forEach(urlBuilder::addQueryParameter);
+        }
+        Request.Builder builder = new Request.Builder().url(urlBuilder.build().toString());
+        builder.addHeader("Authorization", Credentials.basic(accessKey, secretKey));
+        Response response = client.newCall(builder.build()).execute();
+        // Since URL comes from the Rancher server itself, assume there are no redirects.
+        if (response.code() >= 300) {
+            throw new IOException("API get failed" + response.message());
+        }
+        ObjectMapper mapper = new ObjectMapper();
+        assert response.body() != null;
+        return mapper.readTree(response.body().string());
     }
 
-    protected <T> T post(String url, Object data, Class<T> responseClass) throws IOException {
-        PostMethod method = new PostMethod(endpoint + url);
+    protected JsonNode delete(String url) throws IOException {
+        DeleteMethod method = new DeleteMethod(url);
+        return execute(method);
+    }
+
+    protected JsonNode post(String url, Map<String, Object> map) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        String payload = mapper.writeValueAsString(map);
+        System.out.print(payload);
+        return this.post(url, payload);
+    }
+
+    protected JsonNode post(String url, String data) throws IOException {
+        RequestBody postBody = RequestBody.create(MediaType.parse("application/json"), data);
+        Request.Builder builder = new Request.Builder().url(url).post(postBody);
+        builder.addHeader("Authorization", Credentials.basic(accessKey, secretKey));
+        Response response = client.newCall(builder.build()).execute();
+        // Since URL comes from the Rancher server itself, assume there are no redirects.
+        if (response.code() >= 300) {
+            throw new IOException("API post failed" + response.message());
+        }
+        ObjectMapper mapper = new ObjectMapper();
+        assert response.body() != null;
+        return mapper.readTree(response.body().string());
+    }
+
+    protected JsonNode post(String url) throws IOException {
+        PostMethod method = new PostMethod(url);
+        return this.execute(method);
+    }
+
+    protected JsonNode put(String url, Object data) throws IOException {
+        PutMethod method = new PutMethod(url);
         method.setRequestEntity(getRequestBody(data));
-        return this.execute(method, responseClass);
+        return this.execute(method);
     }
 
-    protected <T> T post(String url, Class<T> responseClass) throws IOException {
-        PostMethod method = new PostMethod(endpoint + url);
-        return this.execute(method, responseClass);
-    }
-
-    protected <T> T put(String url, Object data, Class<T> responseClass) throws IOException {
-        PutMethod method = new PutMethod(endpoint + url);
-        method.setRequestEntity(getRequestBody(data));
-        return this.execute(method, responseClass);
-    }
-
-    private <T> T execute(HttpMethod method, Class<T> responseClass) {
+    private JsonNode execute(HttpMethod method) throws IOException {
         try {
             method.addRequestHeader("Authorization", getAuthorization());
             method.getParams().setParameter(HttpMethodParams.RETRY_HANDLER, new DefaultHttpMethodRetryHandler(3, false));
@@ -72,10 +106,7 @@ public abstract class HttpClient {
             if (statusCode != HttpStatus.SC_OK && statusCode != HttpStatus.SC_ACCEPTED && statusCode != HttpStatus.SC_CREATED) {
                 throw new RuntimeException(String.format("Some Error Happen statusCode %d response: %s", statusCode, responseBody));
             }
-            return getObjectMapper().readValue(responseBody, responseClass);
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new RuntimeException("Connection to Rancher Failed Please check deploy configuration");
+            return getObjectMapper().readTree(responseBody);
         } finally {
             method.releaseConnection();
         }
@@ -87,7 +118,7 @@ public abstract class HttpClient {
     }
 
     private String getAuthorization() {
-        byte[] encodedAuth = Base64.encodeBase64((accesskey + ":" + secretKey).getBytes(StandardCharsets.US_ASCII));
+        byte[] encodedAuth = Base64.encodeBase64((accessKey + ":" + secretKey).getBytes(StandardCharsets.US_ASCII));
         return "Basic " + new String(encodedAuth);
     }
 

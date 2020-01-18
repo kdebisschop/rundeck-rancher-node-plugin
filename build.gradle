@@ -18,7 +18,9 @@ ext.rundeckPluginVersion = '1.2'
 ext.pluginClassNames='com.bioraft.rundeck.rancher.RancherNodeExecutorPlugin,' +
 'com.bioraft.rundeck.rancher.RancherFileCopier,' +
 'com.bioraft.rundeck.rancher.RancherResourceModelSourceFactory,' +
-'com.bioraft.rundeck.rancher.RancherUpgradeService'
+'com.bioraft.rundeck.rancher.RancherUpgradeService,' +
+'com.bioraft.rundeck.rancher.RancherNewStack,' +
+'com.bioraft.rundeck.rancher.RancherAddService'
 ext.pluginName = 'Rancher Node Plugins'
 ext.pluginDescription = 'Interface with Rancher environments'
 
@@ -44,12 +46,7 @@ scmVersion {
 project.version = scmVersion.version
 
 repositories {
-    mavenLocal()
     mavenCentral()
-    maven {
-        name = 'RancherJavaSDK'
-        url uri('https://maven.pkg.github.com/kdebisschop/rancher-java-sdk')
-    }
 }
 
 configurations {
@@ -61,8 +58,6 @@ configurations {
 }
 
 dependencies {
-    implementation 'com.github.kdebisschop:rancher-java-sdk:2.0.5-kdebisschop'
-
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.10.1'
     
     implementation group: 'com.squareup.okhttp3', name: 'okhttp', version: '3.14.4'

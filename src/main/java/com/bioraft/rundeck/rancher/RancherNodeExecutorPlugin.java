@@ -19,6 +19,7 @@ package com.bioraft.rundeck.rancher;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
@@ -30,13 +31,12 @@ import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
 import com.dtolabs.rundeck.core.execution.utils.ResolverUtil;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.plugins.Plugin;
-import com.dtolabs.rundeck.core.plugins.configuration.Describable;
-import com.dtolabs.rundeck.core.plugins.configuration.Description;
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory;
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyUtil;
+import com.dtolabs.rundeck.core.plugins.configuration.*;
 import com.dtolabs.rundeck.core.storage.ResourceMeta;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
+
+import static com.bioraft.rundeck.rancher.RancherShared.*;
 
 /**
  * RancherNodeExecutorPlugin is a {@link NodeExecutor} plugin implementation for
@@ -45,125 +45,125 @@ import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
  * @author Karl DeBisschop <kdebisschop@gmail.com>
  * @since 2019-12-08
  */
-@Plugin(name = RancherShared.SERVICE_PROVIDER_NAME, service = ServiceNameConstants.NodeExecutor)
+@Plugin(name = RANCHER_SERVICE_PROVIDER, service = ServiceNameConstants.NodeExecutor)
 public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
 
-	static final Description DESC;
+    static final Description DESC;
 
-	private String accessKey;
-	private String secretKey;
+    private String accessKey;
+    private String secretKey;
 
-	static {
-		DescriptionBuilder builder = DescriptionBuilder.builder();
-		builder.name(RancherShared.SERVICE_PROVIDER_NAME);
-		builder.title("Rancher Node Executor");
-		builder.description("Executes a command on a remote rancher node.");
+    static {
+        DescriptionBuilder builder = DescriptionBuilder.builder();
+        builder.name(RANCHER_SERVICE_PROVIDER);
+        builder.title("Rancher Node Executor");
+        builder.description("Executes a command on a remote rancher node.");
 
-		builder.property(PropertyUtil.integer(RancherShared.CONFIG_EXECUTOR_TIMEOUT, "Maximum execution time",
-				"Terminate execution after specified number of seconds", true, "300"));
+        builder.property(PropertyUtil.integer(RANCHER_CONFIG_EXECUTOR_TIMEOUT, "Maximum execution time",
+                "Terminate execution after specified number of seconds", true, "300"));
 
-		builder.mapping(RancherShared.CONFIG_EXECUTOR_TIMEOUT,
-				PropertyResolverFactory.PROJECT_PREFIX + RancherShared.CONFIG_EXECUTOR_TIMEOUT);
-		builder.frameworkMapping(RancherShared.CONFIG_EXECUTOR_TIMEOUT,
-				PropertyResolverFactory.FRAMEWORK_PREFIX + RancherShared.CONFIG_EXECUTOR_TIMEOUT);
+		builder.mapping(RANCHER_CONFIG_EXECUTOR_TIMEOUT, PROJ_RANCHER_EXECUTOR_TIMEOUT);
+		builder.frameworkMapping(RANCHER_CONFIG_EXECUTOR_TIMEOUT, FMWK_RANCHER_EXECUTOR_TIMEOUT);
 
-		DESC = builder.build();
-	}
+        DESC = builder.build();
+    }
 
-	@Override
-	public Description getDescription() {
-		return DESC;
-	}
+    @Override
+    public Description getDescription() {
+        return DESC;
+    }
 
-	@Override
-	public NodeExecutorResult executeCommand(final ExecutionContext context, final String[] command,
-			final INodeEntry node) {
-		Map<String, String> nodeAttributes = node.getAttributes();
-		try {
-			accessKey = this.loadStoragePathData(context, nodeAttributes.get(RancherShared.CONFIG_ACCESSKEY_PATH));
-			secretKey = this.loadStoragePathData(context, nodeAttributes.get(RancherShared.CONFIG_SECRETKEY_PATH));
-		} catch (IOException e) {
-			return NodeExecutorResultImpl.createFailure(StepFailureReason.IOFailure, e.getMessage(), node);
-		}
+    @Override
+    public NodeExecutorResult executeCommand(final ExecutionContext context, final String[] command,
+                                             final INodeEntry node) {
+        Map<String, String> nodeAttributes = node.getAttributes();
+        try {
+            accessKey = this.loadStoragePathData(context, nodeAttributes.get(CONFIG_ACCESSKEY_PATH));
+            secretKey = this.loadStoragePathData(context, nodeAttributes.get(CONFIG_SECRETKEY_PATH));
+        } catch (IOException e) {
+            return NodeExecutorResultImpl.createFailure(StepFailureReason.IOFailure, e.getMessage(), node);
+        }
 
-		ExecutionListener listener = context.getExecutionListener();
+        ExecutionListener listener = context.getExecutionListener();
 
-		String url = nodeAttributes.get("execute");
+        String url = nodeAttributes.get("execute");
 
-		Map<String, String> jobContext = context.getDataContext().get("job");
-		String temp = this.baseName(command, jobContext);
+        Map<String, String> jobContext = context.getDataContext().get("job");
+        String temp = this.baseName(command, jobContext);
 
-		int timeout = ResolverUtil.resolveIntProperty(RancherShared.CONFIG_EXECUTOR_TIMEOUT, 300, node,
-				context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
-				context.getFramework());
-		try {
-			RancherWebSocketListener.runJob(url, accessKey, secretKey, command, listener, temp, timeout);
-		} catch (IOException e) {
-			return NodeExecutorResultImpl.createFailure(StepFailureReason.IOFailure, e.getMessage(), node);
-		} catch (InterruptedException e) {
-			return NodeExecutorResultImpl.createFailure(StepFailureReason.Interrupted, e.getMessage(), node);
-		}
+        int timeout = ResolverUtil.resolveIntProperty(RANCHER_CONFIG_EXECUTOR_TIMEOUT, 300, node,
+                context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
+                context.getFramework());
+        try {
+            RancherWebSocketListener.runJob(url, accessKey, secretKey, command, listener, temp, timeout);
+        } catch (IOException e) {
+            return NodeExecutorResultImpl.createFailure(StepFailureReason.IOFailure, e.getMessage(), node);
+        } catch (InterruptedException e) {
+            return NodeExecutorResultImpl.createFailure(StepFailureReason.Interrupted, e.getMessage(), node);
+        }
 
-		String[] pidFile;
-		try {
-			pidFile = this.readLogFile(temp + ".pid", url).split(" +");
-		} catch (IOException e) {
-			return NodeExecutorResultImpl.createFailure(StepFailureReason.IOFailure, e.getMessage(), node);
-		} catch (InterruptedException e) {
-			return NodeExecutorResultImpl.createFailure(StepFailureReason.Interrupted, e.getMessage(), node);
-		}
-		if (pidFile.length > 1 && Integer.parseInt(pidFile[1]) == 0) {
-			return NodeExecutorResultImpl.createSuccess(node);
-		} else {
-			return NodeExecutorResultImpl.createFailure(StepFailureReason.PluginFailed,
-					"Process " + pidFile[0] + " status " + pidFile[1], node);
-		}
-	}
+        String[] pidFile;
+        try {
+            pidFile = this.readLogFile(temp + ".pid", url).split(" +");
+        } catch (IOException e) {
+            return NodeExecutorResultImpl.createFailure(StepFailureReason.IOFailure, e.getMessage(), node);
+        } catch (InterruptedException e) {
+            return NodeExecutorResultImpl.createFailure(StepFailureReason.Interrupted, e.getMessage(), node);
+        }
+        if (pidFile.length > 1 && Integer.parseInt(pidFile[1]) == 0) {
+            return NodeExecutorResultImpl.createSuccess(node);
+        } else {
+            return NodeExecutorResultImpl.createFailure(StepFailureReason.PluginFailed,
+                    "Process " + pidFile[0] + " status " + pidFile[1], node);
+        }
+    }
 
-	/**
-	 * Create a unique file path without the extension.
+    /**
+     * Create a unique file path without the extension.
+     *
+     * @param command    The command array to be executed for the job.
+     * @param jobContext The job context map.
+     * @return A unique filename for the PID and stsus of this step.
+     */
+    private String baseName(String[] command, Map<String, String> jobContext) {
+        long time = System.currentTimeMillis();
+        int hash = Arrays.hashCode(command);
+        return "/tmp/" + jobContext.get("project") + "_" + jobContext.get("execid") + time + "_" + hash;
+    }
+
+    /**
+     * Read a file on the Docker container.
+     *
+     * @param file The full path to the file.
+     * @param url  The URL for executing jobs on the desired container.
+     * @return The contents of the file as a string.
+     * @throws InterruptedException When listener is interrupted.
+     * @throws IOException          When connection to Rancher fails.
+     */
+    private String readLogFile(String file, String url) throws IOException, InterruptedException {
+        StringBuilder output = new StringBuilder();
+        RancherWebSocketListener.getFile(url, accessKey, secretKey, output, file);
+        return output.toString();
+    }
+
+    /**
+     * Get a (secret) value from password storage.
+     *
+     * @param context             The execution object that contains a reference to Storage.
+     * @param passwordStoragePath A path in Rundeck stage where value is stored.
 	 *
-	 * @param command    The command array to be executed for the job.
-	 * @param jobContext The job context map.
-	 * @return A unique filename for the PID and stsus of this step.
-	 */
-	private String baseName(String[] command, Map<String, String> jobContext) {
-		long time = System.currentTimeMillis();
-		int hash = Arrays.hashCode(command);
-		return "/tmp/" + jobContext.get("project") + "_" + jobContext.get("execid") + time + "_" + hash;
-	}
-
-	/**
-	 * Read a file on the Docker container.
+     * @return The specified password.
 	 *
-	 * @param file The full path to the file.
-	 * @param url  The URL for executing jobs on the desired container.
-	 * @return The contents of the file as a string.
-	 * @throws InterruptedException When listener is interrupted.
-	 * @throws IOException When connection to Rancher fails.
-	 */
-	private String readLogFile(String file, String url) throws IOException, InterruptedException {
-		StringBuilder output = new StringBuilder();
-		RancherWebSocketListener.getFile(url, accessKey, secretKey, output, file);
-		return output.toString();
-	}
-
-	/**
-	 * Get a (secret) value from password storage.
-	 *
-	 * @param context The execution object that contains a reference to Storage.
-	 * @param passwordStoragePath A path in Rundeck stage where value is stored.
-	 * @return The specified password.
-	 * @throws IOException When connection to Rundeck storage fails.
-	 */
-	private String loadStoragePathData(final ExecutionContext context, final String passwordStoragePath)
-			throws IOException {
-		if (null == passwordStoragePath) {
-			return null;
-		}
-		ResourceMeta contents = context.getStorageTree().getResource(passwordStoragePath).getContents();
-		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-		contents.writeContent(byteArrayOutputStream);
-		return new String(byteArrayOutputStream.toByteArray());
-	}
+     * @throws IOException When connection to Rundeck storage fails.
+     */
+    private String loadStoragePathData(final ExecutionContext context, final String passwordStoragePath)
+            throws IOException {
+        if (null == passwordStoragePath) {
+            return null;
+        }
+        ResourceMeta contents = context.getStorageTree().getResource(passwordStoragePath).getContents();
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        contents.writeContent(byteArrayOutputStream);
+        return new String(byteArrayOutputStream.toByteArray());
+    }
 }

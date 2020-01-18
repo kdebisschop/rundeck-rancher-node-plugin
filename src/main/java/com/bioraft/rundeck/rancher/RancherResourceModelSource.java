@@ -96,7 +96,7 @@ public class RancherResourceModelSource implements ResourceModelSource {
 		this.client = client;
 		this.configuration = configuration;
 		tags = configuration.getProperty("tags");
-		url = configuration.getProperty(RancherShared.CONFIG_ENDPOINT);
+		url = configuration.getProperty(RancherShared.RANCHER_CONFIG_ENDPOINT);
 		attributeInclude = configuration.getProperty(RancherShared.CONFIG_LABELS_INCLUDE_ATTRIBUTES, "");
 		tagInclude = configuration.getProperty(RancherShared.CONFIG_LABELS_INCLUDE_TAGS, "");
 		stackInclude = configuration.getProperty(RancherShared.CONFIG_STACK_FILTER, "");
@@ -233,8 +233,8 @@ public class RancherResourceModelSource implements ResourceModelSource {
 			nodeEntry.setUsername("root");
 			nodeEntry.setAttribute("id", node.path("id").asText());
 			nodeEntry.setAttribute("externalId", node.path("externalId").asText());
-			nodeEntry.setAttribute("file-copier", RancherShared.SERVICE_PROVIDER_NAME);
-			nodeEntry.setAttribute("node-executor", RancherShared.SERVICE_PROVIDER_NAME);
+			nodeEntry.setAttribute("file-copier", RancherShared.RANCHER_SERVICE_PROVIDER);
+			nodeEntry.setAttribute("node-executor", RancherShared.RANCHER_SERVICE_PROVIDER);
 			nodeEntry.setAttribute("type", node.path("kind").asText());
 			nodeEntry.setAttribute("state", node.path("state").asText());
 			nodeEntry.setAttribute("account", node.path("accountId").asText());
