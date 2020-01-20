@@ -1,4 +1,5 @@
-{    "id": "1s56",
+{
+    "id": "1s56",
     "type": "service",
     "links": {
         "self": "https://rancher.example.com/v2-beta/projects/1a10/services/1s56",
@@ -271,5 +272,4 @@
     },
     "uuid": "00000000-0000-0000-0000-000000000000",
     "vip": null
-
 }

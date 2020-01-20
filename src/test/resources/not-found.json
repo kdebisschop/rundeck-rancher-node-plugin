@@ -1,0 +1,11 @@
+{
+  "id": "3f2dff74-00b2-40b4-83a5-261a1f626581",
+  "type": "error",
+  "links": { },
+  "actions": { },
+  "status": 404,
+  "code": "Not Found",
+  "message": "Not Found",
+  "detail": null,
+  "baseType": "error"
+}

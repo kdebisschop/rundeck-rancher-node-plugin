@@ -1,0 +1,114 @@
+{
+  "type": "collection",
+  "resourceType": "stack",
+  "links": {
+    "self": "https://rancher.example.com/v2-beta/projects/1a10/stacks"
+  },
+  "createTypes": {
+  },
+  "actions": {},
+  "data": [
+    {
+      "id": "1st20",
+      "type": "stack",
+      "links": {
+        "self": "…/v2-beta/projects/1a10/stacks/1st20",
+        "account": "…/v2-beta/projects/1a10/stacks/1st20/account",
+        "hosts": "…/v2-beta/projects/1a10/stacks/1st20/hosts",
+        "instances": "…/v2-beta/projects/1a10/stacks/1st20/instances",
+        "scheduledUpgrades": "…/v2-beta/projects/1a10/stacks/1st20/scheduledupgrades",
+        "secrets": "…/v2-beta/projects/1a10/stacks/1st20/secrets",
+        "services": "…/v2-beta/projects/1a10/stacks/1st20/services",
+        "volumeTemplates": "…/v2-beta/projects/1a10/stacks/1st20/volumetemplates",
+        "volumes": "…/v2-beta/projects/1a10/stacks/1st20/volumes",
+        "composeConfig": "…/v2-beta/projects/1a10/stacks/1st20/composeconfig"
+      },
+      "actions": {
+        "deactivateservices": "…/v2-beta/projects/1a10/stacks/1st20/?action=deactivateservices",
+        "activateservices": "…/v2-beta/projects/1a10/stacks/1st20/?action=activateservices",
+        "upgrade": "…/v2-beta/projects/1a10/stacks/1st20/?action=upgrade",
+        "addoutputs": "…/v2-beta/projects/1a10/stacks/1st20/?action=addoutputs",
+        "update": "…/v2-beta/projects/1a10/stacks/1st20/?action=update",
+        "exportconfig": "…/v2-beta/projects/1a10/stacks/1st20/?action=exportconfig",
+        "remove": "…/v2-beta/projects/1a10/stacks/1st20/?action=remove"
+      },
+      "baseType": "stack",
+      "name": "example",
+      "state": "active",
+      "accountId": "1a10",
+      "answers": null,
+      "binding": null,
+      "created": "2020-01-08T21:00:58Z",
+      "createdTS": 1578517258000,
+      "description": null,
+      "dockerCompose": "",
+      "environment": null,
+      "externalId": null,
+      "group": null,
+      "healthState": "healthy",
+      "kind": "stack",
+      "outputs": null,
+      "previousEnvironment": null,
+      "previousExternalId": null,
+      "rancherCompose": "",
+      "removed": null,
+      "serviceIds": [
+        "1s7638"
+      ],
+      "startOnCreate": null,
+      "system": false,
+      "templates": null,
+      "transitioning": "no",
+      "transitioningMessage": null,
+      "transitioningProgress": null,
+      "uuid": "2058feff-4aa1-4145-98c1-6c21690e28c8"
+    }
+  ],
+  "sortLinks": {
+    "accountId": "…/v2-beta/projects/1a10/stacks?name=teststack&sort=accountId",
+    "created": "…/v2-beta/projects/1a10/stacks?name=teststack&sort=created",
+    "description": "…/v2-beta/projects/1a10/stacks?name=teststack&sort=description",
+    "externalId": "…/v2-beta/projects/1a10/stacks?name=teststack&sort=externalId",
+    "group": "…/v2-beta/projects/1a10/stacks?name=teststack&sort=group",
+    "healthState": "…/v2-beta/projects/1a10/stacks?name=teststack&sort=healthState",
+    "id": "…/v2-beta/projects/1a10/stacks?name=teststack&sort=id",
+    "kind": "…/v2-beta/projects/1a10/stacks?name=teststack&sort=kind",
+    "name": "…/v2-beta/projects/1a10/stacks?name=teststack&sort=name",
+    "removeTime": "…/v2-beta/projects/1a10/stacks?name=teststack&sort=removeTime",
+    "removed": "…/v2-beta/projects/1a10/stacks?name=teststack&sort=removed",
+    "state": "…/v2-beta/projects/1a10/stacks?name=teststack&sort=state",
+    "system": "…/v2-beta/projects/1a10/stacks?name=teststack&sort=system",
+    "uuid": "…/v2-beta/projects/1a10/stacks?name=teststack&sort=uuid"
+  },
+  "pagination": {
+    "first": null,
+    "previous": null,
+    "next": null,
+    "limit": 100,
+    "total": null,
+    "partial": false
+  },
+  "sort": null,
+  "filters": {
+    "accountId": null,
+    "created": null,
+    "description": null,
+    "externalId": null,
+    "group": null,
+    "healthState": null,
+    "id": null,
+    "kind": null,
+    "name": [
+      {
+        "value": "teststack",
+        "modifier": "eq"
+      }
+    ],
+    "removeTime": null,
+    "removed": null,
+    "state": null,
+    "system": null,
+    "uuid": null
+  },
+  "createDefaults": {}
+}

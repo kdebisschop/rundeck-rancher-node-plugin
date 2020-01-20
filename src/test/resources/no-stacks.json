@@ -1,0 +1,59 @@
+{
+  "type": "collection",
+  "resourceType": "stack",
+  "links": {
+    "self": "https://rancher.example.com/v2-beta/projects/1a10/stacks"
+  },
+  "createTypes": {
+  },
+  "actions": {},
+  "data": [
+  ],
+  "sortLinks": {
+    "accountId": "…/v2-beta/projects/1a10/stacks?name=teststack&sort=accountId",
+    "created": "…/v2-beta/projects/1a10/stacks?name=teststack&sort=created",
+    "description": "…/v2-beta/projects/1a10/stacks?name=teststack&sort=description",
+    "externalId": "…/v2-beta/projects/1a10/stacks?name=teststack&sort=externalId",
+    "group": "…/v2-beta/projects/1a10/stacks?name=teststack&sort=group",
+    "healthState": "…/v2-beta/projects/1a10/stacks?name=teststack&sort=healthState",
+    "id": "…/v2-beta/projects/1a10/stacks?name=teststack&sort=id",
+    "kind": "…/v2-beta/projects/1a10/stacks?name=teststack&sort=kind",
+    "name": "…/v2-beta/projects/1a10/stacks?name=teststack&sort=name",
+    "removeTime": "…/v2-beta/projects/1a10/stacks?name=teststack&sort=removeTime",
+    "removed": "…/v2-beta/projects/1a10/stacks?name=teststack&sort=removed",
+    "state": "…/v2-beta/projects/1a10/stacks?name=teststack&sort=state",
+    "system": "…/v2-beta/projects/1a10/stacks?name=teststack&sort=system",
+    "uuid": "…/v2-beta/projects/1a10/stacks?name=teststack&sort=uuid"
+  },
+  "pagination": {
+    "first": null,
+    "previous": null,
+    "next": null,
+    "limit": 100,
+    "total": null,
+    "partial": false
+  },
+  "sort": null,
+  "filters": {
+    "accountId": null,
+    "created": null,
+    "description": null,
+    "externalId": null,
+    "group": null,
+    "healthState": null,
+    "id": null,
+    "kind": null,
+    "name": [
+      {
+        "value": "teststack",
+        "modifier": "eq"
+      }
+    ],
+    "removeTime": null,
+    "removed": null,
+    "state": null,
+    "system": null,
+    "uuid": null
+  },
+  "createDefaults": {}
+}

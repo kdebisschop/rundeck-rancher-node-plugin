@@ -1,0 +1,70 @@
+{
+    "type": "collection",
+    "resourceType": "service",
+    "links": {
+        "self": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i234/services"
+    },
+    "createTypes": {
+        "dnsService": "https://rancher.example.com/v2-beta/projects/1a10/dnsservices",
+        "externalService": "https://rancher.example.com/v2-beta/projects/1a10/externalservices",
+        "loadBalancerService": "https://rancher.example.com/v2-beta/projects/1a10/loadbalancerservices",
+        "networkDriverService": "https://rancher.example.com/v2-beta/projects/1a10/networkdriverservices",
+        "service": "https://rancher.example.com/v2-beta/projects/1a10/services",
+        "storageDriverService": "https://rancher.example.com/v2-beta/projects/1a10/storagedriverservices"
+    },
+    "actions": { },
+    "data": [ ],
+    "sortLinks": {
+        "accountId": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i234/services?sort=accountId",
+        "createIndex": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i234/services?sort=createIndex",
+        "created": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i234/services?sort=created",
+        "description": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i234/services?sort=description",
+        "externalId": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i234/services?sort=externalId",
+        "healthState": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i234/services?sort=healthState",
+        "id": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i234/services?sort=id",
+        "kind": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i234/services?sort=kind",
+        "name": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i234/services?sort=name",
+        "removeTime": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i234/services?sort=removeTime",
+        "removed": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i234/services?sort=removed",
+        "selectorContainer": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i234/services?sort=selectorContainer",
+        "selectorLink": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i234/services?sort=selectorLink",
+        "skip": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i234/services?sort=skip",
+        "stackId": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i234/services?sort=stackId",
+        "state": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i234/services?sort=state",
+        "system": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i234/services?sort=system",
+        "uuid": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i234/services?sort=uuid",
+        "vip": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i234/services?sort=vip"
+    },
+    "pagination": {
+        "first": null,
+        "previous": null,
+        "next": null,
+        "limit": 100,
+        "total": null,
+        "partial": false
+    },
+    "sort": null,
+    "filters": {
+        "accountId": null,
+        "createIndex": null,
+        "created": null,
+        "description": null,
+        "externalId": null,
+        "healthState": null,
+        "id": null,
+        "kind": null,
+        "name": null,
+        "removeTime": null,
+        "removed": null,
+        "selectorContainer": null,
+        "selectorLink": null,
+        "skip": null,
+        "stackId": null,
+        "state": null,
+        "system": null,
+        "uuid": null,
+        "vip": null
+    },
+    "createDefaults": { }
+
+}

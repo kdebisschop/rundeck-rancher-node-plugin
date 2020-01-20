@@ -72,7 +72,7 @@ public class RancherResourceModelSourceTest {
 	public void setUp() {
 		configuration = new Properties();
 		configuration.setProperty("project", "MyProject");
-		configuration.setProperty(RancherShared.CONFIG_ENDPOINT, "https://example.com/v2");
+		configuration.setProperty(RancherShared.RANCHER_CONFIG_ENDPOINT, "https://example.com/v2");
 		configuration.setProperty(RancherShared.CONFIG_ENVIRONMENT_IDS, "1a1");
 		configuration.setProperty(RancherShared.CONFIG_ACCESSKEY, "accessKey");
 		configuration.setProperty(RancherShared.CONFIG_SECRETKEY, "secretKey");
@@ -147,7 +147,7 @@ public class RancherResourceModelSourceTest {
 	@Test
 	public void processContinued() throws ResourceModelSourceException, IOException {
 		String json1 = "{\"name\": \"" + environment + "\"}";
-		String url = configuration.getProperty(RancherShared.CONFIG_ENDPOINT);
+		String url = configuration.getProperty(RancherShared.RANCHER_CONFIG_ENDPOINT);
 		String json2 = "{\"data\":[" + item("1") + "], \"pagination\": {\"next\": \"" + url +"\"}}";
 		String json3 = "{\"data\":[" + item("2") + "]}";
 		when(call.execute()).thenReturn(response(json1), response(json2), response(json3));
@@ -195,8 +195,8 @@ public class RancherResourceModelSourceTest {
 				",\"hostId\": \"hostId" + item + "\"" + //
 				",\"id\": \"id" + item + "\"" + //
 				",\"externalId\": \"externalId" + item + "\"" + //
-				",\"file-copier\": \"" + RancherShared.SERVICE_PROVIDER_NAME + "\"" + //
-				",\"node-executor\": \"" + RancherShared.SERVICE_PROVIDER_NAME + "\"" + //
+				",\"file-copier\": \"" + RancherShared.RANCHER_SERVICE_PROVIDER + "\"" + //
+				",\"node-executor\": \"" + RancherShared.RANCHER_SERVICE_PROVIDER + "\"" + //
 				",\"type\": \"" + nodeType + "\"" + //
 				",\"account\": \"" + configuration.getProperty(RancherShared.CONFIG_ENVIRONMENT_IDS) + "\"" + //
 				",\"environment\": \"" + environment + "\"" + //

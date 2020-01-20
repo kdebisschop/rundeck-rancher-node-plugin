@@ -14,44 +14,66 @@
  * limitations under the License.
  */
 
+package com.bioraft.rundeck.rancher;
+
+import static com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory.PROJECT_PREFIX;
+import static com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory.FRAMEWORK_PREFIX;
+
 /**
- * RancherWebSocketListener connects to Rancher containers.
+ * Shared code and constants for Rancher node.
  *
  * @author Karl DeBisschop <kdebisschop@gmail.com>
  * @since 2019-12-11
  */
-
-package com.bioraft.rundeck.rancher;
-
 public class RancherShared {
 
-	public static final String PROJ_PROP_PREFIX = "project.";
+    public static final String RANCHER_SERVICE_PROVIDER = "rancher";
 
-	public static final String NODE_ATTR_RANCHER_ENDPOINT = "rancher.endpoint";
-	public static final String NODE_ATTR_RANCHER_ACCESSKEY_PATH = "rancher.accessKey.path";
-	public static final String NODE_ATTR_RANCHER_SECRETKEY_PATH = "rancher.secretKey.path";
-
-	public static final String PROJ_PROP_ENDPOINT = PROJ_PROP_PREFIX + NODE_ATTR_RANCHER_ENDPOINT;
-	public static final String PROJ_PROP_ACCESSKEY_PATH = PROJ_PROP_PREFIX + NODE_ATTR_RANCHER_ACCESSKEY_PATH;
-	public static final String PROJ_PROP_SECRETKEY_PATH = PROJ_PROP_PREFIX + NODE_ATTR_RANCHER_SECRETKEY_PATH;
-
-	public static final String CONFIG_ENDPOINT = "rancher-api-endpoint";
-	public static final String CONFIG_ENVIRONMENT_IDS = "environment-ids";
-	public static final String CONFIG_ACCESSKEY = "access-key";
-	public static final String CONFIG_SECRETKEY = "secret-key";
+    // Resource Model
+    public static final String RANCHER_CONFIG_ENDPOINT = "rancher-api-endpoint";
 	public static final String CONFIG_ACCESSKEY_PATH = "accessKey-storage-path";
 	public static final String CONFIG_SECRETKEY_PATH = "secretKey-storage-path";
-	public static final String CONFIG_STACK_FILTER = "stack-filter";
-	public static final String CONFIG_LIMIT_ONE_CONTAINER = "limit-to-one";
-	public static final String CONFIG_HANDLE_STOPPED = "exclude-include-restrict-stopped";
-	public static final String CONFIG_HANDLE_SYSTEM = "io-rancher-container-system";
-	public static final String CONFIG_HANDLE_GLOBAL = "io-rancher-scheduler-global";
-	public static final String CONFIG_TAGS = "tags";
-	public static final String CONFIG_LABELS_INCLUDE_ATTRIBUTES = "labels-copied-to-attribs";
-	public static final String CONFIG_LABELS_INCLUDE_TAGS = "labels-copied-to-tags";
-	public static final String CONFIG_EXECUTOR_TIMEOUT = "rancher-node-executor-timeout";
-	public static final String CONFIG_RANCHER_CLI_PATH = "rancher-cli-path";
+    public static final String CONFIG_ENVIRONMENT_IDS = "environment-ids";
+    public static final String CONFIG_ACCESSKEY = "access-key";
+    public static final String CONFIG_SECRETKEY = "secret-key";
+    public static final String CONFIG_STACK_FILTER = "stack-filter";
+    public static final String CONFIG_LIMIT_ONE_CONTAINER = "limit-to-one";
+    public static final String CONFIG_HANDLE_STOPPED = "exclude-include-restrict-stopped";
+    public static final String CONFIG_HANDLE_SYSTEM = "io-rancher-container-system";
+    public static final String CONFIG_HANDLE_GLOBAL = "io-rancher-scheduler-global";
+    public static final String CONFIG_TAGS = "tags";
+    public static final String CONFIG_LABELS_INCLUDE_ATTRIBUTES = "labels-copied-to-attribs";
+    public static final String CONFIG_LABELS_INCLUDE_TAGS = "labels-copied-to-tags";
 
-	public static final String SERVICE_PROVIDER_NAME = "rancher";
+    // Node Executor
+    public static final String RANCHER_CONFIG_EXECUTOR_TIMEOUT = "rancher-node-executor-timeout";
+	public static final String PROJ_RANCHER_EXECUTOR_TIMEOUT = PROJECT_PREFIX + RANCHER_CONFIG_EXECUTOR_TIMEOUT;
+	public static final String FMWK_RANCHER_EXECUTOR_TIMEOUT = FRAMEWORK_PREFIX + RANCHER_CONFIG_EXECUTOR_TIMEOUT;
 
+	// File Copier
+    public static final String RANCHER_CONFIG_CLI_PATH = "rancher-cli-path";
+	public static final String PROJ_RANCHER_CLI_PATH = PROJECT_PREFIX + RANCHER_CONFIG_CLI_PATH;
+	public static final String FMWK_RANCHER_CLI_PATH = FRAMEWORK_PREFIX + RANCHER_CONFIG_CLI_PATH;
+
+    // Step Plugins
+    public static final String PROJ_RANCHER_ENDPOINT = PROJECT_PREFIX + RANCHER_CONFIG_ENDPOINT;
+    public static final String PROJ_RANCHER_ENVIRONMENT_IDS = PROJECT_PREFIX + RANCHER_SERVICE_PROVIDER + "-" + CONFIG_ENVIRONMENT_IDS;
+    public static final String PROJ_RANCHER_ACCESSKEY_PATH = PROJECT_PREFIX + RANCHER_SERVICE_PROVIDER + "-" + CONFIG_ACCESSKEY_PATH;
+    public static final String PROJ_RANCHER_SECRETKEY_PATH = PROJECT_PREFIX + RANCHER_SERVICE_PROVIDER + "-" + CONFIG_SECRETKEY_PATH;
+
+    public static String ensureStringIsJsonObject(String string) {
+        if (string == null) {
+            return "";
+        }
+        String trimmed = string.replaceFirst("^\\s*\\{?", "{").replaceFirst("\\s*$", "");
+        return trimmed + (trimmed.endsWith("}") ? "" : "}");
+    }
+
+    public static String ensureStringIsJsonArray(String string) {
+        if (string == null) {
+            return "";
+        }
+        String trimmed = string.replaceFirst("^\\s*\\[?", "[").replaceFirst("\\s*$", "");
+        return trimmed + (trimmed.endsWith("]") ? "" : "]");
+    }
 }

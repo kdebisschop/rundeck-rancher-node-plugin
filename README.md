@@ -51,6 +51,44 @@ API.
 
 To distribute to all containers in a stack's service, omit the filter for "seen".
 
+### Upgrade Service
+
+Upgrades an existing service. Has required inputs:
+
+ - Docker image
+ - Start before stopping
+ 
+Had many optional inputs:
+
+ - New service labels (JSON Object)
+ - New environment variables (JSON Object)
+ - New secrets (list of strings)
+
+### New Stack
+
+Create a new stack. Has two required inputs:
+
+ - Stack Name (string)
+ - Environment ID (string)
+    
+Environment ID most correspond to an existing Rancher environment. Stack name must not exist in that environment.
+
+### Add Service
+
+Ads a service to an existing stack. Required inputs:
+
+ - Environment ID (string)
+ - Stack Name (string)
+ - Service Name (string)
+ - Docker image
+
+Optional inputs:
+
+ - Data volumes
+ - OS environment
+ - Service labels
+ - Secrets
+
 ## Road Map
 
  - 0.6.6 Make File Copier binary-safe.

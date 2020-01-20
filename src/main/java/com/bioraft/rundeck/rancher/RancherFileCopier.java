@@ -16,10 +16,10 @@
 
 /*
  * RancherFileCopier.java
- * 
+ *
  * @author Karl DeBisschop <kdebisschop@gmail.com>
  * Created: 3/31/11 4:09 PM
- * 
+ *
  */
 
 package com.bioraft.rundeck.rancher;
@@ -44,14 +44,13 @@ import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.execution.utils.ResolverUtil;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.plugins.Plugin;
-import com.dtolabs.rundeck.core.plugins.configuration.Describable;
-import com.dtolabs.rundeck.core.plugins.configuration.Description;
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory;
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyUtil;
+import com.dtolabs.rundeck.core.plugins.configuration.*;
 import com.dtolabs.rundeck.core.storage.ResourceMeta;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
+
+import static com.bioraft.rundeck.rancher.RancherShared.*;
 
 /**
  * RancherStubFileCopier provider for the FileCopier service
@@ -59,224 +58,221 @@ import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
  * @author Karl DeBisschop <kdebisschop@gmail.com>
  * @since 2019-12-08
  */
-@Plugin(name = RancherShared.SERVICE_PROVIDER_NAME, service = ServiceNameConstants.FileCopier)
+@Plugin(name = RancherShared.RANCHER_SERVICE_PROVIDER, service = ServiceNameConstants.FileCopier)
 @PluginDescription(title = "Rancher File Copier", description = "Copies a file to a Rancher-mananged Docker container.")
 public class RancherFileCopier implements FileCopier, Describable {
 
-	static final Description DESC;
+    static final Description DESC;
 
-	static {
-		DescriptionBuilder builder = DescriptionBuilder.builder();
-		builder.name(RancherShared.SERVICE_PROVIDER_NAME);
-		builder.title("Rancher File Copier");
-		builder.description("Copies a file to a Rancher-mananged Docker container");
+    static {
+        DescriptionBuilder builder = DescriptionBuilder.builder();
+        builder.name(RANCHER_SERVICE_PROVIDER);
+        builder.title("Rancher File Copier");
+        builder.description("Copies a file to a Rancher-mananged Docker container");
 
-		builder.property(PropertyUtil.string(RancherShared.CONFIG_RANCHER_CLI_PATH, "Search path ",
-				"A search path on the Rundeck host that finds rancher, docker, sh, and base64 (e.g., /usr/local/bin:/usr/bin:/bin)",
-				false, ""));
+        builder.property(PropertyUtil.string(RancherShared.RANCHER_CONFIG_CLI_PATH, "Search path ",
+                "A search path on the Rundeck host that finds rancher, docker, sh, and base64 (e.g., /usr/local/bin:/usr/bin:/bin)",
+                false, ""));
 
-		builder.mapping(RancherShared.CONFIG_RANCHER_CLI_PATH,
-				PropertyResolverFactory.PROJECT_PREFIX + RancherShared.CONFIG_RANCHER_CLI_PATH);
-		builder.frameworkMapping(RancherShared.CONFIG_RANCHER_CLI_PATH,
-				PropertyResolverFactory.FRAMEWORK_PREFIX + RancherShared.CONFIG_RANCHER_CLI_PATH);
+        builder.mapping(RANCHER_CONFIG_CLI_PATH, PROJ_RANCHER_CLI_PATH);
+        builder.frameworkMapping(RANCHER_CONFIG_CLI_PATH, FMWK_RANCHER_CLI_PATH);
 
-		DESC = builder.build();
-	}
+        DESC = builder.build();
+    }
 
-	@Override
-	public Description getDescription() {
-		return DESC;
-	}
+    @Override
+    public Description getDescription() {
+        return DESC;
+    }
 
-	@Override
-	public String copyFileStream(ExecutionContext context, InputStream input, INodeEntry node, String destination)
-			throws FileCopierException {
-		return copyFile(context, null, input, null, node, destination);
-	}
+    @Override
+    public String copyFileStream(ExecutionContext context, InputStream input, INodeEntry node, String destination)
+            throws FileCopierException {
+        return copyFile(context, null, input, null, node, destination);
+    }
 
-	@Override
-	public String copyFile(final ExecutionContext context, File file, INodeEntry node, final String destination)
-			throws FileCopierException {
-		return copyFile(context, file, null, null, node, destination);
-	}
+    @Override
+    public String copyFile(final ExecutionContext context, File file, INodeEntry node, final String destination)
+            throws FileCopierException {
+        return copyFile(context, file, null, null, node, destination);
+    }
 
-	@Override
-	public String copyScriptContent(ExecutionContext context, String script, INodeEntry node, final String destination)
-			throws FileCopierException {
-		return copyFile(context, null, null, script, node, destination);
-	}
+    @Override
+    public String copyScriptContent(ExecutionContext context, String script, INodeEntry node, final String destination)
+            throws FileCopierException {
+        return copyFile(context, null, null, script, node, destination);
+    }
 
-	private String copyFile(final ExecutionContext context, final File scriptfile, final InputStream input,
-			final String script, final INodeEntry node, final String destinationPath) throws FileCopierException {
+    private String copyFile(final ExecutionContext context, final File scriptfile, final InputStream input,
+                            final String script, final INodeEntry node, final String destinationPath) throws FileCopierException {
 
-		String remotefile;
+        String remotefile;
 
-		Map<String, String> nodeAttributes = node.getAttributes();
-		String accessKey;
-		String secretKey;
-		try {
-			accessKey = this.loadStoragePathData(context, nodeAttributes.get(RancherShared.CONFIG_ACCESSKEY_PATH));
-			secretKey = this.loadStoragePathData(context, nodeAttributes.get(RancherShared.CONFIG_SECRETKEY_PATH));
-		} catch (IOException e) {
-			throw new FileCopierException(e.getMessage(), FileCopyFailureReason.AuthenticationFailure);
-		}
+        Map<String, String> nodeAttributes = node.getAttributes();
+        String accessKey;
+        String secretKey;
+        try {
+            accessKey = this.loadStoragePathData(context, nodeAttributes.get(RancherShared.CONFIG_ACCESSKEY_PATH));
+            secretKey = this.loadStoragePathData(context, nodeAttributes.get(RancherShared.CONFIG_SECRETKEY_PATH));
+        } catch (IOException e) {
+            throw new FileCopierException(e.getMessage(), FileCopyFailureReason.AuthenticationFailure);
+        }
 
-		if (null == destinationPath) {
-			String identity = null != context.getDataContext() && null != context.getDataContext().get("job")
-					? context.getDataContext().get("job").get("execid")
-					: null;
-			remotefile = BaseFileCopier.generateRemoteFilepathForNode(node,
-					context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
-					context.getFramework(), (null != scriptfile ? scriptfile.getName() : "dispatch-script"), null,
-					identity);
-		} else {
-			remotefile = destinationPath;
-		}
-		// write to a local temp file or use the input file
-		final File localTempfile = null != scriptfile ? scriptfile
-				: BaseFileCopier.writeTempFile(context, scriptfile, input, script);
+        if (null == destinationPath) {
+            String identity = null != context.getDataContext() && null != context.getDataContext().get("job")
+                    ? context.getDataContext().get("job").get("execid")
+                    : null;
+            remotefile = BaseFileCopier.generateRemoteFilepathForNode(node,
+                    context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
+                    context.getFramework(), (null != scriptfile ? scriptfile.getName() : "dispatch-script"), null,
+                    identity);
+        } else {
+            remotefile = destinationPath;
+        }
+        // write to a local temp file or use the input file
+        final File localTempfile = null != scriptfile ? scriptfile
+                : BaseFileCopier.writeTempFile(context, scriptfile, input, script);
 
-		/**
-		 * 
-		 * Copy the file over
-		 */
-		System.out.println("copying file: '" + localTempfile.getAbsolutePath() + "' to: '" + node.getNodename() + ":"
-				+ remotefile + "'");
+        // Copy the file over
+        System.out.println("copying file: '" + localTempfile.getAbsolutePath() + "' to: '" + node.getNodename() + ":"
+                + remotefile + "'");
 
-		String searchPath = ResolverUtil.resolveProperty(RancherShared.CONFIG_RANCHER_CLI_PATH, "", node,
-				context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
-				context.getFramework());
-		try {
-			if (searchPath.equals("")) {
-				return copyViaApi(nodeAttributes, accessKey, secretKey, localTempfile, remotefile);
-			} else {
-				return copyViaCli(nodeAttributes, accessKey, secretKey, localTempfile, remotefile, searchPath);
-			}
-		} finally {
-			if (null == scriptfile) {
-				if (!ScriptfileUtils.releaseTempFile(localTempfile)) {
-					context.getExecutionListener().log(Constants.WARN_LEVEL,
-							"Unable to remove local temp file: " + localTempfile.getAbsolutePath());
-				}
-			}
-		}
-	}
+        String searchPath = ResolverUtil.resolveProperty(RancherShared.RANCHER_CONFIG_CLI_PATH, "", node,
+                context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
+                context.getFramework());
+        try {
+            if (searchPath.equals("")) {
+                return copyViaApi(nodeAttributes, accessKey, secretKey, localTempfile, remotefile);
+            } else {
+                return copyViaCli(nodeAttributes, accessKey, secretKey, localTempfile, remotefile, searchPath);
+            }
+        } finally {
+            if (null == scriptfile) {
+                if (!ScriptfileUtils.releaseTempFile(localTempfile)) {
+                    context.getExecutionListener().log(Constants.WARN_LEVEL,
+                            "Unable to remove local temp file: " + localTempfile.getAbsolutePath());
+                }
+            }
+        }
+    }
 
-	private String copyViaCli(Map<String, String> nodeAttributes, String accessKey, String secretKey,
-			File localTempFile, String remotefile, String searchPath) throws FileCopierException {
-		String path = localTempFile.getAbsolutePath();
-		String instance = nodeAttributes.get("externalId");
-		String[] command = { "rancher", "docker", "cp", path, instance + ":" + remotefile };
+    private String copyViaCli(Map<String, String> nodeAttributes, String accessKey, String secretKey,
+                              File localTempFile, String remotefile, String searchPath) throws FileCopierException {
+        String path = localTempFile.getAbsolutePath();
+        String instance = nodeAttributes.get("externalId");
+        String[] command = {"rancher", "docker", "cp", path, instance + ":" + remotefile};
 
-		boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
-		try {
-			ProcessBuilder builder = new ProcessBuilder();
-			Map<String, String> environment = builder.environment();
-			environment.put("PATH", searchPath);
-			environment.put("RANCHER_ENVIRONMENT", nodeAttributes.get("environment"));
-			environment.put("RANCHER_DOCKER_HOST", nodeAttributes.get("hostId"));
-			environment.put("RANCHER_URL", nodeAttributes.get("execute").replaceFirst("/projects/.*$", ""));
-			environment.put("RANCHER_ACCESS_KEY", accessKey);
-			environment.put("RANCHER_SECRET_KEY", secretKey);
-			if (isWindows) {
-				throw new FileCopierException("Windows is not currently supported.",
-						FileCopyFailureReason.UnsupportedOperatingSystem);
-			} else {
-				builder.command(command);
-			}
-			builder.directory(new File(System.getProperty("user.home")));
-			Process process = builder.start();
-			StreamGobbler streamGobbler = new StreamGobbler(process.getInputStream(), System.out::println);
-			Executors.newSingleThreadExecutor().submit(streamGobbler);
-			int exitCode = process.waitFor();
-			assert exitCode == 0;
-		} catch (IOException e) {
-			throw new FileCopierException("Child process IO Exception", FileCopyFailureReason.IOException, e);
-		} catch (InterruptedException e) {
-			throw new FileCopierException("Child process interrupted", FileCopyFailureReason.InterruptedException, e);
-		}
+        boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
+        try {
+            ProcessBuilder builder = new ProcessBuilder();
+            Map<String, String> environment = builder.environment();
+            environment.put("PATH", searchPath);
+            environment.put("RANCHER_ENVIRONMENT", nodeAttributes.get("environment"));
+            environment.put("RANCHER_DOCKER_HOST", nodeAttributes.get("hostId"));
+            environment.put("RANCHER_URL", nodeAttributes.get("execute").replaceFirst("/projects/.*$", ""));
+            environment.put("RANCHER_ACCESS_KEY", accessKey);
+            environment.put("RANCHER_SECRET_KEY", secretKey);
+            if (isWindows) {
+                throw new FileCopierException("Windows is not currently supported.",
+                        FileCopyFailureReason.UnsupportedOperatingSystem);
+            } else {
+                builder.command(command);
+            }
+            builder.directory(new File(System.getProperty("user.home")));
+            Process process = builder.start();
+            StreamGobbler streamGobbler = new StreamGobbler(process.getInputStream(), System.out::println);
+            Executors.newSingleThreadExecutor().submit(streamGobbler);
+            int exitCode = process.waitFor();
+            assert exitCode == 0;
+        } catch (IOException e) {
+            throw new FileCopierException("Child process IO Exception", FileCopyFailureReason.IOException, e);
+        } catch (InterruptedException e) {
+            throw new FileCopierException("Child process interrupted", FileCopyFailureReason.InterruptedException, e);
+        }
 
-		return remotefile;
-	}
+        return remotefile;
+    }
 
-	private String copyViaApi(Map<String, String> nodeAttributes, String accessKey, String secretKey, File file,
-			String destination) throws FileCopierException {
-		try {
-			String url = nodeAttributes.get("execute");
-			RancherWebSocketListener.putFile(url, accessKey, secretKey, file, destination);
-		} catch (IOException | InterruptedException e) {
-			throw new FileCopierException(e.getMessage(), FileCopyFailureReason.ConnectionFailure);
-		}
-		return destination;
-	}
+    private String copyViaApi(Map<String, String> nodeAttributes, String accessKey, String secretKey, File file,
+                              String destination) throws FileCopierException {
+        try {
+            String url = nodeAttributes.get("execute");
+            RancherWebSocketListener.putFile(url, accessKey, secretKey, file, destination);
+        } catch (IOException | InterruptedException e) {
+            throw new FileCopierException(e.getMessage(), FileCopyFailureReason.ConnectionFailure);
+        }
+        return destination;
+    }
 
-	public enum FileCopyFailureReason implements FailureReason {
-		/**
-		 * Requested file could not be found
-		 */
-		FileNotFound,
-		/**
-		 * Process could not be started
-		 */
-		IOException,
-		/**
-		 * Process was interrupted
-		 */
-		InterruptedException,
-		/**
-		 * Timeout on connection
-		 */
-		ConnectionTimeout,
-		/**
-		 * Connection unsuccessful
-		 */
-		ConnectionFailure,
-		/**
-		 * Authentication unsuccessful
-		 */
-		AuthenticationFailure,
-		/**
-		 * Command or script execution result code was not zero
-		 */
-		NonZeroResultCode,
-		/**
-		 * Operating system not currently supported
-		 */
-		UnsupportedOperatingSystem
-	}
+    public enum FileCopyFailureReason implements FailureReason {
+        /**
+         * Requested file could not be found
+         */
+        FileNotFound,
+        /**
+         * Process could not be started
+         */
+        IOException,
+        /**
+         * Process was interrupted
+         */
+        InterruptedException,
+        /**
+         * Timeout on connection
+         */
+        ConnectionTimeout,
+        /**
+         * Connection unsuccessful
+         */
+        ConnectionFailure,
+        /**
+         * Authentication unsuccessful
+         */
+        AuthenticationFailure,
+        /**
+         * Command or script execution result code was not zero
+         */
+        NonZeroResultCode,
+        /**
+         * Operating system not currently supported
+         */
+        UnsupportedOperatingSystem
+    }
 
-	private static class StreamGobbler implements Runnable {
-		private InputStream inputStream;
-		private Consumer<String> consumer;
+    private static class StreamGobbler implements Runnable {
+        private InputStream inputStream;
+        private Consumer<String> consumer;
 
-		public StreamGobbler(InputStream inputStream, Consumer<String> consumer) {
-			this.inputStream = inputStream;
-			this.consumer = consumer;
-		}
+        public StreamGobbler(InputStream inputStream, Consumer<String> consumer) {
+            this.inputStream = inputStream;
+            this.consumer = consumer;
+        }
 
-		@Override
-		public void run() {
-			new BufferedReader(new InputStreamReader(inputStream)).lines().forEach(consumer);
-		}
-	}
+        @Override
+        public void run() {
+            new BufferedReader(new InputStreamReader(inputStream)).lines().forEach(consumer);
+        }
+    }
 
-	/**
-	 * Get a (secret) value from password storage.
+    /**
+     * Get a (secret) value from password storage.
+     *
+	 * @param context             The execution object that contains a reference to Storage.
+	 * @param passwordStoragePath A path in Rundeck stage where value is stored.
 	 *
-	 * @param context
-	 * @param passwordStoragePath
-	 * @return
-	 * @throws IOException
-	 */
-	private String loadStoragePathData(final ExecutionContext context, final String passwordStoragePath)
-			throws IOException {
-		if (null == passwordStoragePath) {
-			return null;
-		}
-		ResourceMeta contents = context.getStorageTree().getResource(passwordStoragePath).getContents();
-		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-		contents.writeContent(byteArrayOutputStream);
-		return new String(byteArrayOutputStream.toByteArray());
-	}
+	 * @return The specified password.
+	 *
+	 * @throws IOException When connection to Rundeck storage fails.
+     */
+    private String loadStoragePathData(final ExecutionContext context, final String passwordStoragePath)
+            throws IOException {
+        if (null == passwordStoragePath) {
+            return null;
+        }
+        ResourceMeta contents = context.getStorageTree().getResource(passwordStoragePath).getContents();
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        contents.writeContent(byteArrayOutputStream);
+        return new String(byteArrayOutputStream.toByteArray());
+    }
 
 }
