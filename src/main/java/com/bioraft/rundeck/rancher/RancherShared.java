@@ -53,7 +53,7 @@ public class RancherShared {
 	// File Copier
     public static final String RANCHER_CONFIG_CLI_PATH = "rancher-cli-path";
 	public static final String PROJ_RANCHER_CLI_PATH = PROJECT_PREFIX + RANCHER_CONFIG_CLI_PATH;
-	public static final String RMWK_RANCHER_CLI_PATH = FRAMEWORK_PREFIX + RANCHER_CONFIG_CLI_PATH;
+	public static final String FMWK_RANCHER_CLI_PATH = FRAMEWORK_PREFIX + RANCHER_CONFIG_CLI_PATH;
 
     // Step Plugins
     public static final String PROJ_RANCHER_ENDPOINT = PROJECT_PREFIX + RANCHER_CONFIG_ENDPOINT;
@@ -62,10 +62,18 @@ public class RancherShared {
     public static final String PROJ_RANCHER_SECRETKEY_PATH = PROJECT_PREFIX + RANCHER_SERVICE_PROVIDER + "-" + CONFIG_SECRETKEY_PATH;
 
     public static String ensureStringIsJsonObject(String string) {
-        return string.replaceFirst("^\\s*\\{?", "{").replaceFirst("}\\s*$", "}");
+        if (string == null) {
+            return "";
+        }
+        String trimmed = string.replaceFirst("^\\s*\\{?", "{").replaceFirst("\\s*$", "");
+        return trimmed + (trimmed.endsWith("}") ? "" : "}");
     }
 
     public static String ensureStringIsJsonArray(String string) {
-        return string.replaceFirst("^\\s*\\[?", "[").replaceFirst("]\\s*$", "]");
+        if (string == null) {
+            return "";
+        }
+        String trimmed = string.replaceFirst("^\\s*\\[?", "[").replaceFirst("\\s*$", "");
+        return trimmed + (trimmed.endsWith("]") ? "" : "]");
     }
 }

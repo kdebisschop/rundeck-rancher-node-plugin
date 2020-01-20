@@ -82,7 +82,7 @@ public class RancherUpgradeService implements NodeStepPlugin {
 	private String secrets;
 
 	@PluginProperty(title = "Start before stopping", description = "Start new container(s) before stopping old", required = true, defaultValue = "true")
-	private boolean startFirst;
+	private Boolean startFirst;
 
 	private String nodeName;
 
@@ -132,11 +132,15 @@ public class RancherUpgradeService implements NodeStepPlugin {
 					node.getNodename());
 		}
 
+		if (dockerImage == null || dockerImage.length() == 0) {
+			dockerImage = (String) cfg.get("dockerImage");
+		}
 		if (dockerImage != null && dockerImage.length() > 0) {
 			logger.log(Constants.INFO_LEVEL, "Setting image to " + dockerImage);
 			((ObjectNode) upgrade.get("inServiceStrategy").get("launchConfig")).put("imageUuid",
 					"docker:" + dockerImage);
 		}
+
 		((ObjectNode) upgrade.get("inServiceStrategy")).put("startFirst", startFirst);
 		if ((environment == null || environment.isEmpty()) && cfg.containsKey("environment")) {
 			environment = (String) cfg.get("environment");
@@ -148,6 +152,10 @@ public class RancherUpgradeService implements NodeStepPlugin {
 
 		if ((secrets == null || secrets.isEmpty()) && cfg.containsKey("secrets")) {
 			secrets = (String) cfg.get("secrets");
+		}
+
+		if (startFirst == null) {
+			startFirst = (Boolean) cfg.get("dockerImage");
 		}
 
 		this.setEnvVars(upgrade);

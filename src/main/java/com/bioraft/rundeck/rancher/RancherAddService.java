@@ -46,6 +46,9 @@ import static com.dtolabs.rundeck.core.plugins.configuration.StringRenderingCons
 public class RancherAddService implements StepPlugin {
     public static final String SERVICE_PROVIDER_NAME = "com.bioraft.rundeck.rancher.RancherAddService";
 
+    @PluginProperty(name = PROJ_RANCHER_ENVIRONMENT_IDS, title = "Environment ID", description = "The ID of the environment to create the stack in", required = true)
+    String environmentId;
+
     @PluginProperty(title = "Stack Name", description = "The name of the stack", required = true)
     private String stackName;
 
@@ -79,38 +82,56 @@ public class RancherAddService implements StepPlugin {
     @PluginProperty(title = "Secret IDs", description = "List of secrets IDs, space or comma separated")
     private String secrets;
 
-    @PluginProperty(name = PROJ_RANCHER_ENVIRONMENT_IDS, title = "Environment ID", description = "The ID of the environment to create the stack in", required = true)
-    String environmentId;
-
     Map<String, Object> configuration;
+
+    HttpClient client;
+
+    public RancherAddService () {
+        this.client = new HttpClient();
+    }
+
+    public RancherAddService (HttpClient client) {
+        this.client = client;
+    }
 
     @Override
     public void executeStep(final PluginStepContext context, final Map<String, Object> configuration) throws
             StepException {
+        this.configuration = configuration;
 
-        if ((stackName == null || stackName.isEmpty()) && configuration.containsKey("stackName")) {
+        if (environmentId == null || environmentId.isEmpty()) {
+            environmentId = (String) configuration.get("environmentId");
+        }
+        if (environmentId == null || environmentId.isEmpty()) {
+            throw new StepException("Environment ID cannot be empty", RancherNewStack.RancherNewStackFailureReason.InvalidEnvironmentName);
+        }
+
+        if (stackName == null || stackName.isEmpty()) {
             stackName = (String) configuration.get("stackName");
         }
         if (stackName == null || stackName.isEmpty()) {
             throw new StepException("Stack Name cannot be empty", Cause.InvalidConfiguration);
         }
 
-        if ((serviceName == null || serviceName.isEmpty()) && configuration.containsKey("serviceName")) {
+        if (serviceName == null || serviceName.isEmpty()) {
             serviceName = (String) configuration.get("serviceName");
         }
         if (serviceName == null || serviceName.isEmpty()) {
             throw new StepException("Service Name cannot be empty", Cause.InvalidConfiguration);
         }
 
-        if ((imageUuid == null || imageUuid.isEmpty()) && configuration.containsKey("imageUuid")) {
+        if (imageUuid == null || imageUuid.isEmpty()) {
             imageUuid = (String) configuration.get("imageUuid");
         }
         if (imageUuid == null || imageUuid.isEmpty()) {
             throw new StepException("Image UUID cannot be empty", Cause.InvalidConfiguration);
         }
 
+        if (dataVolumes == null || dataVolumes.isEmpty()) {
+            dataVolumes = (String) configuration.get("environment");
+        }
 
-        if ((environment == null || environment.isEmpty()) && configuration.containsKey("environment")) {
+        if (environment == null || environment.isEmpty()) {
             environment = (String) configuration.get("environment");
         }
 
@@ -122,7 +143,6 @@ public class RancherAddService implements StepPlugin {
             secrets = (String) configuration.get("secrets");
         }
 
-        ObjectMapper objectMapper = new ObjectMapper();
         Framework framework = context.getFramework();
         String project = context.getFrameworkProject();
         PluginLogger logger = context.getLogger();
@@ -134,7 +154,8 @@ public class RancherAddService implements StepPlugin {
         String accessKey = loadStoragePathData(context.getExecutionContext(), accessKeyPath);
         String secretKey = loadStoragePathData(context.getExecutionContext(), secretKeyPath);
 
-        HttpClient client = new HttpClient(accessKey, secretKey);
+        client.setAccessKey(accessKey);
+        client.setSecretKey(secretKey);
 
         ImmutableMap.Builder<String, Object> mapBuilder = ImmutableMap.builder();
         mapBuilder.put("type", "launchConfig");
@@ -148,67 +169,73 @@ public class RancherAddService implements StepPlugin {
 
         JsonNode check;
         String stackCheck;
+        String stackId;
         try {
+            // First look for a stack with the designated ID.
             stackCheck = endpoint + "/projects/" + environmentId + "/stacks/" + stackName;
             logger.log(INFO_LEVEL, "Looking for `" + stackCheck);
             check = client.get(stackCheck);
-//            if (check.has("error")) {
-//                stackCheck = endpoint + "/projects/" + environmentId + "/stacks";
-//                logger.log(INFO_LEVEL, "Looking for `" + stackCheck);
-//                check = client.get(stackCheck, ImmutableMap.<String, String>builder().put("name", stackName).build());
-//                if (check.path("data").elements().hasNext()) {
-//                    stackName = check.path("data").elements().next().path("id").asText();
-//                }
-//            }
-        } catch (IOException e) {
-            try {
-                stackCheck = endpoint + "/projects/" + environmentId + "/stacks";
-                logger.log(INFO_LEVEL, "Looking for `" + stackCheck);
-                check = client.get(stackCheck, ImmutableMap.<String, String>builder().put("name", stackName).build());
-                if (check.path("data").elements().hasNext()) {
-                    stackName = check.path("data").elements().next().path("id").asText();
-                }
-            } catch (IOException ex) {
-                logger.log(ERR_LEVEL, "FATAL: no stack `" + stackName + "` was found.");
-                throw new StepException("Stack does not exist", Cause.InvalidConfiguration);
+            if (check.path("type").asText().equals("error")) {
+                throw new IOException();
+            } else {
+                stackId = stackName;
             }
+        } catch (IOException e) {
+            stackId = stackId(stackName, endpoint, logger);
+        }
+        if (stackId == null) {
+            throw new StepException("Stack does not exist: " + stackName, Cause.InvalidConfiguration);
         }
 
         try {
             Map<String, Object> map = ImmutableMap.<String, Object>builder()
                     .put("assignServiceIpAddress", false).put("startOnCreate", true).put("name", serviceName)
-                    .put("stackId", stackName).put("rancherCompose", "").put("launchConfig", mapBuilder.build()).build();
-            JsonNode stackResult = client.post(spec, map);
+                    .put("stackId", stackId).put("rancherCompose", "").put("launchConfig", mapBuilder.build()).build();
+            JsonNode serviceResult = client.post(spec, map);
             logger.log(INFO_LEVEL, "Success!");
-            logger.log(INFO_LEVEL, "New stack ID:" + stackResult.path("id").asText());
-            logger.log(INFO_LEVEL, "New stack name:" + stackResult.path("name").asText());
+            logger.log(INFO_LEVEL, "New service ID:" + serviceResult.path("id").asText());
+            logger.log(INFO_LEVEL, "New service name:" + serviceResult.path("name").asText());
         } catch (IOException e) {
             throw new StepException("Failed posting to " + spec, e, Cause.InvalidConfiguration);
         }
     }
 
+    private String stackId(String stackName, String endpoint, PluginLogger logger) throws StepException {
+        try {
+            String stackCheck = endpoint + "/projects/" + environmentId + "/stacks";
+            logger.log(INFO_LEVEL, "Looking for `" + stackCheck);
+            JsonNode check = client.get(stackCheck, ImmutableMap.<String, String>builder().put("name", stackName).build());
+            if (check.path("data").elements().hasNext()) {
+                return check.path("data").elements().next().path("id").asText();
+            } else {
+                logger.log(ERR_LEVEL, "FATAL: no stack `" + stackName + "` was found.");
+                throw new StepException("Stack does not exist", Cause.InvalidConfiguration);
+            }
+        } catch (IOException ex) {
+            logger.log(ERR_LEVEL, "FATAL: no stack `" + stackName + "` was found.");
+            throw new StepException("Stack does not exist", Cause.InvalidConfiguration);
+        }
+    }
+
     private void addJsonData(String name, String data, ImmutableMap.Builder<String, Object> builder) throws StepException {
-        if ((data == null || data.isEmpty()) && configuration.containsKey(name)) {
+        if (data.isEmpty()) {
             data = (String) configuration.get(name);
+        }
+        if (data == null || data.isEmpty()) {
+            return;
         }
 
         ObjectMapper objectMapper = new ObjectMapper();
-        if ((data == null || data.isEmpty()) && configuration.containsKey(name)) {
-            data = (String) configuration.get(name);
-        }
-        if (data != null && !data.isEmpty()) {
-            try {
-                JsonNode map = objectMapper.readTree(data);
-                builder.put(name, map);
-            } catch (JsonProcessingException e) {
-                throw new StepException("Could not parse JSON for " + name, e, Cause.InvalidConfiguration);
-            }
+        try {
+            JsonNode map = objectMapper.readTree(data);
+            builder.put(name, map);
+        } catch (JsonProcessingException e) {
+            throw new StepException("Could not parse JSON for " + name + "\n" + data, e, Cause.InvalidConfiguration);
         }
     }
 
     public enum Cause implements FailureReason {
         InvalidConfiguration,
-        InvalidStackName,
         IOException
     }
 

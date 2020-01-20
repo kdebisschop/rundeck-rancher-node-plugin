@@ -29,7 +29,6 @@ import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.dtolabs.rundeck.plugins.step.StepPlugin;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 
 import java.io.ByteArrayOutputStream;
@@ -51,6 +50,16 @@ public class RancherNewStack implements StepPlugin {
     @PluginProperty(name = CONFIG_ENVIRONMENT_IDS, title = "Environment ID", description = "The ID of the environment to create the stack in", required = true)
     String environment;
 
+    HttpClient client;
+
+    public RancherNewStack () {
+        client = new HttpClient();
+    }
+
+    public RancherNewStack (HttpClient client) {
+        this.client = client;
+    }
+
     @Override
     public void executeStep(final PluginStepContext context, final Map<String, Object> configuration) throws
             StepException {
@@ -60,6 +69,13 @@ public class RancherNewStack implements StepPlugin {
         }
         if (stackName == null || stackName.isEmpty()) {
             throw new StepException("Stack name cannot be empty", RancherNewStackFailureReason.InvalidStackName);
+        }
+
+        if (environment == null || environment.isEmpty()) {
+            environment = (String) configuration.get("environment");
+        }
+        if (environment == null || environment.isEmpty()) {
+            throw new StepException("Environment cannot be empty", RancherNewStackFailureReason.InvalidEnvironmentName);
         }
 
         Framework framework = context.getFramework();
@@ -73,7 +89,8 @@ public class RancherNewStack implements StepPlugin {
         String accessKey = loadStoragePathData(context.getExecutionContext(), accessKeyPath);
         String secretKey = loadStoragePathData(context.getExecutionContext(), secretKeyPath);
 
-        HttpClient client = new HttpClient(accessKey, secretKey);
+        client.setAccessKey(accessKey);
+        client.setSecretKey(secretKey);
 
         try {
             JsonNode check = client.get(spec, ImmutableMap.<String, String>builder().put("name", stackName).build());
@@ -89,9 +106,6 @@ public class RancherNewStack implements StepPlugin {
             Map<String, Object> map = ImmutableMap.<String, Object>builder()
                     .put("name", stackName).put("system", false)
                     .put("dockerCompose", "").put("rancherCompose", "").build();
-//            ObjectMapper mapper = new ObjectMapper();
-//            String payload = mapper.writeValueAsString(map);
-//            logger.log(INFO_LEVEL, payload);
             JsonNode stackResult = client.post(spec, map);
             logger.log(INFO_LEVEL, "Success!");
             logger.log(INFO_LEVEL, "New stack ID:" + stackResult.path("id").asText());
@@ -104,6 +118,7 @@ public class RancherNewStack implements StepPlugin {
     public enum RancherNewStackFailureReason implements FailureReason {
         InvalidConfiguration,
         InvalidStackName,
+        InvalidEnvironmentName,
         IOException
     }
 

@@ -1,6 +1,5 @@
 plugins {
     id 'pl.allegro.tech.build.axion-release' version '1.10.3'
-    id 'com.github.johnrengelman.shadow' version '5.2.0'
     id 'java'
 }
 
@@ -13,7 +12,7 @@ java {
     targetCompatibility = JavaVersion.VERSION_1_8
 }
 
-defaultTasks 'clean','test','shadowJar'
+defaultTasks 'clean','test','build'
 ext.rundeckPluginVersion = '1.2'
 ext.pluginClassNames='com.bioraft.rundeck.rancher.RancherNodeExecutorPlugin,' +
 'com.bioraft.rundeck.rancher.RancherFileCopier,' +
@@ -101,14 +100,6 @@ jar {
 
     }
     dependsOn(copyToLib)
-}
-
-shadowJar {
-    dependencies {
-        exclude(dependency {
-            it.moduleGroup != 'com.github.kdebisschop'
-        })
-    }
 }
 
 wrapper {

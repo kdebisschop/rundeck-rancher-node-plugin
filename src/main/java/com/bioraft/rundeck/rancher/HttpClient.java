@@ -20,14 +20,20 @@ import java.util.Objects;
 
 public class HttpClient {
 
-    private final String accessKey;
-    private final String secretKey;
+    private String accessKey;
+    private String secretKey;
     private final OkHttpClient client;
 
-    public HttpClient(String accessKey, String secretKey) {
-        this.accessKey = accessKey;
-        this.secretKey = secretKey;
+    public HttpClient() {
         client = new OkHttpClient();
+    }
+
+    public void setAccessKey(String accessKey) {
+        this.accessKey = accessKey;
+    }
+
+    public void setSecretKey(String secretKey) {
+        this.secretKey = secretKey;
     }
 
     protected JsonNode get(String url) throws IOException {
@@ -59,7 +65,6 @@ public class HttpClient {
     protected JsonNode post(String url, Map<String, Object> map) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         String payload = mapper.writeValueAsString(map);
-        System.out.print(payload);
         return this.post(url, payload);
     }
 

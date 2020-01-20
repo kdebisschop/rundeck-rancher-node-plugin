@@ -51,8 +51,6 @@ import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 
 import static com.bioraft.rundeck.rancher.RancherShared.*;
-import static com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory.FRAMEWORK_PREFIX;
-import static com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory.PROJECT_PREFIX;
 
 /**
  * RancherStubFileCopier provider for the FileCopier service
@@ -76,8 +74,8 @@ public class RancherFileCopier implements FileCopier, Describable {
                 "A search path on the Rundeck host that finds rancher, docker, sh, and base64 (e.g., /usr/local/bin:/usr/bin:/bin)",
                 false, ""));
 
-        builder.mapping(RANCHER_CONFIG_CLI_PATH, PROJECT_PREFIX + RANCHER_CONFIG_CLI_PATH);
-        builder.frameworkMapping(RANCHER_CONFIG_CLI_PATH, FRAMEWORK_PREFIX + RANCHER_CONFIG_CLI_PATH);
+        builder.mapping(RANCHER_CONFIG_CLI_PATH, PROJ_RANCHER_CLI_PATH);
+        builder.frameworkMapping(RANCHER_CONFIG_CLI_PATH, FMWK_RANCHER_CLI_PATH);
 
         DESC = builder.build();
     }

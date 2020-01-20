@@ -19,7 +19,6 @@ package com.bioraft.rundeck.rancher;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
