@@ -16,6 +16,13 @@
 
 package com.bioraft.rundeck.rancher;
 
+import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import static com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory.PROJECT_PREFIX;
 import static com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory.FRAMEWORK_PREFIX;
 
@@ -75,5 +82,38 @@ public class RancherShared {
         }
         String trimmed = string.replaceFirst("^\\s*\\[?", "[").replaceFirst("\\s*$", "");
         return trimmed + (trimmed.endsWith("]") ? "" : "]");
+    }
+
+    /**
+     * Builds a JsonNode object for insertion into the secrets array.
+     *
+     * @param secretId A secret ID from Rancher (like "1se1")
+     * @return JSON expression for secret reference.
+     * @throws NodeStepException when JSON is not valid.
+     */
+    public static JsonNode buildSecret(String secretId, String nodeName) throws NodeStepException {
+        try {
+            return (new ObjectMapper()).readTree(secretJson(secretId));
+        } catch (JsonProcessingException e) {
+            throw new NodeStepException("Failed add secret", e, ErrorCause.InvalidJson, nodeName);
+        }
+    }
+
+    public static String secretJson(String secretId) {
+        return "{ \"type\": \"secretReference\", \"gid\": \"0\", \"mode\": \"444\", \"name\": \"\", \"secretId\": \""
+                + secretId + "\", \"uid\": \"0\"}";
+    }
+
+    public enum ErrorCause implements FailureReason {
+        InvalidConfiguration,
+        InvalidJson,
+        IOException,
+        NoKeyStorage,
+        NoServiceObject,
+        ServiceNotRunning,
+        MissingUpgradeURL,
+        NoUpgradeData,
+        UpgradeFailure,
+        Interrupted
     }
 }

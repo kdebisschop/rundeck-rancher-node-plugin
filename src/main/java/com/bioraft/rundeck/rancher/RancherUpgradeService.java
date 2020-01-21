@@ -23,7 +23,6 @@ import java.util.Map;
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.plugins.PluginLogger;
@@ -48,7 +47,7 @@ import okhttp3.Request.Builder;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
-import static com.bioraft.rundeck.rancher.RancherShared.ensureStringIsJsonObject;
+import static com.bioraft.rundeck.rancher.RancherShared.*;
 import static com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants.CODE_SYNTAX_MODE;
 import static com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants.DISPLAY_TYPE_KEY;
 
@@ -119,17 +118,17 @@ public class RancherUpgradeService implements NodeStepPlugin {
 		String serviceState = service.path("state").asText();
 		if (!serviceState.equals("active")) {
 			String message = "Service state must be running, was " + serviceState;
-			throw new NodeStepException(message, UpgradeFailureReason.ServiceNotRunning, node.getNodename());
+			throw new NodeStepException(message, ErrorCause.ServiceNotRunning, node.getNodename());
 		}
 
 		String upgradeUrl = service.path("actions").path("upgrade").asText();
 		if (upgradeUrl.length() == 0) {
-			throw new NodeStepException("No upgrade URL found", UpgradeFailureReason.MissingUpgradeURL,
+			throw new NodeStepException("No upgrade URL found", ErrorCause.MissingUpgradeURL,
 					node.getNodename());
 		}
 		JsonNode upgrade = service.path("upgrade");
 		if (upgrade.isMissingNode()) {
-			throw new NodeStepException("No upgrade data found", UpgradeFailureReason.NoUpgradeData,
+			throw new NodeStepException("No upgrade data found", ErrorCause.NoUpgradeData,
 					node.getNodename());
 		}
 
@@ -188,7 +187,7 @@ public class RancherUpgradeService implements NodeStepPlugin {
 					logger.log(Constants.INFO_LEVEL, "Setting environment variable " + key + " to " + value);
 				}
 			} catch (JsonProcessingException e) {
-				throw new NodeStepException("Invalid Labels JSON", UpgradeFailureReason.InvalidJson, this.nodeName);
+				throw new NodeStepException("Invalid Labels JSON", ErrorCause.InvalidJson, this.nodeName);
 			}
 		}
 	}
@@ -213,7 +212,7 @@ public class RancherUpgradeService implements NodeStepPlugin {
 					logger.log(Constants.INFO_LEVEL, "Setting environment variable " + key + " to " + value);
 				}
 			} catch (JsonProcessingException e) {
-				throw new NodeStepException("Invalid Labels JSON", UpgradeFailureReason.InvalidJson, this.nodeName);
+				throw new NodeStepException("Invalid Labels JSON", ErrorCause.InvalidJson, this.nodeName);
 			}
 		}
 	}
@@ -235,6 +234,7 @@ public class RancherUpgradeService implements NodeStepPlugin {
 				Iterator<JsonNode> elements = launchConfig.get("secrets").elements();
 				while (elements.hasNext()) {
 					JsonNode secretObject = elements.next();
+					// @todo this only works for a single secret added.
 					if (!secretObject.get("secretId").asText().equals(secrets)) {
 						secretsArray.add(secretObject);
 					}
@@ -243,26 +243,9 @@ public class RancherUpgradeService implements NodeStepPlugin {
 
 			// Add in the new or replacement secrets specified in the step.
 			for (String secretId : secrets.split("/[,; ]+/")) {
-				secretsArray.add(this.buildSecret(secretId));
+				secretsArray.add(buildSecret(secretId, this.nodeName));
 				logger.log(Constants.INFO_LEVEL, "Adding secret map to " + secretId);
 			}
-		}
-	}
-
-	/**
-	 * Builds a JsonNode object for insertion into the secrets array.
-	 * 
-	 * @param secretId A secret ID from Rancher (like "1se1")
-	 * @return JSON expression for secret reference.
-	 * @throws NodeStepException when JSON is not valid.
-	 */
-	private JsonNode buildSecret(String secretId) throws NodeStepException {
-		String json = "{ \"type\": \"secretReference\", \"gid\": \"0\", \"mode\": \"444\", \"name\": \"\", \"secretId\": \""
-				+ secretId + "\", \"uid\": \"0\"}";
-		try {
-			return (new ObjectMapper()).readTree(json);
-		} catch (JsonProcessingException e) {
-			throw new NodeStepException("Failed add secret", e, UpgradeFailureReason.InvalidJson, this.nodeName);
 		}
 	}
 
@@ -287,7 +270,7 @@ public class RancherUpgradeService implements NodeStepPlugin {
 			try {
 				Thread.sleep(5000);
 			} catch (InterruptedException e) {
-				throw new NodeStepException(e, UpgradeFailureReason.Interrupted, nodeName);
+				throw new NodeStepException(e, ErrorCause.Interrupted, nodeName);
 			}
 			service = apiGet(accessKey, secretKey, link);
 			state = service.get("state").asText();
@@ -308,7 +291,7 @@ public class RancherUpgradeService implements NodeStepPlugin {
 				try {
 					Thread.sleep(5000);
 				} catch (InterruptedException e) {
-					throw new NodeStepException(e, UpgradeFailureReason.Interrupted, nodeName);
+					throw new NodeStepException(e, ErrorCause.Interrupted, nodeName);
 				}
 			}
 		}
@@ -336,7 +319,7 @@ public class RancherUpgradeService implements NodeStepPlugin {
 			assert response.body() != null;
 			return mapper.readTree(response.body().string());
 		} catch (IOException e) {
-			throw new NodeStepException(e.getMessage(), e, UpgradeFailureReason.NoServiceObject, nodeName);
+			throw new NodeStepException(e.getMessage(), e, ErrorCause.NoServiceObject, nodeName);
 		}
 	}
 
@@ -364,7 +347,7 @@ public class RancherUpgradeService implements NodeStepPlugin {
 			assert response.body() != null;
 			return mapper.readTree(response.body().string());
 		} catch (IOException e) {
-			throw new NodeStepException(e.getMessage(), e, UpgradeFailureReason.UpgradeFailure, nodeName);
+			throw new NodeStepException(e.getMessage(), e, ErrorCause.UpgradeFailure, nodeName);
 		}
 	}
 
@@ -383,28 +366,8 @@ public class RancherUpgradeService implements NodeStepPlugin {
 		try {
 			executionContext.getStorageTree().getResource(path).getContents().writeContent(stream);
 		} catch (Exception e) {
-			throw new NodeStepException(e, UpgradeFailureReason.NoKeyStorage, nodeName);
+			throw new NodeStepException(e, ErrorCause.NoKeyStorage, nodeName);
 		}
 		return new String(stream.toByteArray());
 	}
-
-	private enum UpgradeFailureReason implements FailureReason {
-		// Could not read Access Key and/or Storage Key
-		NoKeyStorage,
-		// Service specified in node did not exist
-		NoServiceObject,
-		// Service specified in node was not running
-		ServiceNotRunning,
-		// Upgrade URL not specified in service JSON
-		MissingUpgradeURL,
-		// Upgrade data is missing
-		NoUpgradeData,
-		// Upgrade failed
-		UpgradeFailure,
-		// Upgrade was interrupted
-		Interrupted,
-		// A JSON string could not be read into a JsonNode object
-		InvalidJson
-	}
-
 }

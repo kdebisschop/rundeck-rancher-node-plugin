@@ -15,9 +15,9 @@
  */
 package com.bioraft.rundeck.rancher;
 
+import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.core.storage.ResourceMeta;
@@ -29,10 +29,13 @@ import com.dtolabs.rundeck.plugins.step.StepPlugin;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.google.common.collect.ImmutableMap;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import static com.bioraft.rundeck.rancher.RancherShared.*;
@@ -110,21 +113,21 @@ public class RancherAddService implements StepPlugin {
             stackName = (String) configuration.get("stackName");
         }
         if (stackName == null || stackName.isEmpty()) {
-            throw new StepException("Stack Name cannot be empty", Cause.InvalidConfiguration);
+            throw new StepException("Stack Name cannot be empty", ErrorCause.InvalidConfiguration);
         }
 
         if (serviceName == null || serviceName.isEmpty()) {
             serviceName = (String) configuration.get("serviceName");
         }
         if (serviceName == null || serviceName.isEmpty()) {
-            throw new StepException("Service Name cannot be empty", Cause.InvalidConfiguration);
+            throw new StepException("Service Name cannot be empty", ErrorCause.InvalidConfiguration);
         }
 
         if (imageUuid == null || imageUuid.isEmpty()) {
             imageUuid = (String) configuration.get("imageUuid");
         }
         if (imageUuid == null || imageUuid.isEmpty()) {
-            throw new StepException("Image UUID cannot be empty", Cause.InvalidConfiguration);
+            throw new StepException("Image UUID cannot be empty", ErrorCause.InvalidConfiguration);
         }
 
         if (dataVolumes == null || dataVolumes.isEmpty()) {
@@ -167,6 +170,13 @@ public class RancherAddService implements StepPlugin {
         addJsonData("environment", ensureStringIsJsonObject(environment), mapBuilder);
         addJsonData("labels", ensureStringIsJsonObject(labels), mapBuilder);
 
+        // Add in the new or replacement secrets specified in the step.
+        List<String> secretsArray = new ArrayList<>();
+        for (String secretId : secrets.split("/[,; ]+/")) {
+            secretsArray.add(secretJson(secretId));
+        }
+        mapBuilder.put("secrets", "[" + String.join(",", secretsArray) + "]");
+
         JsonNode check;
         String stackCheck;
         String stackId;
@@ -184,7 +194,7 @@ public class RancherAddService implements StepPlugin {
             stackId = stackId(stackName, endpoint, logger);
         }
         if (stackId == null) {
-            throw new StepException("Stack does not exist: " + stackName, Cause.InvalidConfiguration);
+            throw new StepException("Stack does not exist: " + stackName, ErrorCause.InvalidConfiguration);
         }
 
         try {
@@ -196,7 +206,7 @@ public class RancherAddService implements StepPlugin {
             logger.log(INFO_LEVEL, "New service ID:" + serviceResult.path("id").asText());
             logger.log(INFO_LEVEL, "New service name:" + serviceResult.path("name").asText());
         } catch (IOException e) {
-            throw new StepException("Failed posting to " + spec, e, Cause.InvalidConfiguration);
+            throw new StepException("Failed posting to " + spec, e, ErrorCause.InvalidConfiguration);
         }
     }
 
@@ -209,11 +219,11 @@ public class RancherAddService implements StepPlugin {
                 return check.path("data").elements().next().path("id").asText();
             } else {
                 logger.log(ERR_LEVEL, "FATAL: no stack `" + stackName + "` was found.");
-                throw new StepException("Stack does not exist", Cause.InvalidConfiguration);
+                throw new StepException("Stack does not exist", ErrorCause.InvalidConfiguration);
             }
         } catch (IOException ex) {
             logger.log(ERR_LEVEL, "FATAL: no stack `" + stackName + "` was found.");
-            throw new StepException("Stack does not exist", Cause.InvalidConfiguration);
+            throw new StepException("Stack does not exist", ErrorCause.InvalidConfiguration);
         }
     }
 
@@ -230,13 +240,8 @@ public class RancherAddService implements StepPlugin {
             JsonNode map = objectMapper.readTree(data);
             builder.put(name, map);
         } catch (JsonProcessingException e) {
-            throw new StepException("Could not parse JSON for " + name + "\n" + data, e, Cause.InvalidConfiguration);
+            throw new StepException("Could not parse JSON for " + name + "\n" + data, e, ErrorCause.InvalidConfiguration);
         }
-    }
-
-    public enum Cause implements FailureReason {
-        InvalidConfiguration,
-        IOException
     }
 
     /**
@@ -256,7 +261,7 @@ public class RancherAddService implements StepPlugin {
         try {
             contents.writeContent(byteArrayOutputStream);
         } catch (IOException e) {
-            throw new StepException("Could not get " + passwordStoragePath, e, Cause.IOException);
+            throw new StepException("Could not get " + passwordStoragePath, e, ErrorCause.IOException);
         }
         return new String(byteArrayOutputStream.toByteArray());
     }
