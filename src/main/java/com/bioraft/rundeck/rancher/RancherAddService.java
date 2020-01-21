@@ -185,7 +185,7 @@ public class RancherAddService implements StepPlugin {
         try {
             // First look for a stack with the designated ID.
             stackCheck = endpoint + "/projects/" + environmentId + "/stacks/" + stackName;
-            logger.log(INFO_LEVEL, "Looking for `" + stackCheck);
+            logger.log(INFO_LEVEL, "Looking for " + stackCheck);
             check = client.get(stackCheck);
             if (check.path("type").asText().equals("error")) {
                 throw new IOException();
@@ -215,7 +215,7 @@ public class RancherAddService implements StepPlugin {
     private String stackId(String stackName, String endpoint, PluginLogger logger) throws StepException {
         try {
             String stackCheck = endpoint + "/projects/" + environmentId + "/stacks";
-            logger.log(INFO_LEVEL, "Looking for `" + stackCheck);
+            logger.log(INFO_LEVEL, "Looking for " + stackCheck);
             JsonNode check = client.get(stackCheck, ImmutableMap.<String, String>builder().put("name", stackName).build());
             if (check.path("data").elements().hasNext()) {
                 return check.path("data").elements().next().path("id").asText();
