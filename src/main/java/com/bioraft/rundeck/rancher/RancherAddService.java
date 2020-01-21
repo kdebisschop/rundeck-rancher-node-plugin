@@ -170,12 +170,14 @@ public class RancherAddService implements StepPlugin {
         addJsonData("environment", ensureStringIsJsonObject(environment), mapBuilder);
         addJsonData("labels", ensureStringIsJsonObject(labels), mapBuilder);
 
-        // Add in the new or replacement secrets specified in the step.
-        List<String> secretsArray = new ArrayList<>();
-        for (String secretId : secrets.split("/[,; ]+/")) {
-            secretsArray.add(secretJson(secretId));
+        if (secrets != null && secrets.trim().length() > 0) {
+            // Add in the new or replacement secrets specified in the step.
+            List<String> secretsArray = new ArrayList<>();
+            for (String secretId : secrets.split("/[,; ]+/")) {
+                secretsArray.add(secretJson(secretId));
+            }
+            mapBuilder.put("secrets", "[" + String.join(",", secretsArray) + "]");
         }
-        mapBuilder.put("secrets", "[" + String.join(",", secretsArray) + "]");
 
         JsonNode check;
         String stackCheck;
