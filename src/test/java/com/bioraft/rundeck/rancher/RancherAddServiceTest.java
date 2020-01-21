@@ -75,9 +75,9 @@ public class RancherAddServiceTest extends PluginStepTest {
 		when(cfg.get("imageUuid")).thenReturn("repo/image:tag");
 
 		JsonNode notFound = readFromInputStream(getResourceStream("not-found.json"));
-		when(client.get(anyString())).thenReturn(notFound);
-
 		JsonNode stacks = readFromInputStream(getResourceStream("stacks.json"));
+		when(client.get(anyString())).thenReturn(notFound, stacks);
+
 		when(client.get(anyString(), anyMapOf(String.class, String.class))).thenReturn(stacks);
 
 		JsonNode service = readFromInputStream(getResourceStream("service.json"));
@@ -86,8 +86,8 @@ public class RancherAddServiceTest extends PluginStepTest {
 		upgrade = new RancherAddService(client);
 		upgrade.executeStep(ctx, cfg);
 
-		verify(client, times(1)).get(anyString());
-		verify(client, times(1)).get(anyString(), anyMapOf(String.class, String.class));
+		verify(client, times(2)).get(anyString());
+		verify(client, times(0)).get(anyString(), anyMapOf(String.class, String.class));
 		verify(client, times(1)).post(anyString(), anyMapOf(String.class, Object.class));
 	}
 
