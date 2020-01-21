@@ -214,11 +214,11 @@ public class RancherAddService implements StepPlugin {
 
     private String stackId(String stackName, String endpoint, PluginLogger logger) throws StepException {
         try {
-            String stackCheck = endpoint + "/projects/" + environmentId + "/stacks";
+            String stackCheck = endpoint + "/projects/" + environmentId + "/stacks?name=" + stackName;
             logger.log(INFO_LEVEL, "Looking for " + stackCheck);
-            JsonNode check = client.get(stackCheck, ImmutableMap.<String, String>builder().put("name", stackName).build());
-            if (check.path("data").elements().hasNext()) {
-                return check.path("data").elements().next().path("id").asText();
+            JsonNode check = client.get(stackCheck);
+            if (check.path("data").has(0)) {
+                return check.path("data").get(0).path("id").asText();
             } else {
                 logger.log(ERR_LEVEL, "FATAL: no stack `" + stackName + "` was found.");
                 throw new StepException("Stack does not exist", ErrorCause.InvalidConfiguration);

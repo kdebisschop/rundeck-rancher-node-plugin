@@ -94,7 +94,7 @@ public class RancherNewStack implements StepPlugin {
 
         try {
             JsonNode check = client.get(spec, ImmutableMap.<String, String>builder().put("name", stackName).build());
-            if (check.path("data").elements().hasNext()) {
+            if (check.path("data").has(0)) {
                 logger.log(ERR_LEVEL, "FATAL: A stack with the name " + stackName + " already exists.");
                 throw new StepException("Stack already exists", RancherNewStackFailureReason.InvalidConfiguration);
             }
