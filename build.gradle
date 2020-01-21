@@ -24,7 +24,7 @@ ext.pluginName = 'Rancher Node Plugins'
 ext.pluginDescription = 'Interface with Rancher environments'
 
 scmVersion {
-    ignoreUncommittedChanges = false
+    ignoreUncommittedChanges = true
     tag {
         // Ignore tags that begin with <prefix><versionSeparator>, include all tags
         // if prefix is empty.

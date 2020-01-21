@@ -48,6 +48,7 @@ import okhttp3.Request.Builder;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
+import static com.bioraft.rundeck.rancher.RancherShared.ensureStringIsJsonObject;
 import static com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants.CODE_SYNTAX_MODE;
 import static com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants.DISPLAY_TYPE_KEY;
 
@@ -172,13 +173,22 @@ public class RancherUpgradeService implements NodeStepPlugin {
 	 * 
 	 * @param upgrade JsonNode representing the target upgraded configuration.
 	 */
-	private void setEnvVars(JsonNode upgrade) {
+	private void setEnvVars(JsonNode upgrade) throws NodeStepException {
 		if (environment != null && environment.length() > 0) {
 			ObjectNode envObject = (ObjectNode) upgrade.get("inServiceStrategy").get("launchConfig").get("environment");
-			for (String keyValue : environment.split(";")) {
-				String[] values = keyValue.split(":");
-				envObject.put(values[0], values[1]);
-				logger.log(Constants.INFO_LEVEL, "Setting environment variable " + values[0] + " to " + values[1]);
+			ObjectMapper objectMapper = new ObjectMapper();
+			try {
+				JsonNode map = objectMapper.readTree(ensureStringIsJsonObject(environment));
+				Iterator<Map.Entry<String, JsonNode>> iterator = map.fields();
+				while (iterator.hasNext()) {
+					Map.Entry<String, JsonNode> entry = iterator.next();
+					String key = entry.getKey();
+					String value = entry.getValue().asText();
+					envObject.put(key, value);
+					logger.log(Constants.INFO_LEVEL, "Setting environment variable " + key + " to " + value);
+				}
+			} catch (JsonProcessingException e) {
+				throw new NodeStepException("Invalid Labels JSON", UpgradeFailureReason.InvalidJson, this.nodeName);
 			}
 		}
 	}
@@ -188,13 +198,22 @@ public class RancherUpgradeService implements NodeStepPlugin {
 	 * 
 	 * @param upgrade JsonNode representing the target upgraded configuration.
 	 */
-	private void setLabels(JsonNode upgrade) {
+	private void setLabels(JsonNode upgrade) throws NodeStepException {
 		if (labels != null && labels.length() > 0) {
 			ObjectNode labelObject = (ObjectNode) upgrade.get("inServiceStrategy").get("launchConfig").get("labels");
-			for (String keyValue : labels.split(";")) {
-				String[] values = keyValue.split(":");
-				labelObject.put(values[0], values[1]);
-				logger.log(Constants.INFO_LEVEL, "Setting label " + values[0] + " to " + values[1]);
+			ObjectMapper objectMapper = new ObjectMapper();
+			try {
+				JsonNode map = objectMapper.readTree(ensureStringIsJsonObject(labels));
+				Iterator<Map.Entry<String, JsonNode>> iterator = map.fields();
+				while (iterator.hasNext()) {
+					Map.Entry<String, JsonNode> entry = iterator.next();
+					String key = entry.getKey();
+					String value = entry.getValue().asText();
+					labelObject.put(key, value);
+					logger.log(Constants.INFO_LEVEL, "Setting environment variable " + key + " to " + value);
+				}
+			} catch (JsonProcessingException e) {
+				throw new NodeStepException("Invalid Labels JSON", UpgradeFailureReason.InvalidJson, this.nodeName);
 			}
 		}
 	}
