@@ -86,8 +86,6 @@ public class RancherUpgradeService implements NodeStepPlugin {
 
 	private String nodeName;
 
-	private ExecutionContext executionContext;
-
 	private PluginLogger logger;
 
 	OkHttpClient client;
@@ -105,16 +103,21 @@ public class RancherUpgradeService implements NodeStepPlugin {
 			throws NodeStepException {
 
 		this.nodeName = node.getNodename();
-		this.executionContext = ctx.getExecutionContext();
+		ExecutionContext executionContext = ctx.getExecutionContext();
 		this.logger = ctx.getLogger();
 
 		Map<String, String> attributes = node.getAttributes();
 
-		String accessKey = this.loadStoragePathData(attributes.get(RancherShared.CONFIG_ACCESSKEY_PATH));
-		String secretKey = this.loadStoragePathData(attributes.get(RancherShared.CONFIG_SECRETKEY_PATH));
+		String accessKey;
+		String secretKey;
+		try {
+			accessKey = loadStoragePathData(executionContext, attributes.get(RancherShared.CONFIG_ACCESSKEY_PATH));
+			secretKey = loadStoragePathData(executionContext, attributes.get(RancherShared.CONFIG_SECRETKEY_PATH));
+		} catch (IOException e) {
+			throw new NodeStepException("Could not get secret storage path", e, ErrorCause.IOException, this.nodeName);
+		}
 
 		JsonNode service = apiGet(accessKey, secretKey, attributes.get("services")).path("data").path(0);
-
 		String serviceState = service.path("state").asText();
 		if (!serviceState.equals("active")) {
 			String message = "Service state must be running, was " + serviceState;
@@ -349,25 +352,5 @@ public class RancherUpgradeService implements NodeStepPlugin {
 		} catch (IOException e) {
 			throw new NodeStepException(e.getMessage(), e, ErrorCause.UpgradeFailure, nodeName);
 		}
-	}
-
-	/**
-	 * Get a (secret) value from password storage.
-	 *
-	 * @param path Storage path for secure data.
-	 * @return Secure data from Rundeck storage.
-	 * @throws NodeStepException when content cannot be written to output stream
-	 */
-	private String loadStoragePathData(final String path) throws NodeStepException {
-		if (null == path) {
-			return null;
-		}
-		ByteArrayOutputStream stream = new ByteArrayOutputStream();
-		try {
-			executionContext.getStorageTree().getResource(path).getContents().writeContent(stream);
-		} catch (Exception e) {
-			throw new NodeStepException(e, ErrorCause.NoKeyStorage, nodeName);
-		}
-		return new String(stream.toByteArray());
 	}
 }

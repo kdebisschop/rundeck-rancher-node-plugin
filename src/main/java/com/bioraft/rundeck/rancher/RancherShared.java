@@ -16,12 +16,17 @@
 
 package com.bioraft.rundeck.rancher;
 
+import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
+import com.dtolabs.rundeck.core.storage.ResourceMeta;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
 import static com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory.PROJECT_PREFIX;
 import static com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory.FRAMEWORK_PREFIX;
@@ -82,6 +87,24 @@ public class RancherShared {
         }
         String trimmed = string.replaceFirst("^\\s*\\[?", "[").replaceFirst("\\s*$", "");
         return trimmed + (trimmed.endsWith("]") ? "" : "]");
+    }
+
+    /**
+     * Get a (secret) value from password storage.
+     *
+     * @param context             The current plugin execution context.
+     * @param passwordStoragePath The path to look up in storage.
+     * @return The requested secret or password.
+     * @throws IOException When there is an IO Exception writing to stream.
+     */
+    public static String loadStoragePathData(final ExecutionContext context, final String passwordStoragePath) throws IOException {
+        if (null == passwordStoragePath) {
+            throw new IOException("Storage path is not defined.");
+        }
+        ResourceMeta contents = context.getStorageTree().getResource(passwordStoragePath).getContents();
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        contents.writeContent(byteArrayOutputStream);
+        return new String(byteArrayOutputStream.toByteArray());
     }
 
     /**

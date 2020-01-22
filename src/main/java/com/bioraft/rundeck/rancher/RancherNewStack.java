@@ -16,11 +16,9 @@
 package com.bioraft.rundeck.rancher;
 
 import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
 import com.dtolabs.rundeck.core.plugins.Plugin;
-import com.dtolabs.rundeck.core.storage.ResourceMeta;
 import com.dtolabs.rundeck.plugins.PluginLogger;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
@@ -31,11 +29,11 @@ import com.dtolabs.rundeck.plugins.step.StepPlugin;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.ImmutableMap;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Map;
 
 import static com.bioraft.rundeck.rancher.RancherShared.*;
+import static com.bioraft.rundeck.rancher.RancherShared.loadStoragePathData;
 import static com.dtolabs.rundeck.core.Constants.ERR_LEVEL;
 import static com.dtolabs.rundeck.core.Constants.INFO_LEVEL;
 
@@ -86,11 +84,14 @@ public class RancherNewStack implements StepPlugin {
         String secretKeyPath = framework.getProjectProperty(project, PROJ_RANCHER_SECRETKEY_PATH);
 
         String spec = endpoint + "/projects/" + environment + "/stacks/";
-        String accessKey = loadStoragePathData(context.getExecutionContext(), accessKeyPath);
-        String secretKey = loadStoragePathData(context.getExecutionContext(), secretKeyPath);
-
-        client.setAccessKey(accessKey);
-        client.setSecretKey(secretKey);
+        try {
+            String accessKey = loadStoragePathData(context.getExecutionContext(), accessKeyPath);
+            client.setAccessKey(accessKey);
+            String secretKey = loadStoragePathData(context.getExecutionContext(), secretKeyPath);
+            client.setSecretKey(secretKey);
+        } catch (IOException e) {
+            throw new StepException("Could not get secret storage path", e, ErrorCause.IOException);
+        }
 
         try {
             JsonNode check = client.get(spec, ImmutableMap.<String, String>builder().put("name", stackName).build());
@@ -120,27 +121,5 @@ public class RancherNewStack implements StepPlugin {
         InvalidStackName,
         InvalidEnvironmentName,
         IOException
-    }
-
-    /**
-     * Get a (secret) value from password storage.
-     *
-     * @param context             The current plugin execution context.
-     * @param passwordStoragePath The path to look up in storage.
-     * @return The requested secret or password.
-     * @throws StepException When there is an IO Exception writing to stream.
-     */
-    private String loadStoragePathData(final ExecutionContext context, final String passwordStoragePath) throws StepException {
-        if (null == passwordStoragePath) {
-            return null;
-        }
-        ResourceMeta contents = context.getStorageTree().getResource(passwordStoragePath).getContents();
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        try {
-            contents.writeContent(byteArrayOutputStream);
-        } catch (IOException e) {
-            throw new StepException("Could not get " + passwordStoragePath, e, RancherNewStackFailureReason.IOException);
-        }
-        return new String(byteArrayOutputStream.toByteArray());
     }
 }
