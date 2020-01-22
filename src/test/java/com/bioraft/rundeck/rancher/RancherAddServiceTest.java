@@ -17,16 +17,12 @@ package com.bioraft.rundeck.rancher;
 
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 
 import static org.mockito.Mockito.*;
 
@@ -42,7 +38,7 @@ public class RancherAddServiceTest extends PluginStepTest {
 	RancherAddService upgrade;
 
 	@Before
-	public void implSetUp() throws IOException {
+	public void implSetUp() {
 		setUp();
 	}
 
@@ -110,25 +106,5 @@ public class RancherAddServiceTest extends PluginStepTest {
 		verify(client, times(1)).get(anyString());
 		verify(client, times(1)).get(anyString(), anyMapOf(String.class, String.class));
 		verify(client, times(0)).post(anyString(), anyMapOf(String.class, Object.class));
-	}
-
-	private InputStream getResourceStream(String resource) {
-		ClassLoader classLoader = getClass().getClassLoader();
-		InputStream stream = classLoader.getResourceAsStream(resource);
-		if (stream == null) throw new AssertionError();
-		return stream;
-	}
-
-	private JsonNode readFromInputStream(InputStream inputStream) throws IOException {
-		StringBuilder resultStringBuilder = new StringBuilder();
-		InputStreamReader reader = new InputStreamReader(inputStream);
-		try (BufferedReader br = new BufferedReader(reader)) {
-			String line;
-			while ((line = br.readLine()) != null) {
-				resultStringBuilder.append(line).append("\n");
-			}
-		}
-		ObjectMapper mapper = new ObjectMapper();
-		return mapper.readTree(resultStringBuilder.toString());
 	}
 }
