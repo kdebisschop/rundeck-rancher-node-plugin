@@ -145,8 +145,17 @@ public class RancherAddService implements StepPlugin {
         String project = context.getFrameworkProject();
         PluginLogger logger = context.getLogger();
         String endpoint = framework.getProjectProperty(project, PROJ_RANCHER_ENDPOINT);
+        if (endpoint == null) {
+            endpoint = framework.getProperty(FMWK_RANCHER_ENDPOINT);
+        }
         String accessKeyPath = framework.getProjectProperty(project, PROJ_RANCHER_ACCESSKEY_PATH);
+        if (accessKeyPath == null) {
+            accessKeyPath = framework.getProperty(FMWK_RANCHER_ACCESSKEY_PATH);
+        }
         String secretKeyPath = framework.getProjectProperty(project, PROJ_RANCHER_SECRETKEY_PATH);
+        if (secretKeyPath == null) {
+            secretKeyPath = framework.getProperty(FMWK_RANCHER_SECRETKEY_PATH);
+        }
 
         String spec = endpoint + "/projects/" + environmentId + "/services";
         try {
