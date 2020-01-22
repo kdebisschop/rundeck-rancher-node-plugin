@@ -23,13 +23,7 @@ import com.dtolabs.rundeck.plugins.PluginLogger;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import okhttp3.Call;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
 import org.rundeck.storage.api.Resource;
 
 import java.io.BufferedReader;
@@ -37,11 +31,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.bioraft.rundeck.rancher.RancherShared.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.when;
 
 /**
  * Tests for Nexus3OptionProvider.
@@ -58,9 +51,6 @@ public class PluginStepTest {
 
 	@Mock
 	HttpClient client;
-
-	@Mock
-	Call call;
 
 	@Mock
 	PluginStepContext ctx;
@@ -86,16 +76,10 @@ public class PluginStepTest {
 	@Mock
 	Map<String, Object> cfg;
 
-	RancherNewStack upgrade;
-
-	public void setUp() throws IOException {
-		Map<String, String> map = Stream
-				.of(new String[][]{{"services", endpoint},
-						{RancherShared.CONFIG_ACCESSKEY_PATH, "keys/rancher/access.key"},
-						{RancherShared.CONFIG_SECRETKEY_PATH, "keys/rancher/secret.key"},})
-				.collect(Collectors.toMap(data -> data[0], data -> data[1]));
+	public void setUp() {
 		when(ctx.getLogger()).thenReturn(logger);
 		when(ctx.getFramework()).thenReturn(framework);
+		when(ctx.getFrameworkProject()).thenReturn(project);
 		when(ctx.getExecutionContext()).thenReturn(executionContext);
 
 		when(framework.getProjectProperty(project, PROJ_RANCHER_ENDPOINT)).thenReturn(endpoint);
@@ -108,15 +92,14 @@ public class PluginStepTest {
 		when(cfg.get("stack")).thenReturn("testStack");
 	}
 
-
-	private InputStream getResourceStream(String resource) {
+	protected InputStream getResourceStream(String resource) {
 		ClassLoader classLoader = getClass().getClassLoader();
 		InputStream stream = classLoader.getResourceAsStream(resource);
 		if (stream == null) throw new AssertionError();
 		return stream;
 	}
 
-	private JsonNode readFromInputStream(InputStream inputStream) throws IOException {
+	protected JsonNode readFromInputStream(InputStream inputStream) throws IOException {
 		StringBuilder resultStringBuilder = new StringBuilder();
 		InputStreamReader reader = new InputStreamReader(inputStream);
 		try (BufferedReader br = new BufferedReader(reader)) {
@@ -126,6 +109,6 @@ public class PluginStepTest {
 			}
 		}
 		ObjectMapper mapper = new ObjectMapper();
-		return (ObjectNode) mapper.readTree(resultStringBuilder.toString());
+		return mapper.readTree(resultStringBuilder.toString());
 	}
 }

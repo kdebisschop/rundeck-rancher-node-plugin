@@ -93,7 +93,7 @@ Optional inputs:
 
  - 0.6.6 Make File Copier binary-safe.
  - 0.7.0 Provide container upgrade node step, with ability to set labels and environment variables.
- - 0.7.1 Provide ability to remove labels and environment variables via container upgrade.
+ - 0.7.x Provide ability to remove labels and environment variables via container upgrade.
  - 0.9.x Provide reasonable if not complete test coverage prior to 1.x
 
 ## Compatibility

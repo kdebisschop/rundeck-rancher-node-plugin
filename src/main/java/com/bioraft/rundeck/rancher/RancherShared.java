@@ -16,6 +16,18 @@
 
 package com.bioraft.rundeck.rancher;
 
+import com.dtolabs.rundeck.core.execution.ExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
+import com.dtolabs.rundeck.core.storage.ResourceMeta;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+
 import static com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory.PROJECT_PREFIX;
 import static com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory.FRAMEWORK_PREFIX;
 
@@ -57,9 +69,15 @@ public class RancherShared {
 
     // Step Plugins
     public static final String PROJ_RANCHER_ENDPOINT = PROJECT_PREFIX + RANCHER_CONFIG_ENDPOINT;
-    public static final String PROJ_RANCHER_ENVIRONMENT_IDS = PROJECT_PREFIX + RANCHER_SERVICE_PROVIDER + "-" + CONFIG_ENVIRONMENT_IDS;
+    public static final String FMWK_RANCHER_ENDPOINT = FRAMEWORK_PREFIX + RANCHER_CONFIG_ENDPOINT;
+
     public static final String PROJ_RANCHER_ACCESSKEY_PATH = PROJECT_PREFIX + RANCHER_SERVICE_PROVIDER + "-" + CONFIG_ACCESSKEY_PATH;
+    public static final String FMWK_RANCHER_ACCESSKEY_PATH = FRAMEWORK_PREFIX + RANCHER_SERVICE_PROVIDER + "-" + CONFIG_ACCESSKEY_PATH;
+
     public static final String PROJ_RANCHER_SECRETKEY_PATH = PROJECT_PREFIX + RANCHER_SERVICE_PROVIDER + "-" + CONFIG_SECRETKEY_PATH;
+    public static final String FMWK_RANCHER_SECRETKEY_PATH = FRAMEWORK_PREFIX + RANCHER_SERVICE_PROVIDER + "-" + CONFIG_SECRETKEY_PATH;
+
+    public static final String PROJ_RANCHER_ENVIRONMENT_IDS = PROJECT_PREFIX + RANCHER_SERVICE_PROVIDER + "-" + CONFIG_ENVIRONMENT_IDS;
 
     public static String ensureStringIsJsonObject(String string) {
         if (string == null) {
@@ -75,5 +93,56 @@ public class RancherShared {
         }
         String trimmed = string.replaceFirst("^\\s*\\[?", "[").replaceFirst("\\s*$", "");
         return trimmed + (trimmed.endsWith("]") ? "" : "]");
+    }
+
+    /**
+     * Get a (secret) value from password storage.
+     *
+     * @param context             The current plugin execution context.
+     * @param passwordStoragePath The path to look up in storage.
+     * @return The requested secret or password.
+     * @throws IOException When there is an IO Exception writing to stream.
+     */
+    public static String loadStoragePathData(final ExecutionContext context, final String passwordStoragePath) throws IOException {
+        if (null == passwordStoragePath) {
+            throw new IOException("Storage path is not defined.");
+        }
+        ResourceMeta contents = context.getStorageTree().getResource(passwordStoragePath).getContents();
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        contents.writeContent(byteArrayOutputStream);
+        return new String(byteArrayOutputStream.toByteArray());
+    }
+
+    /**
+     * Builds a JsonNode object for insertion into the secrets array.
+     *
+     * @param secretId A secret ID from Rancher (like "1se1")
+     * @return JSON expression for secret reference.
+     * @throws NodeStepException when JSON is not valid.
+     */
+    public static JsonNode buildSecret(String secretId, String nodeName) throws NodeStepException {
+        try {
+            return (new ObjectMapper()).readTree(secretJson(secretId));
+        } catch (JsonProcessingException e) {
+            throw new NodeStepException("Failed add secret", e, ErrorCause.InvalidJson, nodeName);
+        }
+    }
+
+    public static String secretJson(String secretId) {
+        return "{ \"type\": \"secretReference\", \"gid\": \"0\", \"mode\": \"444\", \"name\": \"\", \"secretId\": \""
+                + secretId + "\", \"uid\": \"0\"}";
+    }
+
+    public enum ErrorCause implements FailureReason {
+        InvalidConfiguration,
+        InvalidJson,
+        IOException,
+        NoKeyStorage,
+        NoServiceObject,
+        ServiceNotRunning,
+        MissingUpgradeURL,
+        NoUpgradeData,
+        UpgradeFailure,
+        Interrupted
     }
 }
