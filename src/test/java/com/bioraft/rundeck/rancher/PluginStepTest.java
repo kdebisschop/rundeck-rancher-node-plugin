@@ -96,6 +96,7 @@ public class PluginStepTest {
 				.collect(Collectors.toMap(data -> data[0], data -> data[1]));
 		when(ctx.getLogger()).thenReturn(logger);
 		when(ctx.getFramework()).thenReturn(framework);
+		when(ctx.getFrameworkProject()).thenReturn(project);
 		when(ctx.getExecutionContext()).thenReturn(executionContext);
 
 		when(framework.getProjectProperty(project, PROJ_RANCHER_ENDPOINT)).thenReturn(endpoint);
