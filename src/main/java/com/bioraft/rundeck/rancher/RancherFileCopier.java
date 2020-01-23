@@ -35,13 +35,13 @@ import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 import com.dtolabs.rundeck.core.Constants;
+import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
 import com.dtolabs.rundeck.core.execution.service.FileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
-import com.dtolabs.rundeck.core.execution.utils.ResolverUtil;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
@@ -131,17 +131,20 @@ public class RancherFileCopier implements FileCopier, Describable {
             remotefile = destinationPath;
         }
         // write to a local temp file or use the input file
-        final File localTempfile = null != scriptfile ? scriptfile
+        final File localTempfile = (null != scriptfile) ? scriptfile
                 : BaseFileCopier.writeTempFile(context, scriptfile, input, script);
 
         // Copy the file over
         System.out.println("copying file: '" + localTempfile.getAbsolutePath() + "' to: '" + node.getNodename() + ":"
                 + remotefile + "'");
 
-        String searchPath = ResolverUtil.resolveProperty(RancherShared.RANCHER_CONFIG_CLI_PATH, "", node,
-                context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
-                context.getFramework());
-        context.getExecutionLogger().log(DEBUG_LEVEL, "PATH: " + searchPath);
+        Framework framework = context.getFramework();
+        String project = context.getFrameworkProject();
+        String searchPath = framework.getProjectProperty(project, PROJ_RANCHER_CLI_PATH);
+        if (searchPath == null) {
+            searchPath = framework.getProperty(FMWK_RANCHER_CLI_PATH);
+        }
+
         try {
             String result;
             if (searchPath.equals("")) {
@@ -168,11 +171,9 @@ public class RancherFileCopier implements FileCopier, Describable {
         String instance = nodeAttributes.get("externalId");
         String[] command = {"rancher", "docker", "cp", path, instance + ":" + remotefile};
 
-        context.getExecutionLogger().log(DEBUG_LEVEL, "CMD: '" + String.join(" ", command) + "'");
         boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
         try {
             ProcessBuilder builder = new ProcessBuilder();
-            context.getExecutionLogger().log(DEBUG_LEVEL, "CMD: '" + String.join(" ", command) + "'");
             Map<String, String> environment = builder.environment();
             context.getExecutionLogger().log(DEBUG_LEVEL, "CMD: '" + String.join(" ", command) + "'");
             environment.put("PATH", searchPath);
@@ -181,7 +182,6 @@ public class RancherFileCopier implements FileCopier, Describable {
             environment.put("RANCHER_URL", nodeAttributes.get("execute").replaceFirst("/projects/.*$", ""));
             environment.put("RANCHER_ACCESS_KEY", accessKey);
             environment.put("RANCHER_SECRET_KEY", secretKey);
-            context.getExecutionLogger().log(DEBUG_LEVEL, "CMD: '" + String.join(" ", command) + "'");
             if (isWindows) {
                 throw new FileCopierException("Windows is not currently supported.", FileCopyFailureReason.UnsupportedOperatingSystem);
             } else {
