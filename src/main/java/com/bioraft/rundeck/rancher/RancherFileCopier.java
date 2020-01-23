@@ -162,6 +162,7 @@ public class RancherFileCopier implements FileCopier, Describable {
 
     private String copyViaCli(final ExecutionContext context, Map<String, String> nodeAttributes, String accessKey, String secretKey,
                               File localTempFile, String remotefile, String searchPath) throws FileCopierException {
+        context.getExecutionLogger().log(DEBUG_LEVEL, "PATH: '" + searchPath + "'");
         String path = localTempFile.getAbsolutePath();
         String instance = nodeAttributes.get("externalId");
         String[] command = {"rancher", "docker", "cp", path, instance + ":" + remotefile};
