@@ -51,6 +51,7 @@ import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 
 import static com.bioraft.rundeck.rancher.RancherShared.*;
+import static com.dtolabs.rundeck.core.Constants.DEBUG_LEVEL;
 
 /**
  * RancherStubFileCopier provider for the FileCopier service
@@ -141,11 +142,14 @@ public class RancherFileCopier implements FileCopier, Describable {
                 context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
                 context.getFramework());
         try {
+            String result;
             if (searchPath.equals("")) {
-                return copyViaApi(nodeAttributes, accessKey, secretKey, localTempfile, remotefile);
+                result = copyViaApi(nodeAttributes, accessKey, secretKey, localTempfile, remotefile);
             } else {
-                return copyViaCli(nodeAttributes, accessKey, secretKey, localTempfile, remotefile, searchPath);
+                result = copyViaCli(nodeAttributes, accessKey, secretKey, localTempfile, remotefile, searchPath);
             }
+            context.getExecutionLogger().log(DEBUG_LEVEL, "Copied '" + localTempfile + "' to '" + result );
+            return result;
         } finally {
             if (null == scriptfile) {
                 if (!ScriptfileUtils.releaseTempFile(localTempfile)) {
@@ -205,37 +209,10 @@ public class RancherFileCopier implements FileCopier, Describable {
     }
 
     public enum FileCopyFailureReason implements FailureReason {
-        /**
-         * Requested file could not be found
-         */
-        FileNotFound,
-        /**
-         * Process could not be started
-         */
         IOException,
-        /**
-         * Process was interrupted
-         */
         InterruptedException,
-        /**
-         * Timeout on connection
-         */
-        ConnectionTimeout,
-        /**
-         * Connection unsuccessful
-         */
         ConnectionFailure,
-        /**
-         * Authentication unsuccessful
-         */
         AuthenticationFailure,
-        /**
-         * Command or script execution result code was not zero
-         */
-        NonZeroResultCode,
-        /**
-         * Operating system not currently supported
-         */
         UnsupportedOperatingSystem
     }
 
