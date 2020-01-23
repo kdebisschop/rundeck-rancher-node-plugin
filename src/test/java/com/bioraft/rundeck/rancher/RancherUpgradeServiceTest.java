@@ -96,6 +96,7 @@ public class RancherUpgradeServiceTest {
 		when(storageTree.getResource(anyString())).thenReturn(treeResource);
 		when(treeResource.getContents()).thenReturn(contents);
 		when(client.newCall(any())).thenReturn(call);
+		cfg.put("startFirst", "true");
 	}
 
 	@Test

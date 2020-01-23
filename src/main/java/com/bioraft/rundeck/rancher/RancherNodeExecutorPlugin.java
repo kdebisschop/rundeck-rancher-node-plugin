@@ -36,6 +36,7 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 
 import static com.bioraft.rundeck.rancher.RancherShared.*;
+import static com.dtolabs.rundeck.core.Constants.DEBUG_LEVEL;
 
 /**
  * RancherNodeExecutorPlugin is a {@link NodeExecutor} plugin implementation for
@@ -94,7 +95,9 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
                 context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
                 context.getFramework());
         try {
+            context.getExecutionLogger().log(DEBUG_LEVEL, "Running " + String.join(" ", command));
             RancherWebSocketListener.runJob(url, accessKey, secretKey, command, listener, temp, timeout);
+            context.getExecutionLogger().log(DEBUG_LEVEL, "Ran " + String.join(" ", command));
         } catch (IOException e) {
             return NodeExecutorResultImpl.createFailure(StepFailureReason.IOFailure, e.getMessage(), node);
         } catch (InterruptedException e) {
@@ -103,7 +106,9 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
 
         String[] pidFile;
         try {
-            pidFile = this.readLogFile(temp + ".pid", url).split(" +");
+            String file = temp + ".pid";
+            context.getExecutionLogger().log(DEBUG_LEVEL, "Reading '" + file + "' on " + url);
+            pidFile = this.readLogFile(file, url).split(" +");
         } catch (IOException e) {
             return NodeExecutorResultImpl.createFailure(StepFailureReason.IOFailure, e.getMessage(), node);
         } catch (InterruptedException e) {

@@ -15,7 +15,6 @@
  */
 package com.bioraft.rundeck.rancher;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
@@ -39,6 +38,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import com.google.common.collect.ImmutableMap;
 import okhttp3.Credentials;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -48,6 +48,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 import static com.bioraft.rundeck.rancher.RancherShared.*;
+import static com.dtolabs.rundeck.core.Constants.DEBUG_LEVEL;
 import static com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants.CODE_SYNTAX_MODE;
 import static com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants.DISPLAY_TYPE_KEY;
 
@@ -90,6 +91,8 @@ public class RancherUpgradeService implements NodeStepPlugin {
 
 	OkHttpClient client;
 
+	private final static int intervalMillis = 2000;
+
 	public RancherUpgradeService() {
 		client = new OkHttpClient();
 	}
@@ -126,25 +129,25 @@ public class RancherUpgradeService implements NodeStepPlugin {
 
 		String upgradeUrl = service.path("actions").path("upgrade").asText();
 		if (upgradeUrl.length() == 0) {
-			throw new NodeStepException("No upgrade URL found", ErrorCause.MissingUpgradeURL,
-					node.getNodename());
+			throw new NodeStepException("No upgrade URL found", ErrorCause.MissingUpgradeURL, node.getNodename());
 		}
-		JsonNode upgrade = service.path("upgrade");
-		if (upgrade.isMissingNode()) {
-			throw new NodeStepException("No upgrade data found", ErrorCause.NoUpgradeData,
-					node.getNodename());
+		JsonNode launchConfig = service.path("upgrade").path("inServiceStrategy").path("launchConfig");
+		if (launchConfig.isMissingNode() || launchConfig.isNull()) {
+			launchConfig = service.path("launchConfig");
 		}
+		if (launchConfig.isMissingNode() || launchConfig.isNull()) {
+			throw new NodeStepException("No upgrade data found", ErrorCause.NoUpgradeData, node.getNodename());
+		}
+		ObjectNode launchConfigObject = (ObjectNode) launchConfig;
 
-		if (dockerImage == null || dockerImage.length() == 0) {
+		if ((dockerImage == null || dockerImage.length() == 0)  && cfg.containsKey("dockerImage")) {
 			dockerImage = (String) cfg.get("dockerImage");
 		}
 		if (dockerImage != null && dockerImage.length() > 0) {
 			logger.log(Constants.INFO_LEVEL, "Setting image to " + dockerImage);
-			((ObjectNode) upgrade.get("inServiceStrategy").get("launchConfig")).put("imageUuid",
-					"docker:" + dockerImage);
+			launchConfigObject.put("imageUuid","docker:" + dockerImage);
 		}
 
-		((ObjectNode) upgrade.get("inServiceStrategy")).put("startFirst", startFirst);
 		if ((environment == null || environment.isEmpty()) && cfg.containsKey("environment")) {
 			environment = (String) cfg.get("environment");
 		}
@@ -157,15 +160,18 @@ public class RancherUpgradeService implements NodeStepPlugin {
 			secrets = (String) cfg.get("secrets");
 		}
 
+		if (cfg.containsKey("startFirst")) {
+			startFirst = cfg.get("startFirst").equals("true");
+		}
 		if (startFirst == null) {
-			startFirst = (Boolean) cfg.get("dockerImage");
+			startFirst = true;
 		}
 
-		this.setEnvVars(upgrade);
-		this.setLabels(upgrade);
-		this.addSecrets(upgrade);
+		this.setEnvVars(launchConfigObject);
+		this.setLabels(launchConfigObject);
+		this.addSecrets(launchConfigObject);
 
-		doUpgrade(accessKey, secretKey, upgradeUrl, upgrade.toString());
+		doUpgrade(accessKey, secretKey, upgradeUrl, launchConfigObject);
 
 		logger.log(Constants.INFO_LEVEL, "Upgraded " + nodeName);
 	}
@@ -173,11 +179,11 @@ public class RancherUpgradeService implements NodeStepPlugin {
 	/**
 	 * Adds/modifies environment variables.
 	 * 
-	 * @param upgrade JsonNode representing the target upgraded configuration.
+	 * @param launchConfig JsonNode representing the target upgraded configuration.
 	 */
-	private void setEnvVars(JsonNode upgrade) throws NodeStepException {
+	private void setEnvVars(ObjectNode launchConfig) throws NodeStepException {
 		if (environment != null && environment.length() > 0) {
-			ObjectNode envObject = (ObjectNode) upgrade.get("inServiceStrategy").get("launchConfig").get("environment");
+			ObjectNode envObject = (ObjectNode) launchConfig.get("environment");
 			ObjectMapper objectMapper = new ObjectMapper();
 			try {
 				JsonNode map = objectMapper.readTree(ensureStringIsJsonObject(environment));
@@ -198,11 +204,11 @@ public class RancherUpgradeService implements NodeStepPlugin {
 	/**
 	 * Adds/modifies labels based on the step's labels setting.
 	 * 
-	 * @param upgrade JsonNode representing the target upgraded configuration.
+	 * @param launchConfig JsonNode representing the target upgraded configuration.
 	 */
-	private void setLabels(JsonNode upgrade) throws NodeStepException {
+	private void setLabels(ObjectNode launchConfig) throws NodeStepException {
 		if (labels != null && labels.length() > 0) {
-			ObjectNode labelObject = (ObjectNode) upgrade.get("inServiceStrategy").get("launchConfig").get("labels");
+			ObjectNode labelObject = (ObjectNode) launchConfig.get("labels");
 			ObjectMapper objectMapper = new ObjectMapper();
 			try {
 				JsonNode map = objectMapper.readTree(ensureStringIsJsonObject(labels));
@@ -223,22 +229,27 @@ public class RancherUpgradeService implements NodeStepPlugin {
 	/**
 	 * Add or replace secrets.
 	 * 
-	 * @param upgrade JsonNode representing the target upgraded configuration.
+	 * @param launchConfig JsonNode representing the target upgraded configuration.
 	 * @throws NodeStepException when secret JSON is malformed (passed up from {@see this.buildSecret()}.
 	 */
-	private void addSecrets(JsonNode upgrade) throws NodeStepException {
+	private void addSecrets(ObjectNode launchConfig) throws NodeStepException {
 		if (secrets != null && secrets.length() > 0) {
-			JsonNode launchConfig = upgrade.get("inServiceStrategy").get("launchConfig");
-			ObjectNode launchObject = (ObjectNode) launchConfig;
-			ArrayNode secretsArray = launchObject.putArray("secrets");
+			// Copy existing secrets, skipping any that we want to add or overwrite.
+			Iterator<JsonNode> elements = null;
+			boolean hasOldSecrets = false;
+			if (launchConfig.has("secrets") && !launchConfig.get("secrets").isNull()) {
+				hasOldSecrets = true;
+				elements = launchConfig.get("secrets").elements();
+			}
+
+			ArrayNode secretsArray = launchConfig.putArray("secrets");
 
 			// Copy existing secrets, skipping any that we want to add or overwrite.
-			if (launchConfig.has("secrets")) {
-				Iterator<JsonNode> elements = launchConfig.get("secrets").elements();
+			if (hasOldSecrets && elements != null) {
 				while (elements.hasNext()) {
 					JsonNode secretObject = elements.next();
 					// @todo this only works for a single secret added.
-					if (!secretObject.get("secretId").asText().equals(secrets)) {
+					if (!secretObject.path("secretId").asText().equals(secrets)) {
 						secretsArray.add(secretObject);
 					}
 				}
@@ -258,11 +269,27 @@ public class RancherUpgradeService implements NodeStepPlugin {
 	 * @param accessKey Rancher access key
 	 * @param secretKey Rancher secret key
 	 * @param upgradeUrl Rancher API url
-	 * @param upgrade The JSON string representing the desired upgrade state.
+	 * @param launchConfig The JSON string representing the desired upgrade state.
 	 * @throws NodeStepException when upgrade is interrupted.
 	 */
-	private void doUpgrade(String accessKey, String secretKey, String upgradeUrl, String upgrade)
+	private void doUpgrade(String accessKey, String secretKey, String upgradeUrl, JsonNode launchConfig)
 			throws NodeStepException {
+		Map<String, Object> inServiceStrategy = ImmutableMap.<String, Object>builder() //
+				.put("type", "inServiceUpgradeStrategy") //
+				.put("batchSize", 1) //
+				.put("intervalMillis", intervalMillis) //
+				.put("startFirst", startFirst) //
+				.put("launchConfig", launchConfig) //
+				.build();
+		ObjectMapper mapper = new ObjectMapper();
+		String upgrade;
+		try {
+			upgrade = "{\"type\":\"serviceUpgrade\",\"inServiceStrategy\":" + mapper.writeValueAsString(inServiceStrategy) + "}";
+			logger.log(DEBUG_LEVEL, upgrade);
+		} catch (IOException e) {
+			throw new NodeStepException("Failed post to " + upgradeUrl, e, ErrorCause.InvalidConfiguration, nodeName);
+		}
+
 		JsonNode service = apiPost(accessKey, secretKey, upgradeUrl, upgrade);
 		String state = service.get("state").asText();
 		String link = service.get("links").get("self").asText();
