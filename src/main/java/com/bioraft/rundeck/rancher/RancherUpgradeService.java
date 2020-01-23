@@ -234,11 +234,18 @@ public class RancherUpgradeService implements NodeStepPlugin {
 	 */
 	private void addSecrets(ObjectNode launchConfig) throws NodeStepException {
 		if (secrets != null && secrets.length() > 0) {
+			// Copy existing secrets, skipping any that we want to add or overwrite.
+			Iterator<JsonNode> elements = null;
+			boolean hasOldSecrets = false;
+			if (launchConfig.has("secrets")) {
+				hasOldSecrets = true;
+				elements = launchConfig.get("secrets").elements();
+			}
+
 			ArrayNode secretsArray = launchConfig.putArray("secrets");
 
 			// Copy existing secrets, skipping any that we want to add or overwrite.
-			if (launchConfig.has("secrets")) {
-				Iterator<JsonNode> elements = launchConfig.get("secrets").elements();
+			if (hasOldSecrets && elements != null) {
 				while (elements.hasNext()) {
 					JsonNode secretObject = elements.next();
 					// @todo this only works for a single secret added.
