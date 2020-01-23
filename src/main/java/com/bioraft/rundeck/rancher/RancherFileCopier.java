@@ -168,7 +168,7 @@ public class RancherFileCopier implements FileCopier, Describable {
             Map<String, String> environment = builder.environment();
             environment.put("PATH", searchPath);
             environment.put("RANCHER_ENVIRONMENT", nodeAttributes.get("environment"));
-            environment.put("RANCHER_DOCKER_HOST", nodeAttributes.get("hostId"));
+            environment.put("RANCHER_DOCKER_HOST", nodeAttributes.get("hostname"));
             environment.put("RANCHER_URL", nodeAttributes.get("execute").replaceFirst("/projects/.*$", ""));
             environment.put("RANCHER_ACCESS_KEY", accessKey);
             environment.put("RANCHER_SECRET_KEY", secretKey);
