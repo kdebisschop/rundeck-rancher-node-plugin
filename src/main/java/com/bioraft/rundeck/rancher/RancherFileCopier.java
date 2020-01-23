@@ -141,6 +141,7 @@ public class RancherFileCopier implements FileCopier, Describable {
         String searchPath = ResolverUtil.resolveProperty(RancherShared.RANCHER_CONFIG_CLI_PATH, "", node,
                 context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
                 context.getFramework());
+        context.getExecutionLogger().log(DEBUG_LEVEL, "PATH: " + searchPath);
         try {
             String result;
             if (searchPath.equals("")) {
