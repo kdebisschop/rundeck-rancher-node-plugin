@@ -166,19 +166,22 @@ public class RancherFileCopier implements FileCopier, Describable {
         String instance = nodeAttributes.get("externalId");
         String[] command = {"rancher", "docker", "cp", path, instance + ":" + remotefile};
 
+        context.getExecutionLogger().log(DEBUG_LEVEL, "CMD: '" + String.join(" ", command) + "'");
         boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
         try {
             ProcessBuilder builder = new ProcessBuilder();
+            context.getExecutionLogger().log(DEBUG_LEVEL, "CMD: '" + String.join(" ", command) + "'");
             Map<String, String> environment = builder.environment();
+            context.getExecutionLogger().log(DEBUG_LEVEL, "CMD: '" + String.join(" ", command) + "'");
             environment.put("PATH", searchPath);
             environment.put("RANCHER_ENVIRONMENT", nodeAttributes.get("environment"));
             environment.put("RANCHER_DOCKER_HOST", nodeAttributes.get("hostname"));
             environment.put("RANCHER_URL", nodeAttributes.get("execute").replaceFirst("/projects/.*$", ""));
             environment.put("RANCHER_ACCESS_KEY", accessKey);
             environment.put("RANCHER_SECRET_KEY", secretKey);
+            context.getExecutionLogger().log(DEBUG_LEVEL, "CMD: '" + String.join(" ", command) + "'");
             if (isWindows) {
-                throw new FileCopierException("Windows is not currently supported.",
-                        FileCopyFailureReason.UnsupportedOperatingSystem);
+                throw new FileCopierException("Windows is not currently supported.", FileCopyFailureReason.UnsupportedOperatingSystem);
             } else {
                 builder.command(command);
             }
