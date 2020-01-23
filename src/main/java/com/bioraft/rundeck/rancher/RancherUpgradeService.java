@@ -48,6 +48,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 import static com.bioraft.rundeck.rancher.RancherShared.*;
+import static com.dtolabs.rundeck.core.Constants.DEBUG_LEVEL;
 import static com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants.CODE_SYNTAX_MODE;
 import static com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants.DISPLAY_TYPE_KEY;
 
@@ -277,6 +278,7 @@ public class RancherUpgradeService implements NodeStepPlugin {
 		String upgrade;
 		try {
 			upgrade = mapper.writeValueAsString(inServiceStrategy);
+			logger.log(DEBUG_LEVEL, upgrade);
 		} catch (IOException e) {
 			throw new NodeStepException("Failed post to " + upgradeUrl, e, ErrorCause.InvalidConfiguration, nodeName);
 		}
