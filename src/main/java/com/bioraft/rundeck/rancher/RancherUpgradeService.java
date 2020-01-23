@@ -277,7 +277,7 @@ public class RancherUpgradeService implements NodeStepPlugin {
 		ObjectMapper mapper = new ObjectMapper();
 		String upgrade;
 		try {
-			upgrade = mapper.writeValueAsString(inServiceStrategy);
+			upgrade = "{\"type\":\"serviceUpgrade\",\"inServiceStrategy\"" + mapper.writeValueAsString(inServiceStrategy) + "}";
 			logger.log(DEBUG_LEVEL, upgrade);
 		} catch (IOException e) {
 			throw new NodeStepException("Failed post to " + upgradeUrl, e, ErrorCause.InvalidConfiguration, nodeName);
