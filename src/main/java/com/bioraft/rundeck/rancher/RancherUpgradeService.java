@@ -237,7 +237,7 @@ public class RancherUpgradeService implements NodeStepPlugin {
 			// Copy existing secrets, skipping any that we want to add or overwrite.
 			Iterator<JsonNode> elements = null;
 			boolean hasOldSecrets = false;
-			if (launchConfig.has("secrets")) {
+			if (launchConfig.has("secrets") && !launchConfig.get("secrets").isNull()) {
 				hasOldSecrets = true;
 				elements = launchConfig.get("secrets").elements();
 			}
