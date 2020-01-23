@@ -144,9 +144,9 @@ public class RancherFileCopier implements FileCopier, Describable {
         try {
             String result;
             if (searchPath.equals("")) {
-                result = copyViaApi(nodeAttributes, accessKey, secretKey, localTempfile, remotefile);
+                result = copyViaApi(context, nodeAttributes, accessKey, secretKey, localTempfile, remotefile);
             } else {
-                result = copyViaCli(nodeAttributes, accessKey, secretKey, localTempfile, remotefile, searchPath);
+                result = copyViaCli(context, nodeAttributes, accessKey, secretKey, localTempfile, remotefile, searchPath);
             }
             context.getExecutionLogger().log(DEBUG_LEVEL, "Copied '" + localTempfile + "' to '" + result );
             return result;
@@ -160,7 +160,7 @@ public class RancherFileCopier implements FileCopier, Describable {
         }
     }
 
-    private String copyViaCli(Map<String, String> nodeAttributes, String accessKey, String secretKey,
+    private String copyViaCli(final ExecutionContext context, Map<String, String> nodeAttributes, String accessKey, String secretKey,
                               File localTempFile, String remotefile, String searchPath) throws FileCopierException {
         String path = localTempFile.getAbsolutePath();
         String instance = nodeAttributes.get("externalId");
@@ -182,7 +182,8 @@ public class RancherFileCopier implements FileCopier, Describable {
             } else {
                 builder.command(command);
             }
-            builder.directory(new File(System.getProperty("user.home")));
+            context.getExecutionLogger().log(DEBUG_LEVEL, "CMD: '" + String.join(" ", command) + "'");
+            builder.directory(new File(System.getProperty("java.io.tmpdir")));
             Process process = builder.start();
             StreamGobbler streamGobbler = new StreamGobbler(process.getInputStream(), System.out::println);
             Executors.newSingleThreadExecutor().submit(streamGobbler);
@@ -197,11 +198,12 @@ public class RancherFileCopier implements FileCopier, Describable {
         return remotefile;
     }
 
-    private String copyViaApi(Map<String, String> nodeAttributes, String accessKey, String secretKey, File file,
+    private String copyViaApi(final ExecutionContext context, Map<String, String> nodeAttributes, String accessKey, String secretKey, File file,
                               String destination) throws FileCopierException {
         try {
             String url = nodeAttributes.get("execute");
             RancherWebSocketListener.putFile(url, accessKey, secretKey, file, destination);
+            context.getExecutionLogger().log(DEBUG_LEVEL, "PUT: '" + file + "'");
         } catch (IOException | InterruptedException e) {
             throw new FileCopierException(e.getMessage(), FileCopyFailureReason.ConnectionFailure);
         }
