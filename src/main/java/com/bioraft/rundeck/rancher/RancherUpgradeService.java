@@ -249,7 +249,7 @@ public class RancherUpgradeService implements NodeStepPlugin {
 				while (elements.hasNext()) {
 					JsonNode secretObject = elements.next();
 					// @todo this only works for a single secret added.
-					if (!secretObject.get("secretId").asText().equals(secrets)) {
+					if (!secretObject.path("secretId").asText().equals(secrets)) {
 						secretsArray.add(secretObject);
 					}
 				}
