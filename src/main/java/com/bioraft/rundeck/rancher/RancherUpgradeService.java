@@ -139,7 +139,7 @@ public class RancherUpgradeService implements NodeStepPlugin {
 		}
 		ObjectNode launchConfigObject = (ObjectNode) launchConfig;
 
-		if (dockerImage == null || dockerImage.length() == 0) {
+		if ((dockerImage == null || dockerImage.length() == 0)  && cfg.containsKey("dockerImage")) {
 			dockerImage = (String) cfg.get("dockerImage");
 		}
 		if (dockerImage != null && dockerImage.length() > 0) {
