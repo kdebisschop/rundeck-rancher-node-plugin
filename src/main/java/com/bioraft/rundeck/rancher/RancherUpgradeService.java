@@ -79,6 +79,20 @@ public class RancherUpgradeService implements NodeStepPlugin {
 	})
 	private String environment;
 
+	@PluginProperty(title = "Service Labels", description = "JSON object of \"variable\": \"value\"")
+	@RenderingOptions({
+			@RenderingOption(key = DISPLAY_TYPE_KEY, value = "CODE"),
+			@RenderingOption(key = CODE_SYNTAX_MODE, value = "json"),
+	})
+	private String removeLabels;
+
+	@PluginProperty(title = "Container OS Environment", description = "JSON object of \"variable\": \"value\"")
+	@RenderingOptions({
+			@RenderingOption(key = DISPLAY_TYPE_KEY, value = "CODE"),
+			@RenderingOption(key = CODE_SYNTAX_MODE, value = "json"),
+	})
+	private String removeEnvironment;
+
 	@PluginProperty(title = "Secrets", description = "Keys for secrets separated by commas or spaces")
 	private String secrets;
 
@@ -160,6 +174,14 @@ public class RancherUpgradeService implements NodeStepPlugin {
 			secrets = (String) cfg.get("secrets");
 		}
 
+		if (cfg.containsKey("removeEnvironment")) {
+			removeEnvironment = (String) cfg.get("removeEnvironment");
+		}
+
+		if (cfg.containsKey(removeLabels)) {
+			removeLabels = (String) cfg.get("removeLabels");
+		}
+
 		if (cfg.containsKey("startFirst")) {
 			startFirst = cfg.get("startFirst").equals("true");
 		}
@@ -170,6 +192,9 @@ public class RancherUpgradeService implements NodeStepPlugin {
 		this.setEnvVars(launchConfigObject);
 		this.setLabels(launchConfigObject);
 		this.addSecrets(launchConfigObject);
+
+		this.removeLabels(launchConfigObject);
+		this.removeEnvVars(launchConfigObject);
 
 		doUpgrade(accessKey, secretKey, upgradeUrl, launchConfigObject);
 
@@ -260,6 +285,62 @@ public class RancherUpgradeService implements NodeStepPlugin {
 				secretsArray.add(buildSecret(secretId, this.nodeName));
 				logger.log(Constants.INFO_LEVEL, "Adding secret map to " + secretId);
 			}
+		}
+	}
+
+	/**
+	 * Adds/modifies environment variables.
+	 *
+	 * @param launchConfig JsonNode representing the target upgraded configuration.
+	 */
+	private void removeEnvVars(ObjectNode launchConfig) throws NodeStepException {
+		if (!launchConfig.has("environment") || launchConfig.get("environment").isNull()) {
+			return;
+		}
+		if (removeEnvironment == null || removeEnvironment.length() == 0) {
+			return;
+		}
+
+		ObjectNode envObject = (ObjectNode) launchConfig.get("environment");
+		ObjectMapper objectMapper = new ObjectMapper();
+		try {
+			JsonNode map = objectMapper.readTree(ensureStringIsJsonArray(removeEnvironment));
+			Iterator<JsonNode> iterator = map.elements();
+			while (iterator.hasNext()) {
+				String entry = iterator.next().asText();
+				envObject.remove(entry);
+				logger.log(Constants.INFO_LEVEL, "Removing environment variable " + entry);
+			}
+		} catch (JsonProcessingException e) {
+			throw new NodeStepException("Invalid Labels JSON", ErrorCause.InvalidJson, this.nodeName);
+		}
+	}
+
+	/**
+	 * Adds/modifies environment variables.
+	 *
+	 * @param launchConfig JsonNode representing the target upgraded configuration.
+	 */
+	private void removeLabels(ObjectNode launchConfig) throws NodeStepException {
+		if (!launchConfig.has("labels") || launchConfig.get("labels").isNull()) {
+			return;
+		}
+		if (removeLabels == null || removeLabels.length() == 0) {
+			return;
+		}
+
+		ObjectNode envObject = (ObjectNode) launchConfig.get("labels");
+		ObjectMapper objectMapper = new ObjectMapper();
+		try {
+			JsonNode map = objectMapper.readTree(ensureStringIsJsonArray(removeLabels));
+			Iterator<JsonNode> iterator = map.elements();
+			while (iterator.hasNext()) {
+				String entry = iterator.next().asText();
+				envObject.remove(entry);
+				logger.log(Constants.INFO_LEVEL, "Removing albel " + entry);
+			}
+		} catch (JsonProcessingException e) {
+			throw new NodeStepException("Invalid Labels JSON", ErrorCause.InvalidJson, this.nodeName);
 		}
 	}
 
