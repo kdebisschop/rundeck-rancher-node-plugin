@@ -337,7 +337,7 @@ public class RancherUpgradeService implements NodeStepPlugin {
 			while (iterator.hasNext()) {
 				String entry = iterator.next().asText();
 				envObject.remove(entry);
-				logger.log(Constants.INFO_LEVEL, "Removing albel " + entry);
+				logger.log(Constants.INFO_LEVEL, "Removing label " + entry);
 			}
 		} catch (JsonProcessingException e) {
 			throw new NodeStepException("Invalid Labels JSON", ErrorCause.InvalidJson, this.nodeName);
