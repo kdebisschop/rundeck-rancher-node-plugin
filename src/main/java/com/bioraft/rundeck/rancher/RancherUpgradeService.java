@@ -79,14 +79,14 @@ public class RancherUpgradeService implements NodeStepPlugin {
 	})
 	private String environment;
 
-	@PluginProperty(title = "Service Labels", description = "JSON object of \"variable\": \"value\"")
+	@PluginProperty(title = "Remove Service Labels", description = "JSON object of labels (quoted)")
 	@RenderingOptions({
 			@RenderingOption(key = DISPLAY_TYPE_KEY, value = "CODE"),
 			@RenderingOption(key = CODE_SYNTAX_MODE, value = "json"),
 	})
 	private String removeLabels;
 
-	@PluginProperty(title = "Container OS Environment", description = "JSON object of \"variable\": \"value\"")
+	@PluginProperty(title = "Remove OS Environment", description = "JSON array of variables (quoted)")
 	@RenderingOptions({
 			@RenderingOption(key = DISPLAY_TYPE_KEY, value = "CODE"),
 			@RenderingOption(key = CODE_SYNTAX_MODE, value = "json"),
