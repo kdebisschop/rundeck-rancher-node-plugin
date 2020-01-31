@@ -15,18 +15,12 @@
  */
 package com.bioraft.rundeck.rancher;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import static com.bioraft.rundeck.rancher.RancherShared.ensureStringIsJsonArray;
-import static com.bioraft.rundeck.rancher.RancherShared.ensureStringIsJsonObject;
-
+import static com.bioraft.rundeck.rancher.RancherShared.*;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
 
 /**
  * Tests for Nexus3OptionProvider.
@@ -54,6 +48,16 @@ public class RancherSharedTest {
         assertEquals(wrapObject(string), ensureStringIsJsonObject("{" + string + "}"));
 
         assertEquals(wrapObject(string), ensureStringIsJsonObject(" \n \t\r{" + string + "} \n\t"));
+    }
+
+    @Test
+    public void testMountSplitter() {
+        testOneMount("/mount/point", "/local", "");
+        testOneMount("/mount", "/local/storage",":ro");
+    }
+
+    private void testOneMount(String mountPoint, String local, String options) {
+        assertEquals(mountPoint, mountPoint(local + ":" + mountPoint + options));
     }
 
     private String wrapArray(String string) {

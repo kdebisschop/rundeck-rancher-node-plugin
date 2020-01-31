@@ -1,0 +1,60 @@
+{
+    "type": "launchConfig",
+    "dataVolumes": [
+        "/source1:/mountpoint1"
+    ],
+    "environment": {
+        "DOMAIN": "mysite.development.example.com",
+        "ENVIRONMENT": "development",
+        "SITE": "mysite"
+    },
+    "healthCheck": {
+        "type": "instanceHealthCheck",
+        "healthyThreshold": 2,
+        "initializingTimeout": 9000,
+        "interval": 300,
+        "port": 80,
+        "reinitializingTimeout": 9000,
+        "responseTimeout": 300,
+        "strategy": "none",
+        "unhealthyThreshold": 3
+    },
+    "imageUuid": "docker:nexus.example.com/frontend:v1.2.3_1",
+    "instanceTriggeredStop": "stop",
+    "kind": "container",
+    "labels": {
+        "com.example.group": "dev",
+        "com.example.service": "frontend",
+        "com.example.site": "mysite",
+        "io.rancher.service.hash": "0123456789012345678901234567890123456789",
+        "com.example.description": "mysite.development.example.com"
+    },
+    "logConfig": {
+        "type": "logConfig"
+    },
+    "networkMode": "managed",
+    "ports": [
+        "57372:80/tcp"
+    ],
+    "privileged": false,
+    "publishAllPorts": false,
+    "readOnly": false,
+    "runInit": false,
+    "secrets": [
+        {
+            "type": "secretReference",
+            "gid": "0",
+            "mode": "444",
+            "name": "",
+            "secretId": "1se1",
+            "uid": "0"
+        }
+    ],
+    "startOnCreate": true,
+    "stdinOpen": false,
+    "system": false,
+    "tty": false,
+    "version": "00000000-0000-0000-0000-000000000000",
+    "vcpu": 1,
+    "drainTimeoutMs": 0
+}
