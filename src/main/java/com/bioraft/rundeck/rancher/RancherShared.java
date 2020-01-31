@@ -133,6 +133,10 @@ public class RancherShared {
                 + secretId + "\", \"uid\": \"0\"}";
     }
 
+    public static String mountPoint(String mountSpec) {
+        return mountSpec.replaceFirst("[^:]+:", "").replaceFirst(":.*", "");
+    }
+
     public enum ErrorCause implements FailureReason {
         InvalidConfiguration,
         InvalidJson,

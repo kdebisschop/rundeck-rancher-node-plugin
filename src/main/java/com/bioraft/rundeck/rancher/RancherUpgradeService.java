@@ -15,10 +15,6 @@
  */
 package com.bioraft.rundeck.rancher;
 
-import java.io.IOException;
-import java.util.Iterator;
-import java.util.Map;
-
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
@@ -32,22 +28,18 @@ import com.dtolabs.rundeck.plugins.descriptions.RenderingOption;
 import com.dtolabs.rundeck.plugins.descriptions.RenderingOptions;
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import com.google.common.collect.ImmutableMap;
-import okhttp3.Credentials;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
+import okhttp3.*;
 import okhttp3.Request.Builder;
-import okhttp3.RequestBody;
-import okhttp3.Response;
 
-import static com.bioraft.rundeck.rancher.RancherShared.*;
+import java.io.IOException;
+import java.util.Map;
+
+import static com.bioraft.rundeck.rancher.RancherShared.ErrorCause;
+import static com.bioraft.rundeck.rancher.RancherShared.loadStoragePathData;
 import static com.dtolabs.rundeck.core.Constants.DEBUG_LEVEL;
 import static com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants.CODE_SYNTAX_MODE;
 import static com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants.DISPLAY_TYPE_KEY;
@@ -65,6 +57,20 @@ public class RancherUpgradeService implements NodeStepPlugin {
 	@PluginProperty(title = "Docker Image", description = "The fully specified Docker image to upgrade to.")
 	private String dockerImage;
 
+	@PluginProperty(title = "Container OS Environment", description = "JSON object of \"variable\": \"value\"")
+	@RenderingOptions({
+			@RenderingOption(key = DISPLAY_TYPE_KEY, value = "CODE"),
+			@RenderingOption(key = CODE_SYNTAX_MODE, value = "json"),
+	})
+	private String environment;
+
+	@PluginProperty(title = "Data Volumes", description = "JSON array Lines of \"source:mountPoint\"")
+	@RenderingOptions({
+			@RenderingOption(key = DISPLAY_TYPE_KEY, value = "CODE"),
+			@RenderingOption(key = CODE_SYNTAX_MODE, value = "json"),
+	})
+	private String dataVolumes;
+
 	@PluginProperty(title = "Service Labels", description = "JSON object of \"variable\": \"value\"")
 	@RenderingOptions({
 			@RenderingOption(key = DISPLAY_TYPE_KEY, value = "CODE"),
@@ -72,12 +78,19 @@ public class RancherUpgradeService implements NodeStepPlugin {
 	})
 	private String labels;
 
-	@PluginProperty(title = "Container OS Environment", description = "JSON object of \"variable\": \"value\"")
+	@PluginProperty(title = "Remove OS Environment", description = "JSON array of variables (quoted)")
 	@RenderingOptions({
 			@RenderingOption(key = DISPLAY_TYPE_KEY, value = "CODE"),
 			@RenderingOption(key = CODE_SYNTAX_MODE, value = "json"),
 	})
-	private String environment;
+	private String removeEnvironment;
+
+	@PluginProperty(title = "Remove Service Labels", description = "JSON array of labels (quoted)")
+	@RenderingOptions({
+			@RenderingOption(key = DISPLAY_TYPE_KEY, value = "CODE"),
+			@RenderingOption(key = CODE_SYNTAX_MODE, value = "json"),
+	})
+	private String removeLabels;
 
 	@PluginProperty(title = "Secrets", description = "Keys for secrets separated by commas or spaces")
 	private String secrets;
@@ -90,6 +103,10 @@ public class RancherUpgradeService implements NodeStepPlugin {
 	private PluginLogger logger;
 
 	OkHttpClient client;
+
+	JsonNode launchConfig;
+
+	ObjectNode launchConfigObject;
 
 	private final static int intervalMillis = 2000;
 
@@ -131,25 +148,31 @@ public class RancherUpgradeService implements NodeStepPlugin {
 		if (upgradeUrl.length() == 0) {
 			throw new NodeStepException("No upgrade URL found", ErrorCause.MissingUpgradeURL, node.getNodename());
 		}
-		JsonNode launchConfig = service.path("upgrade").path("inServiceStrategy").path("launchConfig");
+
+		launchConfig = service.path("upgrade").path("inServiceStrategy").path("launchConfig");
 		if (launchConfig.isMissingNode() || launchConfig.isNull()) {
 			launchConfig = service.path("launchConfig");
 		}
 		if (launchConfig.isMissingNode() || launchConfig.isNull()) {
 			throw new NodeStepException("No upgrade data found", ErrorCause.NoUpgradeData, node.getNodename());
 		}
-		ObjectNode launchConfigObject = (ObjectNode) launchConfig;
+		launchConfigObject = (ObjectNode) launchConfig;
+
+		RancherLaunchConfig rancherLaunchConfig = new RancherLaunchConfig(nodeName, launchConfigObject, logger);
 
 		if ((dockerImage == null || dockerImage.length() == 0)  && cfg.containsKey("dockerImage")) {
 			dockerImage = (String) cfg.get("dockerImage");
 		}
 		if (dockerImage != null && dockerImage.length() > 0) {
-			logger.log(Constants.INFO_LEVEL, "Setting image to " + dockerImage);
-			launchConfigObject.put("imageUuid","docker:" + dockerImage);
+			rancherLaunchConfig.setDockerImage(dockerImage);
 		}
 
 		if ((environment == null || environment.isEmpty()) && cfg.containsKey("environment")) {
 			environment = (String) cfg.get("environment");
+		}
+
+		if ((dataVolumes == null || dataVolumes.isEmpty()) && cfg.containsKey("dataVolumes")) {
+			dataVolumes = (String) cfg.get("dataVolumes");
 		}
 
 		if ((labels == null || labels.isEmpty()) && cfg.containsKey("labels")) {
@@ -160,6 +183,21 @@ public class RancherUpgradeService implements NodeStepPlugin {
 			secrets = (String) cfg.get("secrets");
 		}
 
+		if (cfg.containsKey("removeEnvironment")) {
+			removeEnvironment = (String) cfg.get("removeEnvironment");
+		}
+
+		if (cfg.containsKey(removeLabels)) {
+			removeLabels = (String) cfg.get("removeLabels");
+		}
+
+		rancherLaunchConfig.setEnvironment(environment);
+		rancherLaunchConfig.setDataVolumes(dataVolumes);
+		rancherLaunchConfig.setLabels(labels);
+		rancherLaunchConfig.setSecrets(secrets);
+		rancherLaunchConfig.removeEnvironment(removeEnvironment);
+		rancherLaunchConfig.removeLabels(removeLabels);
+
 		if (cfg.containsKey("startFirst")) {
 			startFirst = cfg.get("startFirst").equals("true");
 		}
@@ -167,101 +205,11 @@ public class RancherUpgradeService implements NodeStepPlugin {
 			startFirst = true;
 		}
 
-		this.setEnvVars(launchConfigObject);
-		this.setLabels(launchConfigObject);
-		this.addSecrets(launchConfigObject);
-
-		doUpgrade(accessKey, secretKey, upgradeUrl, launchConfigObject);
+		doUpgrade(accessKey, secretKey, upgradeUrl, rancherLaunchConfig.update());
 
 		logger.log(Constants.INFO_LEVEL, "Upgraded " + nodeName);
 	}
 
-	/**
-	 * Adds/modifies environment variables.
-	 * 
-	 * @param launchConfig JsonNode representing the target upgraded configuration.
-	 */
-	private void setEnvVars(ObjectNode launchConfig) throws NodeStepException {
-		if (environment != null && environment.length() > 0) {
-			ObjectNode envObject = (ObjectNode) launchConfig.get("environment");
-			ObjectMapper objectMapper = new ObjectMapper();
-			try {
-				JsonNode map = objectMapper.readTree(ensureStringIsJsonObject(environment));
-				Iterator<Map.Entry<String, JsonNode>> iterator = map.fields();
-				while (iterator.hasNext()) {
-					Map.Entry<String, JsonNode> entry = iterator.next();
-					String key = entry.getKey();
-					String value = entry.getValue().asText();
-					envObject.put(key, value);
-					logger.log(Constants.INFO_LEVEL, "Setting environment variable " + key + " to " + value);
-				}
-			} catch (JsonProcessingException e) {
-				throw new NodeStepException("Invalid Labels JSON", ErrorCause.InvalidJson, this.nodeName);
-			}
-		}
-	}
-
-	/**
-	 * Adds/modifies labels based on the step's labels setting.
-	 * 
-	 * @param launchConfig JsonNode representing the target upgraded configuration.
-	 */
-	private void setLabels(ObjectNode launchConfig) throws NodeStepException {
-		if (labels != null && labels.length() > 0) {
-			ObjectNode labelObject = (ObjectNode) launchConfig.get("labels");
-			ObjectMapper objectMapper = new ObjectMapper();
-			try {
-				JsonNode map = objectMapper.readTree(ensureStringIsJsonObject(labels));
-				Iterator<Map.Entry<String, JsonNode>> iterator = map.fields();
-				while (iterator.hasNext()) {
-					Map.Entry<String, JsonNode> entry = iterator.next();
-					String key = entry.getKey();
-					String value = entry.getValue().asText();
-					labelObject.put(key, value);
-					logger.log(Constants.INFO_LEVEL, "Setting environment variable " + key + " to " + value);
-				}
-			} catch (JsonProcessingException e) {
-				throw new NodeStepException("Invalid Labels JSON", ErrorCause.InvalidJson, this.nodeName);
-			}
-		}
-	}
-
-	/**
-	 * Add or replace secrets.
-	 * 
-	 * @param launchConfig JsonNode representing the target upgraded configuration.
-	 * @throws NodeStepException when secret JSON is malformed (passed up from {@see this.buildSecret()}.
-	 */
-	private void addSecrets(ObjectNode launchConfig) throws NodeStepException {
-		if (secrets != null && secrets.length() > 0) {
-			// Copy existing secrets, skipping any that we want to add or overwrite.
-			Iterator<JsonNode> elements = null;
-			boolean hasOldSecrets = false;
-			if (launchConfig.has("secrets") && !launchConfig.get("secrets").isNull()) {
-				hasOldSecrets = true;
-				elements = launchConfig.get("secrets").elements();
-			}
-
-			ArrayNode secretsArray = launchConfig.putArray("secrets");
-
-			// Copy existing secrets, skipping any that we want to add or overwrite.
-			if (hasOldSecrets && elements != null) {
-				while (elements.hasNext()) {
-					JsonNode secretObject = elements.next();
-					// @todo this only works for a single secret added.
-					if (!secretObject.path("secretId").asText().equals(secrets)) {
-						secretsArray.add(secretObject);
-					}
-				}
-			}
-
-			// Add in the new or replacement secrets specified in the step.
-			for (String secretId : secrets.split("/[,; ]+/")) {
-				secretsArray.add(buildSecret(secretId, this.nodeName));
-				logger.log(Constants.INFO_LEVEL, "Adding secret map to " + secretId);
-			}
-		}
-	}
 
 	/**
 	 * Performs the actual upgrade.

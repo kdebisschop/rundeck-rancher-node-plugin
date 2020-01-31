@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.nio.file.Files;
 import java.util.Base64;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -91,12 +92,12 @@ public final class RancherWebSocketListener extends WebSocketListener {
 
 	@Override
 	public void onMessage(WebSocket webSocket, String text) {
-		logDockerStream(webSocket, Bytes.concat(nextHeader, Base64.getDecoder().decode(text)));
+		logDockerStream(Bytes.concat(nextHeader, Base64.getDecoder().decode(text)));
 	}
 
 	@Override
 	public void onMessage(WebSocket webSocket, ByteString bytes) {
-		logDockerStream(webSocket, Bytes.concat(nextHeader, bytes.toByteArray()));
+		logDockerStream(Bytes.concat(nextHeader, bytes.toByteArray()));
 	}
 
 	@Override
@@ -115,14 +116,14 @@ public final class RancherWebSocketListener extends WebSocketListener {
 	 * Runs the overall job step: sends output to a listener; saves PID and exit
 	 * status to a temporary file.
 	 *
-	 * @param url
-	 * @param accessKey
-	 * @param secretKey
-	 * @param command
-	 * @param listener
-	 * @param temp
-	 * @throws IOException
-	 * @throws InterruptedException
+	 * @param url The URL the listener should use to launch the job.
+	 * @param accessKey Rancher credentials AccessKey.
+	 * @param secretKey Rancher credentials SecretKey.
+	 * @param command The command to run.
+	 * @param listener Log listener from Rundeck.
+	 * @param temp A unique temporary file for this job (".pid" will be appended to the file name)
+	 * @throws IOException When job fails.
+	 * @throws InterruptedException When job is interrupted.
 	 */
 	public static void runJob(String url, String accessKey, String secretKey, String[] command,
 			ExecutionListener listener, String temp, int timeout) throws IOException, InterruptedException {
@@ -139,13 +140,13 @@ public final class RancherWebSocketListener extends WebSocketListener {
 	/**
 	 * Get contents of a file from server.
 	 *
-	 * @param url
-	 * @param accessKey
-	 * @param secretKey
-	 * @param logger
-	 * @param file
-	 * @throws IOException
-	 * @throws InterruptedException
+	 * @param url The URL the listener should use to launch the job.
+	 * @param accessKey Rancher credentials AccessKey.
+	 * @param secretKey Rancher credentials SecretKey.
+	 * @param logger A StringBuilder to which status is appended.
+	 * @param file The file to fetch/cat from the remote container.
+	 * @throws IOException When job fails.
+	 * @throws InterruptedException When job is interrupted.
 	 */
 	public static void getFile(String url, String accessKey, String secretKey, StringBuilder logger, String file)
 			throws IOException, InterruptedException {
@@ -156,13 +157,13 @@ public final class RancherWebSocketListener extends WebSocketListener {
 	/**
 	 * Put text onto a container as the specified file.
 	 *
-	 * @param url
-	 * @param accessKey
-	 * @param secretKey
-	 * @param logger
-	 * @param file
-	 * @throws IOException
-	 * @throws InterruptedException
+	 * @param url The URL the listener should use to launch the job.
+	 * @param accessKey Rancher credentials AccessKey.
+	 * @param secretKey Rancher credentials SecretKey.
+	 * @param file The file to copy.
+	 * @param destination Location of target file on specified container.
+	 * @throws IOException When job fails.
+	 * @throws InterruptedException When job is interrupted.
 	 */
 	public static void putFile(String url, String accessKey, String secretKey, File file, String destination)
 			throws IOException, InterruptedException {
@@ -174,13 +175,13 @@ public final class RancherWebSocketListener extends WebSocketListener {
 	 * 
 	 * Exit status is read after completion from the job's PID file in /tmp.
 	 *
-	 * @param url
-	 * @param accessKey
-	 * @param secretKey
-	 * @param listener
-	 * @param command
-	 * @throws IOException
-	 * @throws InterruptedException
+	 * @param url The URL the listener should use to launch the job.
+	 * @param accessKey Rancher credentials AccessKey.
+	 * @param secretKey Rancher credentials SecretKey.
+	 * @param listener Log listener from Rundeck.
+	 * @param command The command to run.
+	 * @throws IOException When job fails.
+	 * @throws InterruptedException When job is interrupted.
 	 */
 	private void runJob(String url, String accessKey, String secretKey, ExecutionListener listener, String[] command,
 			int timeout) throws IOException, InterruptedException {
@@ -198,7 +199,7 @@ public final class RancherWebSocketListener extends WebSocketListener {
 		// the message stream so we can pick out lines that are part of STDERR.
 		output = new StringBuilder();
 
-		client.newWebSocket(this.buildRequest(false, true), this);
+		client.newWebSocket(this.buildRequest(true), this);
 
 		// Trigger shutdown of the dispatcher's executor so process exits cleanly.
 		client.dispatcher().executorService().shutdown();
@@ -211,14 +212,14 @@ public final class RancherWebSocketListener extends WebSocketListener {
 	 * 
 	 * This is used to get the contents of the PID file when the job ends and
 	 * determine the exit status.
-	 * 
-	 * @param url
-	 * @param accessKey
-	 * @param secretKey
-	 * @param output
-	 * @param command
-	 * @throws IOException
-	 * @throws InterruptedException
+	 *
+	 * @param url The URL the listener should use to launch the job.
+	 * @param accessKey Rancher credentials AccessKey.
+	 * @param secretKey Rancher credentials SecretKey.
+	 * @param output An output buffer used to accumulate results of the command.
+	 * @param command The command to run.
+	 * @throws IOException When job fails.
+	 * @throws InterruptedException When job is interrupted.
 	 */
 	private void run(String url, String accessKey, String secretKey, StringBuilder output, String[] command)
 			throws IOException, InterruptedException {
@@ -231,7 +232,7 @@ public final class RancherWebSocketListener extends WebSocketListener {
 		this.output = output;
 		this.nextHeader = new byte[0];
 
-		client.newWebSocket(this.buildRequest(false, true), this);
+		client.newWebSocket(this.buildRequest(true), this);
 
 		// Trigger shutdown of the dispatcher's executor so process exits cleanly.
 		client.dispatcher().executorService().shutdown();
@@ -243,14 +244,14 @@ public final class RancherWebSocketListener extends WebSocketListener {
 	 * 
 	 * Neither STDIN or STDOUT are attached. The file is sent as a payload with the
 	 * post command.
-	 * 
-	 * @param url
-	 * @param accessKey
-	 * @param secretKey
-	 * @param input
-	 * @param file
-	 * @throws IOException
-	 * @throws InterruptedException
+	 *
+	 * @param url The URL the listener should use to launch the job.
+	 * @param accessKey Rancher credentials AccessKey.
+	 * @param secretKey Rancher credentials SecretKey.
+	 * @param input The file to put on the target container.
+	 * @param file The name of the destination file on the target container.
+	 * @throws IOException When job fails.
+	 * @throws InterruptedException When job is interrupted.
 	 */
 	private void put(String url, String accessKey, String secretKey, File input, String file)
 			throws IOException, InterruptedException {
@@ -283,10 +284,18 @@ public final class RancherWebSocketListener extends WebSocketListener {
 		this.runCommand(command, 1);
 	}
 
+	/**
+	 * Runs a command on a remote container.
+	 *
+	 * @param command The command to run.
+	 * @param timeout Time to wait before closing unresponsive connections.
+	 * @throws IOException When job fails.
+	 * @throws InterruptedException When job is interrupted.
+	 */
 	private void runCommand(String[] command, int timeout) throws IOException, InterruptedException {
 		client = new OkHttpClient.Builder().build();
 		this.commandList = command;
-		client.newWebSocket(this.buildRequest(false, false), this);
+		client.newWebSocket(this.buildRequest(false), this);
 		client.dispatcher().executorService().shutdown();
 		if (timeout > 0) {
 			client.dispatcher().executorService().awaitTermination(timeout, TimeUnit.MILLISECONDS);
@@ -296,11 +305,12 @@ public final class RancherWebSocketListener extends WebSocketListener {
 	/**
 	 * Builds the web socket request.
 	 *
-	 * @return
-	 * @throws IOException
+	 * @param attachStdout Should Rancher attach a TTY to StdOut?
+	 * @return HTTP Request Object
+	 * @throws IOException When connection to the container fails.
 	 */
-	private Request buildRequest(boolean attachStdin, boolean attachStdout) throws IOException {
-		JsonNode token = this.getToken(attachStdin, attachStdout);
+	private Request buildRequest(boolean attachStdout) throws IOException {
+		JsonNode token = this.getToken(attachStdout);
 		String path = token.path("url").asText() + "?token=" + token.path("token").asText();
 		return new Request.Builder().url(path).build();
 	}
@@ -308,20 +318,25 @@ public final class RancherWebSocketListener extends WebSocketListener {
 	/**
 	 * Gets the web socket end point and connection token for an execute request.
 	 *
-	 * @return
-	 * @throws IOException
+	 * @param attachStdout Should Rancher attach a TTY to StdOut?
+	 * @return WebSocket connection token.
+	 * @throws IOException When connection to the container fails.
 	 */
-	private JsonNode getToken(boolean attachStdin, boolean attachStdout) throws IOException {
-		HttpUrl.Builder urlBuilder = HttpUrl.parse(url).newBuilder();
+	private JsonNode getToken(boolean attachStdout) throws IOException {
+		HttpUrl.Builder urlBuilder = Objects.requireNonNull(HttpUrl.parse(url)).newBuilder();
 		String path = urlBuilder.build().toString();
-		String content = this.apiData(attachStdin, attachStdout);
+		String content = this.apiData(attachStdout);
 		try {
 			RequestBody body = RequestBody.create(MediaType.parse("application/json"), content);
 			Request request = new Request.Builder().url(path).post(body)
 					.addHeader("Authorization", Credentials.basic(accessKey, secretKey)).build();
 			Response response = client.newCall(request).execute();
 			ObjectMapper mapper = new ObjectMapper();
-			return mapper.readTree(response.body().string());
+			if (response.body() != null) {
+				return mapper.readTree(response.body().string());
+			} else {
+				throw new IOException("WebSocket response was null");
+			}
 		} catch (IOException e) {
 			System.out.println(e.getMessage());
 			throw e;
@@ -331,16 +346,17 @@ public final class RancherWebSocketListener extends WebSocketListener {
 	/**
 	 * Builds JSON string of API data.
 	 *
-	 * @return
-	 * @throws JsonMappingException
-	 * @throws JsonProcessingException
+	 * @param attachStdout Should Rancher attach a TTY to StdOut?
+	 * @return API Token to use in rancher connections.
+	 * @throws JsonMappingException When JSON is invalid.
+	 * @throws JsonProcessingException When JSON is invalid.
 	 */
-	private String apiData(boolean attachStdin, boolean attachStdout)
+	private String apiData(boolean attachStdout)
 			throws JsonMappingException, JsonProcessingException {
 		ObjectMapper mapper = new ObjectMapper();
 		JsonNode root = mapper.readTree("{}");
 		((ObjectNode) root).put("tty", false);
-		((ObjectNode) root).put("attachStdin", attachStdin);
+		((ObjectNode) root).put("attachStdin", false);
 		((ObjectNode) root).put("attachStdout", attachStdout);
 		ArrayNode command = ((ObjectNode) root).putArray("command");
 		for (String atom : commandList) {
@@ -351,11 +367,10 @@ public final class RancherWebSocketListener extends WebSocketListener {
 
 	/**
 	 * Logs a Docker stream passed through Rancher.
-	 * 
-	 * @param webSocket
-	 * @param bytes
+	 *
+	 * @param bytes A byte array to send to RunDeck with its log level.
 	 */
-	public void logDockerStream(WebSocket webSocket, byte[] bytes) {
+	public void logDockerStream(byte[] bytes) {
 		LogMessage message;
 		BufferedReader stringReader;
 		try {
@@ -367,7 +382,7 @@ public final class RancherWebSocketListener extends WebSocketListener {
 				// function.
 				if (listener != null) {
 					stringReader = new BufferedReader(new StringReader(new String(message.content.array())));
-					log(currentOutputChannel, stringReader);
+					log(stringReader);
 				} else {
 					output.append(new String(message.content.array()));
 				}
@@ -384,11 +399,10 @@ public final class RancherWebSocketListener extends WebSocketListener {
 	 * Read a Buffer line by line and send lines prefixed by STDERR_TOK to the
 	 * WARN_LEVEL channel of RunDeck's console.
 	 *
-	 * @param level
-	 * @param message
-	 * @throws IOException
+	 * @param stringReader A buffer of text to be sent to the logger.
+	 * @throws IOException when reading buffer fails.
 	 */
-	private void log(int level, BufferedReader stringReader) throws IOException {
+	private void log(BufferedReader stringReader) throws IOException {
 		String line;
 		while ((line = stringReader.readLine()) != null) {
 			if (line.startsWith(STDERR_TOK)) {
@@ -407,8 +421,8 @@ public final class RancherWebSocketListener extends WebSocketListener {
 	 * Buffer lines sent to RunDeck's logger so they are sent together and not
 	 * line-by-line.
 	 *
-	 * @param level
-	 * @param message
+	 * @param level Log level.
+	 * @param message The message to log.
 	 */
 	private void log(int level, String message) {
 		if (listener != null) {
