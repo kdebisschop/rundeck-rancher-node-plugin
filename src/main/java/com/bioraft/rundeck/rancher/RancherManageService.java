@@ -96,7 +96,6 @@ public class RancherManageService implements NodeStepPlugin {
 
 		JsonNode service = apiGet(accessKey, secretKey, attributes.get("services")).path("data").path(0);
 		String serviceState = service.path("state").asText();
-		String url = "";
 		String body = "";
 		switch (action) {
 			case "activate":
@@ -113,7 +112,7 @@ public class RancherManageService implements NodeStepPlugin {
 				}
 				break;
 		}
-		url = service.path("actions").path(action).asText();
+		String url = service.path("actions").path(action).asText();
 		if (url.length() == 0) {
 			throw new NodeStepException("No upgrade URL found", ErrorCause.MissingUpgradeURL, node.getNodename());
 		}
