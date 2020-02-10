@@ -19,7 +19,7 @@ ext.pluginClassNames='com.bioraft.rundeck.rancher.RancherNodeExecutorPlugin,' +
 'com.bioraft.rundeck.rancher.RancherResourceModelSourceFactory,' +
 'com.bioraft.rundeck.rancher.RancherUpgradeService,' +
 'com.bioraft.rundeck.rancher.RancherNewStack,' +
-'com.bioraft.rundeck.rancher.RancherAddService' +
+'com.bioraft.rundeck.rancher.RancherAddService,' +
 'com.bioraft.rundeck.rancher.RancherManageService'
 ext.pluginName = 'Rancher Node Plugins'
 ext.pluginDescription = 'Interface with Rancher environments'
