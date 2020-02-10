@@ -22,13 +22,14 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.plugins.PluginLogger;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
-import com.dtolabs.rundeck.plugins.descriptions.*;
+import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
+import com.dtolabs.rundeck.plugins.descriptions.PluginProperty;
+import com.dtolabs.rundeck.plugins.descriptions.SelectValues;
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.collect.ImmutableMap;
 import okhttp3.*;
 import okhttp3.Request.Builder;
 
@@ -37,9 +38,6 @@ import java.util.Map;
 
 import static com.bioraft.rundeck.rancher.RancherShared.ErrorCause;
 import static com.bioraft.rundeck.rancher.RancherShared.loadStoragePathData;
-import static com.dtolabs.rundeck.core.Constants.DEBUG_LEVEL;
-import static com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants.CODE_SYNTAX_MODE;
-import static com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants.DISPLAY_TYPE_KEY;
 
 /**
  * Workflow Node Step Plug-in to upgrade a service associated with a node.
@@ -57,15 +55,7 @@ public class RancherManageService implements NodeStepPlugin {
 
 	private String nodeName;
 
-	private PluginLogger logger;
-
 	OkHttpClient client;
-
-	JsonNode launchConfig;
-
-	ObjectNode launchConfigObject;
-
-	private final static int intervalMillis = 2000;
 
 	public RancherManageService() {
 		client = new OkHttpClient();
@@ -81,7 +71,7 @@ public class RancherManageService implements NodeStepPlugin {
 
 		this.nodeName = node.getNodename();
 		ExecutionContext executionContext = ctx.getExecutionContext();
-		this.logger = ctx.getLogger();
+		PluginLogger logger = ctx.getLogger();
 
 		Map<String, String> attributes = node.getAttributes();
 
