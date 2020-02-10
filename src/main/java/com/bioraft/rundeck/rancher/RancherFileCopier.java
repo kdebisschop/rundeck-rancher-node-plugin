@@ -141,13 +141,13 @@ public class RancherFileCopier implements FileCopier, Describable {
         Framework framework = context.getFramework();
         String project = context.getFrameworkProject();
         String searchPath = framework.getProjectProperty(project, PROJ_RANCHER_CLI_PATH);
-        if (searchPath == null) {
+        if ((searchPath == null || searchPath.equals("")) && framework.hasProperty(FMWK_RANCHER_CLI_PATH)) {
             searchPath = framework.getProperty(FMWK_RANCHER_CLI_PATH);
         }
 
         try {
             String result;
-            if (searchPath.equals("")) {
+            if (searchPath == null || searchPath.equals("")) {
                 result = copyViaApi(context, nodeAttributes, accessKey, secretKey, localTempfile, remotefile);
             } else {
                 result = copyViaCli(context, nodeAttributes, accessKey, secretKey, localTempfile, remotefile, searchPath);
