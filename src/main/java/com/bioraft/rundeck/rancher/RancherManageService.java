@@ -104,36 +104,21 @@ public class RancherManageService implements NodeStepPlugin {
 					String message = "Service state is already active";
 					throw new NodeStepException(message, ErrorCause.ServiceNotRunning, node.getNodename());
 				}
-
-				url = service.path("actions").path("upgrade").asText();
-				if (url.length() == 0) {
-					throw new NodeStepException("No upgrade URL found", ErrorCause.MissingUpgradeURL, node.getNodename());
-				}
-
+				break;
 			case "deactivate":
-				if (!serviceState.equals("active")) {
-					String message = "Service state must be running, was " + serviceState;
-					throw new NodeStepException(message, ErrorCause.ServiceNotRunning, node.getNodename());
-				}
-
-				url = service.path("actions").path("deactivate").asText();
-				if (url.length() == 0) {
-					throw new NodeStepException("No upgrade URL found", ErrorCause.MissingUpgradeURL, node.getNodename());
-				}
-
 			case "restart":
 				if (!serviceState.equals("active")) {
 					String message = "Service state must be running, was " + serviceState;
 					throw new NodeStepException(message, ErrorCause.ServiceNotRunning, node.getNodename());
 				}
-
-				url = service.path("actions").path("deactivate").asText();
-				if (url.length() == 0) {
-					throw new NodeStepException("No upgrade URL found", ErrorCause.MissingUpgradeURL, node.getNodename());
-				}
+				break;
+		}
+		url = service.path("actions").path(action).asText();
+		if (url.length() == 0) {
+			throw new NodeStepException("No upgrade URL found", ErrorCause.MissingUpgradeURL, node.getNodename());
 		}
 
-		apiPost(accessKey, secretKey, url, body);
+		JsonNode newService = apiPost(accessKey, secretKey, url, body);
 
 		logger.log(Constants.INFO_LEVEL, "Upgraded " + nodeName);
 	}
