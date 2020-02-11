@@ -38,6 +38,7 @@ import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
+import com.dtolabs.rundeck.core.execution.ExecutionLogger;
 import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
 import com.dtolabs.rundeck.core.execution.service.FileCopier;
@@ -135,8 +136,10 @@ public class RancherFileCopier implements FileCopier, Describable {
                 : BaseFileCopier.writeTempFile(context, scriptfile, input, script);
 
         // Copy the file over
-        System.out.println("copying file: '" + localTempfile.getAbsolutePath() + "' to: '" + node.getNodename() + ":"
-                + remotefile + "'");
+        ExecutionLogger logger = context.getExecutionLogger();
+        String absPath = localTempfile.getAbsolutePath();
+        String message = "copying file: '" + absPath + "' to: '" + node.getNodename() + ":" + remotefile + "'";
+        logger.log(DEBUG_LEVEL, message);
 
         Framework framework = context.getFramework();
         String project = context.getFrameworkProject();
