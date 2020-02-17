@@ -67,11 +67,17 @@ public class RancherResourceModelSource implements ResourceModelSource {
 	// Regular expression for stacks to include in result set.
 	private String stackInclude;
 
+	// Create nodes from services, containers, or both.
+	private String nodeSourceType;
+
 	// The set of nodes that will be returned by getNodes().
 	private NodeSetImpl iNodeEntries;
 
 	// Track how many times each stack_service has been seen.
 	Map<String, Integer> seen;
+
+	// Map stack IDs to names once to reduce API calls.
+	HashMap<String, String> stackNames = new HashMap<>();
 
 	/**
 	 * The required object constructor.
@@ -100,6 +106,7 @@ public class RancherResourceModelSource implements ResourceModelSource {
 		attributeInclude = configuration.getProperty(RancherShared.CONFIG_LABELS_INCLUDE_ATTRIBUTES, "");
 		tagInclude = configuration.getProperty(RancherShared.CONFIG_LABELS_INCLUDE_TAGS, "");
 		stackInclude = configuration.getProperty(RancherShared.CONFIG_STACK_FILTER, "");
+		nodeSourceType = configuration.getProperty(RancherShared.CONFIG_NODE_TYPES, "Container");
 	}
 
 	@SuppressWarnings("RedundantThrows")
@@ -130,43 +137,80 @@ public class RancherResourceModelSource implements ResourceModelSource {
 			Framework.logger.log(Level.WARN, e.getMessage());
 		}
 
-		try {
-			data = this.getContainers(environmentId);
-		} catch (IOException e) {
-			Framework.logger.log(Level.WARN, e.getMessage());
-			return;
-		}
-
-		for (JsonNode node : data) {
-			if (isExclude(RancherShared.CONFIG_HANDLE_STOPPED) && !node.get("state").asText().equals("running")) {
-				continue;
+		if (nodeSourceType.equals("Container") || nodeSourceType.equals("Both")) {
+			try {
+				data = this.getContainers(environmentId);
+			} catch (IOException e) {
+				Framework.logger.log(Level.WARN, e.getMessage());
+				return;
 			}
-
-			int count = 0;
-			if (node.hasNonNull("labels")) {
-				count = countProcessableByLabel(node.get("labels"));
-				if (count == 0) {
+			for (JsonNode node : data) {
+				if (isExclude(RancherShared.CONFIG_HANDLE_STOPPED) && !node.get("state").asText().equals("running")) {
 					continue;
 				}
+
+				int count = 0;
+				if (node.hasNonNull("labels")) {
+					count = countProcessableByLabel(node.get("labels"));
+					if (count == 0) {
+						continue;
+					}
+				}
+
+				RancherNode rancherNode = new RancherNode();
+				try {
+					NodeEntryImpl nodeEntry = rancherNode.getNodeEntry(environmentName, node);
+
+					if (count != 0) {
+						nodeEntry.setAttribute("seen", Integer.toString(count));
+					}
+
+					if (nodeEntry.getNodename() == null) {
+						String name = node.get("name").asText() + "(" + node.get("id").asText() + ")";
+						String self = node.get("links").get("self").asText();
+						Framework.logger.log(Level.WARN, name + " " + node.get("accountId").asText() + " " + self);
+					} else {
+						iNodeEntries.putNode(nodeEntry);
+					}
+				} catch (IllegalArgumentException | NullPointerException e) {
+					Framework.logger.log(Level.WARN, e.getMessage());
+				}
 			}
 
-			RancherNode rancherNode = new RancherNode();
-			try {
-				NodeEntryImpl nodeEntry = rancherNode.getNodeEntry(environmentName, node);
-
-				if (count != 0) {
-					nodeEntry.setAttribute("seen", Integer.toString(count));
+			if (nodeSourceType.equals("Service") || nodeSourceType.equals("Both")) {
+				stackNames = new HashMap<>();
+				try {
+					data = this.getStacks(environmentId);
+				} catch (IOException e) {
+					Framework.logger.log(Level.WARN, e.getMessage());
+					return;
+				}
+				for (JsonNode node : data) {
+					stackNames.put(node.get("id").asText(), node.get("name").asText());
 				}
 
-				if (nodeEntry.getNodename() == null) {
-					String name = node.get("name").asText() + "(" + node.get("id").asText() + ")";
-					String self = node.get("links").get("self").asText();
-					Framework.logger.log(Level.WARN, name + " " + node.get("accountId").asText() + " " + self);
-				} else {
-					iNodeEntries.putNode(nodeEntry);
+				try {
+					data = this.getServices(environmentId);
+				} catch (IOException e) {
+					Framework.logger.log(Level.WARN, e.getMessage());
+					return;
 				}
-			} catch (IllegalArgumentException | NullPointerException e) {
-				Framework.logger.log(Level.WARN, e.getMessage());
+				for (JsonNode node : data) {
+					RancherNode rancherNode = new RancherNode();
+					try {
+						NodeEntryImpl nodeEntry = rancherNode.getNodeFromService(environmentName, node);
+
+						if (nodeEntry.getNodename() == null) {
+							String name = node.get("name").asText() + "(" + node.get("id").asText() + ")";
+							String self = node.get("links").get("self").asText();
+							Framework.logger.log(Level.WARN, name + " " + node.get("accountId").asText() + " " + self);
+						} else {
+							iNodeEntries.putNode(nodeEntry);
+						}
+					} catch (IllegalArgumentException | NullPointerException e) {
+						Framework.logger.log(Level.WARN, e.getMessage());
+					}
+				}
 			}
 		}
 	}
@@ -202,6 +246,10 @@ public class RancherResourceModelSource implements ResourceModelSource {
 		}
 
 		return 1;
+	}
+
+	private String getStackName(JsonNode node) {
+		return stackNames.get(node.get("stackId").asText());
 	}
 
 	/**
@@ -259,6 +307,28 @@ public class RancherResourceModelSource implements ResourceModelSource {
 				this.processLabels(node);
 			}
 
+			return nodeEntry;
+		}
+
+		public NodeEntryImpl getNodeFromService(String environmentName, JsonNode node) throws NullPointerException {
+			String name = environmentName + "_" + getStackName(node) + "-" + node.get("name").asText();
+			nodeEntry.setNodename(name);
+			nodeEntry.setUsername("root");
+			nodeEntry.setAttribute("id", node.path("id").asText());
+			nodeEntry.setAttribute("file-copier", RancherShared.RANCHER_SERVICE_PROVIDER);
+			nodeEntry.setAttribute("node-executor", RancherShared.RANCHER_SERVICE_PROVIDER);
+			nodeEntry.setAttribute("type", node.path("kind").asText());
+			nodeEntry.setAttribute("state", node.path("state").asText());
+			nodeEntry.setAttribute("account", node.path("accountId").asText());
+			nodeEntry.setAttribute("environment", environmentName);
+			nodeEntry.setAttribute("image", node.path("launchConfig").path("imageUuid").asText());
+			// Storage path for Rancher API access key.
+			String accessKeyPath = RancherShared.CONFIG_ACCESSKEY_PATH;
+			nodeEntry.setAttribute(accessKeyPath, configuration.getProperty(accessKeyPath));
+			// Storage path for Rancher API secret key.
+			String secretKeyPath = RancherShared.CONFIG_SECRETKEY_PATH;
+			nodeEntry.setAttribute(secretKeyPath, configuration.getProperty(secretKeyPath));
+			nodeEntry.setAttribute("self", node.path("links").path("self").asText());
 			return nodeEntry;
 		}
 
@@ -393,10 +463,45 @@ public class RancherResourceModelSource implements ResourceModelSource {
 	 * @throws IOException when API request fails.
 	 */
 	private ArrayList<JsonNode> getContainers(String environment) throws IOException {
+		String path = url + "/projects/" + environment + "/containers";
+		return getCollection(path);
+	}
+
+	/**
+	 * Makes the underlying API call to get the list of nodes for the environment.
+	 *
+	 * @param environment The Rancher accountId for the environment.
+	 * @return An array of JsonNodes representing the containers in the environment.
+	 * @throws IOException when API request fails.
+	 */
+	private ArrayList<JsonNode> getServices(String environment) throws IOException {
+		String path = url + "/projects/" + environment + "/services";
+		return getCollection(path);
+	}
+
+	/**
+	 * Makes the underlying API call to get the list of nodes for the environment.
+	 *
+	 * @param environment The Rancher accountId for the environment.
+	 * @return An array of JsonNodes representing the containers in the environment.
+	 * @throws IOException when API request fails.
+	 */
+	private ArrayList<JsonNode> getStacks(String environment) throws IOException {
+		String path = url + "/projects/" + environment + "/stacks";
+		return getCollection(path);
+	}
+
+	/**
+	 * Makes the underlying API call to get the list of nodes for the environment.
+	 *
+	 * @param path The Rancher accountId for the environment.
+	 * @return An array of JsonNodes representing the containers in the environment.
+	 * @throws IOException when API request fails.
+	 */
+	private ArrayList<JsonNode> getCollection(String path) throws IOException {
 		ObjectMapper objectMapper = new ObjectMapper();
 		String accessKey = configuration.getProperty(RancherShared.CONFIG_ACCESSKEY);
 		String secretKey = configuration.getProperty(RancherShared.CONFIG_SECRETKEY);
-		String path = url + "/projects/" + environment + "/containers";
 
 		ArrayList<JsonNode> data = new ArrayList<>();
 		while (!path.equals("null")) {

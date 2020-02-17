@@ -133,7 +133,7 @@ public class RancherFileCopier implements FileCopier, Describable {
         }
         // write to a local temp file or use the input file
         final File localTempfile = (null != scriptfile) ? scriptfile
-                : BaseFileCopier.writeTempFile(context, scriptfile, input, script);
+                : BaseFileCopier.writeTempFile(context, null, input, script);
 
         // Copy the file over
         ExecutionLogger logger = context.getExecutionLogger();

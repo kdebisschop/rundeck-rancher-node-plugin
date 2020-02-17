@@ -72,6 +72,9 @@ public class RancherResourceModelSourceFactory implements ResourceModelSourceFac
         builder.property(PropertyUtil.string(CONFIG_STACK_FILTER, "Stack Filter",
                 "A regular expression for stacks to be included", true, "^.*$"));
 
+        builder.property(PropertyUtil.select(CONFIG_NODE_TYPES, "Node Types",
+                "Node source/type", true, "Container", Arrays.asList("Container", "Service", "Both")));
+
         builder.property(PropertyUtil.bool(CONFIG_LIMIT_ONE_CONTAINER, "Limit to One Container",
                 "Only run on one container for each service", true, "false"));
 
