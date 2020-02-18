@@ -67,9 +67,6 @@ public class RancherResourceModelSource implements ResourceModelSource {
 	// Regular expression for stacks to include in result set.
 	private String stackInclude;
 
-	// Create nodes from services, containers, or both.
-	private String nodeSourceType;
-
 	// The set of nodes that will be returned by getNodes().
 	private NodeSetImpl iNodeEntries;
 
@@ -106,7 +103,6 @@ public class RancherResourceModelSource implements ResourceModelSource {
 		attributeInclude = configuration.getProperty(RancherShared.CONFIG_LABELS_INCLUDE_ATTRIBUTES, "");
 		tagInclude = configuration.getProperty(RancherShared.CONFIG_LABELS_INCLUDE_TAGS, "");
 		stackInclude = configuration.getProperty(RancherShared.CONFIG_STACK_FILTER, "");
-		nodeSourceType = configuration.getProperty(RancherShared.CONFIG_NODE_TYPES, "Container");
 	}
 
 	@SuppressWarnings("RedundantThrows")
@@ -137,7 +133,7 @@ public class RancherResourceModelSource implements ResourceModelSource {
 			Framework.logger.log(Level.WARN, e.getMessage());
 		}
 
-		if (nodeSourceType.equals("Container") || nodeSourceType.equals("Both")) {
+		if (configuration.getProperty(RancherShared.CONFIG_NODE_TYPE_INCLUDE_CONTAINER, "true").equals("true")) {
 			try {
 				data = this.getContainers(environmentId);
 			} catch (IOException e) {
@@ -178,7 +174,7 @@ public class RancherResourceModelSource implements ResourceModelSource {
 			}
 		}
 
-		if (nodeSourceType.equals("Service") || nodeSourceType.equals("Both")) {
+		if (configuration.getProperty(RancherShared.CONFIG_NODE_TYPE_INCLUDE_SERVICE, "false").equals("true")) {
 			try {
 				stackNames = new HashMap<>();
 				for (JsonNode node : this.getStacks(environmentId)) {
@@ -227,7 +223,7 @@ public class RancherResourceModelSource implements ResourceModelSource {
 		}
 
 		if (labels.hasNonNull("io.rancher.stack_service.name")) {
-			if (configuration.getProperty(RancherShared.CONFIG_LIMIT_ONE_CONTAINER) != null) {
+			if (configuration.getProperty(RancherShared.CONFIG_LIMIT_ONE_CONTAINER, "false").equals("true")) {
 				String stackService = labels.get("io.rancher.stack_service.name").textValue();
 				if (stackService != null && seen.containsKey(stackService)) {
 					return 0;

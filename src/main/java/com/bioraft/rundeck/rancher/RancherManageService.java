@@ -45,7 +45,7 @@ import static com.bioraft.rundeck.rancher.RancherShared.loadStoragePathData;
  * @since 2019-12-20
  */
 @Plugin(name = RancherShared.RANCHER_SERVICE_CONTROLLER, service = ServiceNameConstants.WorkflowNodeStep)
-@PluginDescription(title = "Rancher - Manage Service", description = "Strart/Stop/Restart/Delete the service associated with the selected node.")
+@PluginDescription(title = "Rancher - Manage Service", description = "Start/Stop/Restart the service associated with the selected node.")
 public class RancherManageService implements NodeStepPlugin {
 
 	@PluginProperty(title = "Action", description = "What action is desired", required = true, defaultValue = "true")

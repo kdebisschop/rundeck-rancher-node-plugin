@@ -51,7 +51,8 @@ public class RancherShared {
     public static final String CONFIG_ACCESSKEY = "access-key";
     public static final String CONFIG_SECRETKEY = "secret-key";
     public static final String CONFIG_STACK_FILTER = "stack-filter";
-    public static final String CONFIG_NODE_TYPES = "node-types";
+    public static final String CONFIG_NODE_TYPE_INCLUDE_SERVICE = "node-type-include-service";
+    public static final String CONFIG_NODE_TYPE_INCLUDE_CONTAINER = "node-type-include-container";
     public static final String CONFIG_LIMIT_ONE_CONTAINER = "limit-to-one";
     public static final String CONFIG_HANDLE_STOPPED = "exclude-include-restrict-stopped";
     public static final String CONFIG_HANDLE_SYSTEM = "io-rancher-container-system";

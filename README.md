@@ -16,6 +16,7 @@ Features:
 
  - Project can include multiple environments.
  - API keys are not exposed in configuration.
+ - Nodes can be created from containers, services, or both.
  - Can limit selected containers to one per service.
  - Can exclude stopped containers.
  - Can exclude global containers.
@@ -75,7 +76,7 @@ Environment ID most correspond to an existing Rancher environment. Stack name mu
 
 ### Add Service
 
-Ads a service to an existing stack. Required inputs:
+Adds a service to an existing stack. Required inputs:
 
  - Environment ID (string)
  - Stack Name (string)
@@ -88,6 +89,10 @@ Optional inputs:
  - OS environment
  - Service labels
  - Secrets
+
+### Manage Service
+
+Activate, deactivate, or restart a service.
 
 ## Road Map
 
