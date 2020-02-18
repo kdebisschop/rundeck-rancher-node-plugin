@@ -86,6 +86,7 @@ public class RancherUpgradeServiceTest {
 	public void setUp() {
 		Map<String, String> map = Stream
 				.of(new String[][]{{"services", "https://rancher.example.com/v2-beta/"},
+						{"type", "container"},
 						{RancherShared.CONFIG_ACCESSKEY_PATH, "keys/rancher/access.key"},
 						{RancherShared.CONFIG_SECRETKEY_PATH, "keys/rancher/secret.key"},})
 				.collect(Collectors.toMap(data -> data[0], data -> data[1]));

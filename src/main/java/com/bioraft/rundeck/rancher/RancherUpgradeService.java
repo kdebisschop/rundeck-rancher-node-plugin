@@ -137,7 +137,12 @@ public class RancherUpgradeService implements NodeStepPlugin {
 			throw new NodeStepException("Could not get secret storage path", e, ErrorCause.IOException, this.nodeName);
 		}
 
-		JsonNode service = apiGet(accessKey, secretKey, attributes.get("services")).path("data").path(0);
+		JsonNode service;
+		if (attributes.get("type").equals("container")) {
+			service = apiGet(accessKey, secretKey, attributes.get("services")).path("data").path(0);
+		} else {
+			service = apiGet(accessKey, secretKey, attributes.get("self"));
+		}
 		String serviceState = service.path("state").asText();
 		if (!serviceState.equals("active")) {
 			String message = "Service state must be running, was " + serviceState;

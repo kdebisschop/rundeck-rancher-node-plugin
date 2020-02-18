@@ -43,7 +43,9 @@ import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
 import com.dtolabs.rundeck.core.execution.service.FileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
 import com.dtolabs.rundeck.core.storage.ResourceMeta;
@@ -111,6 +113,12 @@ public class RancherFileCopier implements FileCopier, Describable {
         String remotefile;
 
         Map<String, String> nodeAttributes = node.getAttributes();
+
+        if (nodeAttributes.get("type").equals("service")) {
+            String message = "File copier is not currently supported for services";
+            throw new FileCopierException(message, FileCopyFailureReason.UnsupportedNodeType);
+        }
+
         String accessKey;
         String secretKey;
         try {
@@ -133,7 +141,7 @@ public class RancherFileCopier implements FileCopier, Describable {
         }
         // write to a local temp file or use the input file
         final File localTempfile = (null != scriptfile) ? scriptfile
-                : BaseFileCopier.writeTempFile(context, scriptfile, input, script);
+                : BaseFileCopier.writeTempFile(context, null, input, script);
 
         // Copy the file over
         ExecutionLogger logger = context.getExecutionLogger();
@@ -223,7 +231,8 @@ public class RancherFileCopier implements FileCopier, Describable {
         InterruptedException,
         ConnectionFailure,
         AuthenticationFailure,
-        UnsupportedOperatingSystem
+        UnsupportedOperatingSystem,
+        UnsupportedNodeType,
     }
 
     private static class StreamGobbler implements Runnable {
