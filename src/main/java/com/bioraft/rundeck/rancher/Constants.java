@@ -1,6 +1,10 @@
 package com.bioraft.rundeck.rancher;
 
 public class Constants {
+    private Constants() {
+        throw new IllegalStateException("Utility class");
+    }
+
     public static final int INTERVAL_MILLIS = 2000;
 
     public static final String STATE = "state";
