@@ -38,6 +38,7 @@ import okhttp3.Request.Builder;
 import java.io.IOException;
 import java.util.Map;
 
+import static com.bioraft.rundeck.rancher.Constants.*;
 import static com.bioraft.rundeck.rancher.RancherShared.ErrorCause;
 import static com.bioraft.rundeck.rancher.RancherShared.loadStoragePathData;
 import static com.dtolabs.rundeck.core.Constants.DEBUG_LEVEL;
@@ -60,35 +61,35 @@ public class RancherUpgradeService implements NodeStepPlugin {
 	@PluginProperty(title = "Container OS Environment", description = "JSON object of \"variable\": \"value\"")
 	@RenderingOptions({
 			@RenderingOption(key = DISPLAY_TYPE_KEY, value = "CODE"),
-			@RenderingOption(key = CODE_SYNTAX_MODE, value = "json"),
+			@RenderingOption(key = CODE_SYNTAX_MODE, value = JSON),
 	})
 	private String environment;
 
 	@PluginProperty(title = "Data Volumes", description = "JSON array Lines of \"source:mountPoint\"")
 	@RenderingOptions({
 			@RenderingOption(key = DISPLAY_TYPE_KEY, value = "CODE"),
-			@RenderingOption(key = CODE_SYNTAX_MODE, value = "json"),
+			@RenderingOption(key = CODE_SYNTAX_MODE, value = JSON),
 	})
 	private String dataVolumes;
 
 	@PluginProperty(title = "Service Labels", description = "JSON object of \"variable\": \"value\"")
 	@RenderingOptions({
 			@RenderingOption(key = DISPLAY_TYPE_KEY, value = "CODE"),
-			@RenderingOption(key = CODE_SYNTAX_MODE, value = "json"),
+			@RenderingOption(key = CODE_SYNTAX_MODE, value = JSON),
 	})
 	private String labels;
 
 	@PluginProperty(title = "Remove OS Environment", description = "JSON array of variables (quoted)")
 	@RenderingOptions({
 			@RenderingOption(key = DISPLAY_TYPE_KEY, value = "CODE"),
-			@RenderingOption(key = CODE_SYNTAX_MODE, value = "json"),
+			@RenderingOption(key = CODE_SYNTAX_MODE, value = JSON),
 	})
 	private String removeEnvironment;
 
 	@PluginProperty(title = "Remove Service Labels", description = "JSON array of labels (quoted)")
 	@RenderingOptions({
 			@RenderingOption(key = DISPLAY_TYPE_KEY, value = "CODE"),
-			@RenderingOption(key = CODE_SYNTAX_MODE, value = "json"),
+			@RenderingOption(key = CODE_SYNTAX_MODE, value = JSON),
 	})
 	private String removeLabels;
 
@@ -108,7 +109,7 @@ public class RancherUpgradeService implements NodeStepPlugin {
 
 	ObjectNode launchConfigObject;
 
-	private final static int intervalMillis = 2000;
+	private int sleepInterval = 5000;
 
 	public RancherUpgradeService() {
 		client = new OkHttpClient();
@@ -143,8 +144,8 @@ public class RancherUpgradeService implements NodeStepPlugin {
 		} else {
 			service = apiGet(accessKey, secretKey, attributes.get("self"));
 		}
-		String serviceState = service.path("state").asText();
-		if (!serviceState.equals("active")) {
+		String serviceState = service.path(STATE).asText();
+		if (!serviceState.equals(STATE_ACTIVE)) {
 			String message = "Service state must be running, was " + serviceState;
 			throw new NodeStepException(message, ErrorCause.ServiceNotRunning, node.getNodename());
 		}
@@ -154,9 +155,9 @@ public class RancherUpgradeService implements NodeStepPlugin {
 			throw new NodeStepException("No upgrade URL found", ErrorCause.MissingUpgradeURL, node.getNodename());
 		}
 
-		launchConfig = service.path("upgrade").path("inServiceStrategy").path("launchConfig");
+		launchConfig = service.path("upgrade").path("inServiceStrategy").path(LAUNCH_CONFIG);
 		if (launchConfig.isMissingNode() || launchConfig.isNull()) {
-			launchConfig = service.path("launchConfig");
+			launchConfig = service.path(LAUNCH_CONFIG);
 		}
 		if (launchConfig.isMissingNode() || launchConfig.isNull()) {
 			throw new NodeStepException("No upgrade data found", ErrorCause.NoUpgradeData, node.getNodename());
@@ -192,7 +193,7 @@ public class RancherUpgradeService implements NodeStepPlugin {
 			removeEnvironment = (String) cfg.get("removeEnvironment");
 		}
 
-		if (cfg.containsKey(removeLabels)) {
+		if (cfg.containsKey("removeLabels")) {
 			removeLabels = (String) cfg.get("removeLabels");
 		}
 
@@ -203,13 +204,15 @@ public class RancherUpgradeService implements NodeStepPlugin {
 		rancherLaunchConfig.removeEnvironment(removeEnvironment);
 		rancherLaunchConfig.removeLabels(removeLabels);
 
-		if (cfg.containsKey("startFirst")) {
-			startFirst = cfg.get("startFirst").equals("true");
-		}
-		if (startFirst == null) {
-			startFirst = true;
+		if (cfg.containsKey(START_FIRST)) {
+			startFirst = cfg.get(START_FIRST).equals("true");
+		} else {
+			startFirst = startFirst != null && startFirst;
 		}
 
+		if (cfg.containsKey("sleepInterval")) {
+			sleepInterval = Integer.parseInt(cfg.get("sleepInterval").toString());
+		}
 		doUpgrade(accessKey, secretKey, upgradeUrl, rancherLaunchConfig.update());
 
 		logger.log(Constants.INFO_LEVEL, "Upgraded " + nodeName);
@@ -230,9 +233,9 @@ public class RancherUpgradeService implements NodeStepPlugin {
 		Map<String, Object> inServiceStrategy = ImmutableMap.<String, Object>builder() //
 				.put("type", "inServiceUpgradeStrategy") //
 				.put("batchSize", 1) //
-				.put("intervalMillis", intervalMillis) //
-				.put("startFirst", startFirst) //
-				.put("launchConfig", launchConfig) //
+				.put("intervalMillis", INTERVAL_MILLIS) //
+				.put(START_FIRST, startFirst) //
+				.put(LAUNCH_CONFIG, launchConfig) //
 				.build();
 		ObjectMapper mapper = new ObjectMapper();
 		String upgrade;
@@ -244,36 +247,38 @@ public class RancherUpgradeService implements NodeStepPlugin {
 		}
 
 		JsonNode service = apiPost(accessKey, secretKey, upgradeUrl, upgrade);
-		String state = service.get("state").asText();
-		String link = service.get("links").get("self").asText();
+		String state = service.get(STATE).asText();
+		String link = service.get(LINKS).get("self").asText();
 
 		// Poll until upgraded.
 		logger.log(Constants.INFO_LEVEL, "Upgrading " + service.path("name"));
-		while (!state.equals("upgraded")) {
+		while (!state.equals(STATE_UPGRADED)) {
 			try {
-				Thread.sleep(5000);
+				Thread.sleep(sleepInterval);
 			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
 				throw new NodeStepException(e, ErrorCause.Interrupted, nodeName);
 			}
 			service = apiGet(accessKey, secretKey, link);
-			state = service.get("state").asText();
-			link = service.get("links").get("self").asText();
+			state = service.get(STATE).asText();
+			link = service.get(LINKS).get("self").asText();
 		}
 
 		// Finish the upgrade.
 		logger.log(Constants.INFO_LEVEL, "Finishing upgrade " + service.path("name"));
 		link = service.get("actions").get("finishupgrade").asText();
 		service = apiPost(accessKey, secretKey, link, "");
-		state = service.get("state").asText();
-		link = service.get("links").get("self").asText();
-		while (!state.equals("active")) {
+		state = service.get(STATE).asText();
+		link = service.get(LINKS).get("self").asText();
+		while (!state.equals(STATE_ACTIVE)) {
 			service = apiGet(accessKey, secretKey, link);
-			state = service.get("state").asText();
-			link = service.get("links").get("self").asText();
-			if (!state.equals("active")) {
+			state = service.get(STATE).asText();
+			link = service.get(LINKS).get("self").asText();
+			if (!state.equals(STATE_ACTIVE)) {
 				try {
-					Thread.sleep(5000);
+					Thread.sleep(sleepInterval);
 				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
 					throw new NodeStepException(e, ErrorCause.Interrupted, nodeName);
 				}
 			}

@@ -34,10 +34,12 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.rundeck.storage.api.Resource;
 
 import java.io.*;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.bioraft.rundeck.rancher.Constants.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
@@ -74,7 +76,6 @@ public class RancherUpgradeServiceTest {
 	@Mock
 	StorageTree storageTree;
 
-	@Mock
 	Map<String, Object> cfg;
 
 	@Mock
@@ -84,6 +85,7 @@ public class RancherUpgradeServiceTest {
 
 	@Before
 	public void setUp() {
+		cfg = new HashMap<>();
 		Map<String, String> map = Stream
 				.of(new String[][]{{"services", "https://rancher.example.com/v2-beta/"},
 						{"type", "container"},
@@ -97,11 +99,11 @@ public class RancherUpgradeServiceTest {
 		when(storageTree.getResource(anyString())).thenReturn(treeResource);
 		when(treeResource.getContents()).thenReturn(contents);
 		when(client.newCall(any())).thenReturn(call);
-		cfg.put("startFirst", "true");
 	}
 
 	@Test
 	public void processOneNode() throws NodeStepException, IOException {
+		cfg.put("sleepInterval", "1");
 		Response response0 = response(getResourceStream("services.json"));
 
 		String text = readFromInputStream(getResourceStream("service.json"));
@@ -123,6 +125,88 @@ public class RancherUpgradeServiceTest {
 		upgrade.executeNodeStep(ctx, cfg, node);
 
 		verify(call, times(4)).execute();
+	}
+
+	@Test
+	public void processOneNodeAndCfg() throws NodeStepException, IOException {
+		cfg.put(START_FIRST, "false");
+		cfg.put("dockerImage", "ubuntu/xenial:16.04");
+		cfg.put("environment", "{}");
+		cfg.put("labels", "{}");
+		cfg.put("removeEnvironment", "[]");
+		cfg.put("removeLabels", "[]");
+		cfg.put("dataVolumes", "[]");
+		cfg.put("secrets", "1se1");
+		cfg.put("sleepInterval", "1");
+		Response response0 = response(getResourceStream("services.json"));
+
+		String text = readFromInputStream(getResourceStream("service.json"));
+		ObjectMapper mapper = new ObjectMapper();
+		ObjectNode json1 = (ObjectNode) mapper.readTree(text);
+
+		json1.put("state", "transtitioning");
+		Response response1 = response(json1.toPrettyString());
+
+		json1.put("state", "upgraded");
+		Response response2 = response(json1.toPrettyString());
+
+		json1.put("state", "active");
+		Response response3 = response(json1.toPrettyString());
+
+		when(call.execute()).thenReturn(response0, response1, response2, response3);
+
+		upgrade = new RancherUpgradeService(client);
+		upgrade.executeNodeStep(ctx, cfg, node);
+
+		verify(call, times(4)).execute();
+	}
+
+	@Test
+	public void processNode() throws NodeStepException, IOException {
+		cfg.put(START_FIRST, "false");
+		cfg.put("sleepInterval", "1");
+		Response response0 = response(getResourceStream("services.json"));
+
+		String text = readFromInputStream(getResourceStream("service.json"));
+		ObjectMapper mapper = new ObjectMapper();
+		ObjectNode json1 = (ObjectNode) mapper.readTree(text);
+
+		json1.put("state", "transtitioning");
+		Response response1 = response(json1.toPrettyString());
+		Response response1a = response(json1.toPrettyString());
+
+		json1.put("state", "upgraded");
+		Response response2 = response(json1.toPrettyString());
+		Response response2a = response(json1.toPrettyString());
+		Response response2b = response(json1.toPrettyString());
+
+		json1.put("state", "active");
+		Response response3 = response(json1.toPrettyString());
+
+		when(call.execute()).thenReturn(response0, response1, response1a, response2, response2a, response2b, response3);
+
+		upgrade = new RancherUpgradeService(client);
+		upgrade.executeNodeStep(ctx, cfg, node);
+
+		verify(call, times(7)).execute();
+	}
+
+	@Test(expected = NodeStepException.class)
+	public void testStopped()  throws NodeStepException, IOException {
+		String text = readFromInputStream(getResourceStream("service.json"));
+		ObjectMapper mapper = new ObjectMapper();
+
+		ObjectNode json1 = (ObjectNode) mapper.readTree(text);
+		json1.put("state", "upgraded");
+
+		Response response0 = response(json1.toPrettyString());
+
+		when(call.execute()).thenReturn(response0);
+
+		upgrade = new RancherUpgradeService(client);
+		upgrade.executeNodeStep(ctx, cfg, node);
+
+		verify(call, times(1)).execute();
 	}
 
 	private Response response(InputStream stream) throws IOException {
