@@ -15,12 +15,20 @@
  */
 package com.bioraft.rundeck.rancher;
 
+import com.dtolabs.rundeck.core.execution.ExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
+
 import static com.bioraft.rundeck.rancher.RancherShared.*;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Tests for Nexus3OptionProvider.
@@ -30,6 +38,15 @@ import static org.junit.Assert.assertEquals;
  */
 @RunWith(MockitoJUnitRunner.class)
 public class RancherSharedTest {
+
+    @Test(expected = InvocationTargetException.class)
+    public void testConstructorIsPrivate() throws NoSuchMethodException, IllegalAccessException, InstantiationException, InvocationTargetException {
+        Constructor<RancherShared> constructor = RancherShared.class.getDeclaredConstructor();
+        assertTrue(Modifier.isPrivate(constructor.getModifiers()));
+        constructor.setAccessible(true);
+        constructor.newInstance();
+    }
+
     @Test
     public void testArrayWrapping() {
         String string = "\"a\": 1";
@@ -58,6 +75,20 @@ public class RancherSharedTest {
 
     private void testOneMount(String mountPoint, String local, String options) {
         assertEquals(mountPoint, mountPoint(local + ":" + mountPoint + options));
+    }
+
+    @Test(expected = IOException.class)
+    public void testLoadStorageException() throws IOException {
+        ExecutionContext ctx = null;
+        String path = null;
+        RancherShared.loadStoragePathData(ctx, path);
+    }
+
+    @Test(expected = NodeStepException.class)
+    public void testIllegalSecretNameThrowsException() throws NodeStepException {
+        String secretId = "secret\"id";
+        String nodeName = "node";
+        buildSecret(secretId, nodeName);
     }
 
     private String wrapArray(String string) {
