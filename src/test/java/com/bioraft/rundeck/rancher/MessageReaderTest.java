@@ -1,6 +1,5 @@
 package com.bioraft.rundeck.rancher;
 
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -26,7 +25,7 @@ public class MessageReaderTest {
     }
 
     @Test
-    public void testEmpty() throws NodeStepException, IOException {
+    public void testEmpty() throws IOException {
         byte[] input = "bbbbbbbb".getBytes();
         input[0] = 0x01;
         input[1] = 0x00;
@@ -44,11 +43,11 @@ public class MessageReaderTest {
         assertEquals("STDOUT", logMessage.stream().toString());
         assertEquals(0, logMessage.content().remaining());
 
-        assertNull(logMessage = subject.nextMessage());
+        assertNull(subject.nextMessage());
     }
 
     @Test
-    public void testStdout() throws NodeStepException, IOException {
+    public void testStdout() throws IOException {
         byte[] input = "bbbbbbbbbbbb".getBytes();
         input[0] = 0x01;
         input[1] = 0x00;
@@ -77,7 +76,7 @@ public class MessageReaderTest {
     }
 
     @Test
-    public void testAll() throws NodeStepException, IOException {
+    public void testAll() throws IOException {
         byte[] input = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb".getBytes();
         input[0] = 0x01;
         input[1] = 0x00;
@@ -140,7 +139,7 @@ public class MessageReaderTest {
     }
 
     @Test
-    public void testSplit() throws NodeStepException, IOException {
+    public void testSplit() throws IOException {
         byte[] input = "bbbbbbbbbbbbbbbbbbbbbb".getBytes();
         input[0] = 0x01;
         input[1] = 0x00;
