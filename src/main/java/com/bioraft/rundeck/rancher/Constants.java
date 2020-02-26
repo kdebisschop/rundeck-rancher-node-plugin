@@ -1,7 +1,7 @@
 package com.bioraft.rundeck.rancher;
 
 public class Constants {
-    private Constants() {
+    public Constants() {
         throw new IllegalStateException("Utility class");
     }
 

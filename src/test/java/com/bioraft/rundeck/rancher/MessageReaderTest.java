@@ -1,7 +1,5 @@
 package com.bioraft.rundeck.rancher;
 
-import static org.junit.Assert.*;
-
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import org.junit.Test;
 
@@ -9,11 +7,10 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
-import java.nio.charset.CharsetEncoder;
 import java.nio.charset.StandardCharsets;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 public class MessageReaderTest {
     @Test
