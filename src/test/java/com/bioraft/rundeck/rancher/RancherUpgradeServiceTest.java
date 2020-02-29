@@ -34,10 +34,13 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.rundeck.storage.api.Resource;
 
 import java.io.*;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.bioraft.rundeck.rancher.Constants.*;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
@@ -74,7 +77,6 @@ public class RancherUpgradeServiceTest {
 	@Mock
 	StorageTree storageTree;
 
-	@Mock
 	Map<String, Object> cfg;
 
 	@Mock
@@ -82,10 +84,14 @@ public class RancherUpgradeServiceTest {
 
 	RancherUpgradeService upgrade;
 
+	Map<String, String> map;
+
 	@Before
 	public void setUp() {
-		Map<String, String> map = Stream
+		cfg = new HashMap<>();
+		map = Stream
 				.of(new String[][]{{"services", "https://rancher.example.com/v2-beta/"},
+						{"self", "https://rancher.example.com/v2-beta/"},
 						{"type", "container"},
 						{RancherShared.CONFIG_ACCESSKEY_PATH, "keys/rancher/access.key"},
 						{RancherShared.CONFIG_SECRETKEY_PATH, "keys/rancher/secret.key"},})
@@ -97,16 +103,35 @@ public class RancherUpgradeServiceTest {
 		when(storageTree.getResource(anyString())).thenReturn(treeResource);
 		when(treeResource.getContents()).thenReturn(contents);
 		when(client.newCall(any())).thenReturn(call);
-		cfg.put("startFirst", "true");
 	}
 
 	@Test
-	public void processOneNode() throws NodeStepException, IOException {
-		Response response0 = response(getResourceStream("services.json"));
+	public void validateDefaultConstructor() {
+		RancherUpgradeService subject = new RancherUpgradeService();
+		assertNotNull(subject);
+	}
+
+	@Test(expected = NodeStepException.class)
+	public void throwExceptionForNullKey() throws NodeStepException {
+		RancherUpgradeService subject = new RancherUpgradeService(client);
+		map.remove(RancherShared.CONFIG_ACCESSKEY_PATH);
+		when(node.getAttributes()).thenReturn(map);
+		subject.executeNodeStep(ctx, cfg, node);
+		assertNotNull(subject);
+	}
+
+	@Test
+	public void selectForService() throws NodeStepException, IOException {
+		map.put("type", "service");
+		when(node.getAttributes()).thenReturn(map);
+
+		cfg.put("sleepInterval", "1");
 
 		String text = readFromInputStream(getResourceStream("service.json"));
 		ObjectMapper mapper = new ObjectMapper();
 		ObjectNode json1 = (ObjectNode) mapper.readTree(text);
+
+		Response response0 = response(json1.toPrettyString());
 
 		json1.put("state", "transtitioning");
 		Response response1 = response(json1.toPrettyString());
@@ -123,6 +148,146 @@ public class RancherUpgradeServiceTest {
 		upgrade.executeNodeStep(ctx, cfg, node);
 
 		verify(call, times(4)).execute();
+	}
+
+	@Test(expected = NodeStepException.class)
+	public void missingUpgradeUrl() throws NodeStepException, IOException {
+		map.put("type", "service");
+		when(node.getAttributes()).thenReturn(map);
+
+		cfg.put("sleepInterval", "1");
+
+		String text = readFromInputStream(getResourceStream("service.json"));
+		ObjectMapper mapper = new ObjectMapper();
+		ObjectNode json1 = (ObjectNode) mapper.readTree(text);
+		ObjectNode actions = (ObjectNode) json1.path("actions");
+		actions.put("upgrade", "");
+
+		Response response0 = response(json1.toPrettyString());
+
+		json1.put("state", "transtitioning");
+		Response response1 = response(json1.toPrettyString());
+
+		json1.put("state", "upgraded");
+		Response response2 = response(json1.toPrettyString());
+
+		json1.put("state", "active");
+		Response response3 = response(json1.toPrettyString());
+
+		when(call.execute()).thenReturn(response0, response1, response2, response3);
+
+		upgrade = new RancherUpgradeService(client);
+		upgrade.executeNodeStep(ctx, cfg, node);
+
+		verify(call, times(4)).execute();
+	}
+
+	@Test
+	public void processOneNode() throws NodeStepException, IOException {
+		cfg.put("sleepInterval", "1");
+		Response response0 = response(getResourceStream("services.json"));
+
+		String text = readFromInputStream(getResourceStream("service.json"));
+		ObjectMapper mapper = new ObjectMapper();
+		ObjectNode json1 = (ObjectNode) mapper.readTree(text);
+
+		json1.put("state", "transitioning");
+		Response response1 = response(json1.toPrettyString());
+
+		json1.put("state", "upgraded");
+		Response response2 = response(json1.toPrettyString());
+
+		json1.put("state", "active");
+		Response response3 = response(json1.toPrettyString());
+
+		when(call.execute()).thenReturn(response0, response1, response2, response3);
+
+		upgrade = new RancherUpgradeService(client);
+		upgrade.executeNodeStep(ctx, cfg, node);
+
+		verify(call, times(4)).execute();
+	}
+
+	@Test
+	public void processOneNodeAndCfg() throws NodeStepException, IOException {
+		cfg.put(START_FIRST, "false");
+		cfg.put("dockerImage", "ubuntu/xenial:16.04");
+		cfg.put("environment", "{}");
+		cfg.put("labels", "{}");
+		cfg.put("removeEnvironment", "[]");
+		cfg.put("removeLabels", "[]");
+		cfg.put("dataVolumes", "[]");
+		cfg.put("secrets", "1se1");
+		cfg.put("sleepInterval", "1");
+		Response response0 = response(getResourceStream("services.json"));
+
+		String text = readFromInputStream(getResourceStream("service.json"));
+		ObjectMapper mapper = new ObjectMapper();
+		ObjectNode json1 = (ObjectNode) mapper.readTree(text);
+
+		json1.put("state", "transitioning");
+		Response response1 = response(json1.toPrettyString());
+
+		json1.put("state", "upgraded");
+		Response response2 = response(json1.toPrettyString());
+
+		json1.put("state", "active");
+		Response response3 = response(json1.toPrettyString());
+
+		when(call.execute()).thenReturn(response0, response1, response2, response3);
+
+		upgrade = new RancherUpgradeService(client);
+		upgrade.executeNodeStep(ctx, cfg, node);
+
+		verify(call, times(4)).execute();
+	}
+
+	@Test
+	public void processNode() throws NodeStepException, IOException {
+		cfg.put(START_FIRST, "false");
+		cfg.put("sleepInterval", "1");
+		Response response0 = response(getResourceStream("services.json"));
+
+		String text = readFromInputStream(getResourceStream("service.json"));
+		ObjectMapper mapper = new ObjectMapper();
+		ObjectNode json1 = (ObjectNode) mapper.readTree(text);
+
+		json1.put("state", "transitioning");
+		Response response1 = response(json1.toPrettyString());
+		Response response1a = response(json1.toPrettyString());
+
+		json1.put("state", "upgraded");
+		Response response2 = response(json1.toPrettyString());
+		Response response2a = response(json1.toPrettyString());
+		Response response2b = response(json1.toPrettyString());
+
+		json1.put("state", "active");
+		Response response3 = response(json1.toPrettyString());
+
+		when(call.execute()).thenReturn(response0, response1, response1a, response2, response2a, response2b, response3);
+
+		upgrade = new RancherUpgradeService(client);
+		upgrade.executeNodeStep(ctx, cfg, node);
+
+		verify(call, times(7)).execute();
+	}
+
+	@Test(expected = NodeStepException.class)
+	public void testStopped()  throws NodeStepException, IOException {
+		String text = readFromInputStream(getResourceStream("service.json"));
+		ObjectMapper mapper = new ObjectMapper();
+
+		ObjectNode json1 = (ObjectNode) mapper.readTree(text);
+		json1.put("state", "upgraded");
+
+		Response response0 = response(json1.toPrettyString());
+
+		when(call.execute()).thenReturn(response0);
+
+		upgrade = new RancherUpgradeService(client);
+		upgrade.executeNodeStep(ctx, cfg, node);
+
+		verify(call, times(1)).execute();
 	}
 
 	private Response response(InputStream stream) throws IOException {

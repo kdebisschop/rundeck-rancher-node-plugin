@@ -87,8 +87,8 @@ public class MessageReader implements Closeable {
 		int streamId;
 		final byte[] frame;
 		final int idZ = header.getInt(0);
-		// Header format is : {STREAM_TYPE, 0, 0, 0, SIZE1, SIZE2, SIZE3, SIZE4}
-		// So idZ is : {STREAM_TYPE, 0, 0, 0}
+		// Header format is // STREAM_TYPE, 0, 0, 0, SIZE1, SIZE2, SIZE3, SIZE4 //
+		// So idZ is // STREAM_TYPE, 0, 0, 0 //
 		if (idZ == 0x00000000 || idZ == 0x01000000 || idZ == 0x02000000) {
 			streamId = idZ >> 24;
 			final int frameSize = header.getInt(FRAME_SIZE_OFFSET);
@@ -137,7 +137,7 @@ public class MessageReader implements Closeable {
 	 * @return An 8-byte header.
 	 * @throws IOException
 	 */
-	public byte[] nextHeader() throws IOException {
+	public byte[] nextHeader() {
 		return expected;
 	}
 

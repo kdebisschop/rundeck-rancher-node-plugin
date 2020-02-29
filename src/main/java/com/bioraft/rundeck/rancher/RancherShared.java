@@ -39,9 +39,12 @@ import static com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFac
  */
 public class RancherShared {
 
+    private RancherShared() {
+        throw new IllegalStateException("Utility class");
+    }
+
     public static final String RANCHER_SERVICE_PROVIDER = "rancher";
     public static final String RANCHER_SERVICE_CONTROLLER = "rancher-service-controller";
-
 
     // Resource Model
     public static final String RANCHER_CONFIG_ENDPOINT = "rancher-api-endpoint";
