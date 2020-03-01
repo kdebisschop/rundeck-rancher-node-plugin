@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.plugins.descriptions.RenderingOption;
 import com.dtolabs.rundeck.plugins.descriptions.RenderingOptions;
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -39,8 +40,7 @@ import java.io.IOException;
 import java.util.Map;
 
 import static com.bioraft.rundeck.rancher.Constants.*;
-import static com.bioraft.rundeck.rancher.RancherShared.ErrorCause;
-import static com.bioraft.rundeck.rancher.RancherShared.loadStoragePathData;
+import static com.bioraft.rundeck.rancher.RancherShared.*;
 import static com.dtolabs.rundeck.core.Constants.DEBUG_LEVEL;
 import static com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants.CODE_SYNTAX_MODE;
 import static com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants.DISPLAY_TYPE_KEY;
@@ -150,7 +150,7 @@ public class RancherUpgradeService implements NodeStepPlugin {
 			throw new NodeStepException(message, ErrorCause.ServiceNotRunning, node.getNodename());
 		}
 
-		String upgradeUrl = service.path("actions").path("upgrade").asText();
+		String upgradeUrl = service.path("actions").path("upgrade").asText("");
 		if (upgradeUrl.length() == 0) {
 			throw new NodeStepException("No upgrade URL found", ErrorCause.MissingUpgradeURL, node.getNodename());
 		}
@@ -166,34 +166,34 @@ public class RancherUpgradeService implements NodeStepPlugin {
 
 		RancherLaunchConfig rancherLaunchConfig = new RancherLaunchConfig(nodeName, launchConfigObject, logger);
 
-		if ((dockerImage == null || dockerImage.length() == 0)  && cfg.containsKey("dockerImage")) {
+		if (mapIfNotEmpty(cfg,"dockerImage")) {
 			dockerImage = (String) cfg.get("dockerImage");
 		}
 		if (dockerImage != null && dockerImage.length() > 0) {
 			rancherLaunchConfig.setDockerImage(dockerImage);
 		}
 
-		if ((environment == null || environment.isEmpty()) && cfg.containsKey("environment")) {
+		if (mapIfNotEmpty(cfg, "environment")) {
 			environment = (String) cfg.get("environment");
 		}
 
-		if ((dataVolumes == null || dataVolumes.isEmpty()) && cfg.containsKey("dataVolumes")) {
+		if (mapIfNotEmpty(cfg, "dataVolumes")) {
 			dataVolumes = (String) cfg.get("dataVolumes");
 		}
 
-		if ((labels == null || labels.isEmpty()) && cfg.containsKey("labels")) {
+		if (mapIfNotEmpty(cfg, "labels")) {
 			labels = (String) cfg.get("labels");
 		}
 
-		if ((secrets == null || secrets.isEmpty()) && cfg.containsKey("secrets")) {
+		if (mapIfNotEmpty(cfg, "secrets")) {
 			secrets = (String) cfg.get("secrets");
 		}
 
-		if (cfg.containsKey("removeEnvironment")) {
+		if (mapIfNotEmpty(cfg, "removeEnvironment")) {
 			removeEnvironment = (String) cfg.get("removeEnvironment");
 		}
 
-		if (cfg.containsKey("removeLabels")) {
+		if (mapIfNotEmpty(cfg, "removeLabels")) {
 			removeLabels = (String) cfg.get("removeLabels");
 		}
 
@@ -206,8 +206,8 @@ public class RancherUpgradeService implements NodeStepPlugin {
 
 		if (cfg.containsKey(START_FIRST)) {
 			startFirst = cfg.get(START_FIRST).equals("true");
-		} else {
-			startFirst = startFirst != null && startFirst;
+		} else if (startFirst == null) {
+			startFirst = true;
 		}
 
 		if (cfg.containsKey("sleepInterval")) {
@@ -242,11 +242,14 @@ public class RancherUpgradeService implements NodeStepPlugin {
 		try {
 			upgrade = "{\"type\":\"serviceUpgrade\",\"inServiceStrategy\":" + mapper.writeValueAsString(inServiceStrategy) + "}";
 			logger.log(DEBUG_LEVEL, upgrade);
-		} catch (IOException e) {
+		} catch (JsonProcessingException e) {
 			throw new NodeStepException("Failed post to " + upgradeUrl, e, ErrorCause.InvalidConfiguration, nodeName);
 		}
 
 		JsonNode service = apiPost(accessKey, secretKey, upgradeUrl, upgrade);
+		if (!service.has(STATE) || !service.path(LINKS).has("self")) {
+			throw new NodeStepException("API POST returned incomplete data", ErrorCause.NoUpgradeData, nodeName);
+		}
 		String state = service.get(STATE).asText();
 		String link = service.get(LINKS).get("self").asText();
 
@@ -304,7 +307,9 @@ public class RancherUpgradeService implements NodeStepPlugin {
 				throw new IOException("API get failed" + response.message());
 			}
 			ObjectMapper mapper = new ObjectMapper();
-			assert response.body() != null;
+			if (response.body() == null) {
+				return mapper.readTree("");
+			}
 			return mapper.readTree(response.body().string());
 		} catch (IOException e) {
 			throw new NodeStepException(e.getMessage(), e, ErrorCause.NoServiceObject, nodeName);
@@ -329,10 +334,12 @@ public class RancherUpgradeService implements NodeStepPlugin {
 			Response response = client.newCall(builder.build()).execute();
 			// Since URL comes from the Rancher server itself, assume there are no redirects.
 			if (response.code() >= 300) {
-				throw new IOException("API post failed" + response.message());
+				throw new IOException("API post failed " + response.message());
 			}
 			ObjectMapper mapper = new ObjectMapper();
-			assert response.body() != null;
+			if (response.body() == null) {
+				return mapper.readTree("");
+			}
 			return mapper.readTree(response.body().string());
 		} catch (IOException e) {
 			throw new NodeStepException(e.getMessage(), e, ErrorCause.UpgradeFailure, nodeName);
