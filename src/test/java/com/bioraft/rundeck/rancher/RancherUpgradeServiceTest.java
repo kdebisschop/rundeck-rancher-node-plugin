@@ -57,9 +57,6 @@ public class RancherUpgradeServiceTest {
 	@Mock
 	OkHttpClient client;
 
-//	@Mock
-//	OkHttpClient interruptedClient;
-
 	@Mock
 	Call call;
 
@@ -219,31 +216,6 @@ public class RancherUpgradeServiceTest {
 		cfg.put("secrets", null);
 		processOneNode();
 	}
-
-//	@Test(expected = NodeStepException.class)
-//	public void processInvalidStartFirst() throws NodeStepException, IOException {
-//		cfg.put(START_FIRST, new ObjectMapper());
-//		map.put("type", "service");
-//		when(node.getAttributes()).thenReturn(map);
-//
-//		when(interruptedClient.newCall(any()))
-//				.thenReturn(call)
-//				.thenReturn(call);
-//
-//		String text = readFromInputStream(getResourceStream("service.json"));
-//		ObjectMapper mapper = new ObjectMapper();
-//		ObjectNode json1 = (ObjectNode) mapper.readTree(text);
-//		Response response0 = response(json1.toPrettyString());
-//		json1.put("state", "transitioning");
-//		Response response1 = response(json1.toPrettyString());
-//		when(call.execute()).thenReturn(response0, response1);
-//
-//		upgrade = new RancherUpgradeService(interruptedClient);
-////		Thread.currentThread().interrupt();
-//		upgrade.executeNodeStep(ctx, cfg, node);
-//
-//		verify(call, times(4)).execute();
-//	}
 
 	@Test
 	public void processNode() throws NodeStepException, IOException {
