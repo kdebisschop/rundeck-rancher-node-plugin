@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Map;
 
 import static com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory.PROJECT_PREFIX;
 import static com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory.FRAMEWORK_PREFIX;
@@ -142,6 +143,10 @@ public class RancherShared {
 
     public static String mountPoint(String mountSpec) {
         return mountSpec.replaceFirst("[^:]+:", "").replaceFirst(":.*", "");
+    }
+
+    public static boolean mapIfNotEmpty(Map<String, Object> cfg, String key) {
+        return cfg.containsKey(key) && cfg.get(key) != null && cfg.get(key) != "";
     }
 
     public enum ErrorCause implements FailureReason {

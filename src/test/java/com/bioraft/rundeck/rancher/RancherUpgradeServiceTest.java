@@ -40,6 +40,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.bioraft.rundeck.rancher.Constants.*;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
@@ -55,6 +56,9 @@ public class RancherUpgradeServiceTest {
 
 	@Mock
 	OkHttpClient client;
+
+//	@Mock
+//	OkHttpClient interruptedClient;
 
 	@Mock
 	Call call;
@@ -111,6 +115,9 @@ public class RancherUpgradeServiceTest {
 		assertNotNull(subject);
 	}
 
+	/**
+	 * @throws NodeStepException If path to CONFIG_ACCESSKEY_PATH or CONFIG_SECRETKEY_PATH is not configured.
+	 */
 	@Test(expected = NodeStepException.class)
 	public void throwExceptionForNullKey() throws NodeStepException {
 		RancherUpgradeService subject = new RancherUpgradeService(client);
@@ -120,76 +127,44 @@ public class RancherUpgradeServiceTest {
 		assertNotNull(subject);
 	}
 
+
 	@Test
 	public void selectForService() throws NodeStepException, IOException {
 		map.put("type", "service");
 		when(node.getAttributes()).thenReturn(map);
-
-		cfg.put("sleepInterval", "1");
 
 		String text = readFromInputStream(getResourceStream("service.json"));
 		ObjectMapper mapper = new ObjectMapper();
 		ObjectNode json1 = (ObjectNode) mapper.readTree(text);
 
 		Response response0 = response(json1.toPrettyString());
-
-		json1.put("state", "transtitioning");
-		Response response1 = response(json1.toPrettyString());
-
-		json1.put("state", "upgraded");
-		Response response2 = response(json1.toPrettyString());
-
-		json1.put("state", "active");
-		Response response3 = response(json1.toPrettyString());
-
-		when(call.execute()).thenReturn(response0, response1, response2, response3);
-
-		upgrade = new RancherUpgradeService(client);
-		upgrade.executeNodeStep(ctx, cfg, node);
-
-		verify(call, times(4)).execute();
+		processService(json1, response0);
 	}
 
 	@Test(expected = NodeStepException.class)
 	public void missingUpgradeUrl() throws NodeStepException, IOException {
 		map.put("type", "service");
 		when(node.getAttributes()).thenReturn(map);
-
-		cfg.put("sleepInterval", "1");
-
-		String text = readFromInputStream(getResourceStream("service.json"));
-		ObjectMapper mapper = new ObjectMapper();
-		ObjectNode json1 = (ObjectNode) mapper.readTree(text);
-		ObjectNode actions = (ObjectNode) json1.path("actions");
-		actions.put("upgrade", "");
-
-		Response response0 = response(json1.toPrettyString());
-
-		json1.put("state", "transtitioning");
-		Response response1 = response(json1.toPrettyString());
-
-		json1.put("state", "upgraded");
-		Response response2 = response(json1.toPrettyString());
-
-		json1.put("state", "active");
-		Response response3 = response(json1.toPrettyString());
-
-		when(call.execute()).thenReturn(response0, response1, response2, response3);
-
-		upgrade = new RancherUpgradeService(client);
-		upgrade.executeNodeStep(ctx, cfg, node);
-
-		verify(call, times(4)).execute();
+		processOneNode();
 	}
 
 	@Test
+	public void normalStartup() throws NodeStepException, IOException {
+		processOneNode();
+	}
+
 	public void processOneNode() throws NodeStepException, IOException {
-		cfg.put("sleepInterval", "1");
 		Response response0 = response(getResourceStream("services.json"));
 
 		String text = readFromInputStream(getResourceStream("service.json"));
 		ObjectMapper mapper = new ObjectMapper();
 		ObjectNode json1 = (ObjectNode) mapper.readTree(text);
+
+		processService(json1, response0);
+	}
+
+	public void processService(ObjectNode json1, Response response0) throws NodeStepException, IOException {
+		cfg.put("sleepInterval", "1");
 
 		json1.put("state", "transitioning");
 		Response response1 = response(json1.toPrettyString());
@@ -218,29 +193,57 @@ public class RancherUpgradeServiceTest {
 		cfg.put("removeLabels", "[]");
 		cfg.put("dataVolumes", "[]");
 		cfg.put("secrets", "1se1");
-		cfg.put("sleepInterval", "1");
-		Response response0 = response(getResourceStream("services.json"));
-
-		String text = readFromInputStream(getResourceStream("service.json"));
-		ObjectMapper mapper = new ObjectMapper();
-		ObjectNode json1 = (ObjectNode) mapper.readTree(text);
-
-		json1.put("state", "transitioning");
-		Response response1 = response(json1.toPrettyString());
-
-		json1.put("state", "upgraded");
-		Response response2 = response(json1.toPrettyString());
-
-		json1.put("state", "active");
-		Response response3 = response(json1.toPrettyString());
-
-		when(call.execute()).thenReturn(response0, response1, response2, response3);
-
-		upgrade = new RancherUpgradeService(client);
-		upgrade.executeNodeStep(ctx, cfg, node);
-
-		verify(call, times(4)).execute();
+		processOneNode();
 	}
+
+	@Test
+	public void processOneNodeAndCfgWithBlanks() throws NodeStepException, IOException {
+		cfg.put("dockerImage", "");
+		cfg.put("environment", "");
+		cfg.put("labels", "");
+		cfg.put("removeEnvironment", "");
+		cfg.put("removeLabels", "");
+		cfg.put("dataVolumes", "");
+		cfg.put("secrets", "");
+		processOneNode();
+	}
+
+	@Test
+	public void processOneNodeAndCfgWithNulls() throws NodeStepException, IOException {
+		cfg.put("dockerImage", null);
+		cfg.put("environment", null);
+		cfg.put("labels", null);
+		cfg.put("removeEnvironment", null);
+		cfg.put("removeLabels", null);
+		cfg.put("dataVolumes", null);
+		cfg.put("secrets", null);
+		processOneNode();
+	}
+
+//	@Test(expected = NodeStepException.class)
+//	public void processInvalidStartFirst() throws NodeStepException, IOException {
+//		cfg.put(START_FIRST, new ObjectMapper());
+//		map.put("type", "service");
+//		when(node.getAttributes()).thenReturn(map);
+//
+//		when(interruptedClient.newCall(any()))
+//				.thenReturn(call)
+//				.thenReturn(call);
+//
+//		String text = readFromInputStream(getResourceStream("service.json"));
+//		ObjectMapper mapper = new ObjectMapper();
+//		ObjectNode json1 = (ObjectNode) mapper.readTree(text);
+//		Response response0 = response(json1.toPrettyString());
+//		json1.put("state", "transitioning");
+//		Response response1 = response(json1.toPrettyString());
+//		when(call.execute()).thenReturn(response0, response1);
+//
+//		upgrade = new RancherUpgradeService(interruptedClient);
+////		Thread.currentThread().interrupt();
+//		upgrade.executeNodeStep(ctx, cfg, node);
+//
+//		verify(call, times(4)).execute();
+//	}
 
 	@Test
 	public void processNode() throws NodeStepException, IOException {
@@ -290,16 +293,235 @@ public class RancherUpgradeServiceTest {
 		verify(call, times(1)).execute();
 	}
 
+	@Test(expected = NodeStepException.class)
+	public void testGetFails() throws NodeStepException, IOException {
+		String text = readFromInputStream(getResourceStream("service.json"));
+		ObjectMapper mapper = new ObjectMapper();
+
+		ObjectNode json1 = (ObjectNode) mapper.readTree(text);
+
+		Response response0 = response(json1.toPrettyString(), 301);
+
+		when(call.execute()).thenReturn(response0);
+
+		upgrade = new RancherUpgradeService(client);
+		upgrade.executeNodeStep(ctx, cfg, node);
+
+		verify(call, times(1)).execute();
+	}
+
+	/**
+	 * Response body can be null for cacheResponse and other, but we do not expect that or
+	 * have a way to respond to null body. So we fail because the service stata is unknown.
+	 *
+	 * @throws IOException because no service state can be inferred from empty body.
+	 */
+	@Test(expected = NodeStepException.class)
+	public void testGetEmpty() throws NodeStepException, IOException {
+		String text = readFromInputStream(getResourceStream("service.json"));
+		ObjectMapper mapper = new ObjectMapper();
+		ObjectNode json1 = (ObjectNode) mapper.readTree(text);
+		Response response0 = response(null, 200);
+		try {
+			processService(json1, response0);
+		} catch (NodeStepException e) {
+			assertEquals("Service state must be running, was ", e.getMessage());
+			throw e;
+		}
+	}
+
+	/**
+	 * Fail with message if there is no upgradeUrl.
+	 *
+	 * @throws IOException because there is no upgrade url.
+	 */
+	@Test(expected = NodeStepException.class)
+	public void testMissingUpgradeUrl() throws NodeStepException, IOException {
+		map.put("type", "service");
+		when(node.getAttributes()).thenReturn(map);
+		String text = readFromInputStream(getResourceStream("service.json"));
+		ObjectMapper mapper = new ObjectMapper();
+		ObjectNode json1 = (ObjectNode) mapper.readTree(text);
+		ObjectNode actions = (ObjectNode) json1.get("actions");
+		actions.remove("upgrade");
+		Response response0 = response(json1.toPrettyString());
+		try {
+			processService(json1, response0);
+		} catch (NodeStepException e) {
+			assertEquals("No upgrade URL found", e.getMessage());
+			throw e;
+		}
+	}
+
+	/**
+	 * Fallback to current launchConfig if there is no upgrade -> launchConfig.
+	 *
+	 * @throws IOException because there is no upgrade url.
+	 */
+	@Test
+	public void testMissingUpgradeLaunchConfig() throws NodeStepException, IOException {
+		map.put("type", "service");
+		when(node.getAttributes()).thenReturn(map);
+		String text = readFromInputStream(getResourceStream("service.json"));
+		ObjectMapper mapper = new ObjectMapper();
+		ObjectNode json1 = (ObjectNode) mapper.readTree(text);
+		ObjectNode upgrade = (ObjectNode) json1.get("upgrade");
+		ObjectNode strategy = (ObjectNode) upgrade.get("inServiceStrategy");
+		strategy.put("launchConfig", (String) null);
+		Response response0 = response(json1.toPrettyString());
+		try {
+			processService(json1, response0);
+		} catch (NodeStepException e) {
+			assertEquals("No upgrade data found", e.getMessage());
+			throw e;
+		}
+	}
+
+	/**
+	 * Fail with message if there is no launchConfig.
+	 *
+	 * @throws IOException because there is no upgrade url.
+	 */
+	@Test(expected = NodeStepException.class)
+	public void testMissingLaunchConfig() throws NodeStepException, IOException {
+		map.put("type", "service");
+		when(node.getAttributes()).thenReturn(map);
+		String text = readFromInputStream(getResourceStream("service.json"));
+		ObjectMapper mapper = new ObjectMapper();
+		ObjectNode json1 = (ObjectNode) mapper.readTree(text);
+		json1.remove("upgrade");
+		json1.remove(LAUNCH_CONFIG);
+		Response response0 = response(json1.toPrettyString());
+		try {
+			processService(json1, response0);
+		} catch (NodeStepException e) {
+			assertEquals("No upgrade data found", e.getMessage());
+			throw e;
+		}
+	}
+
+	/**
+	 * Fail with message if there is no launchConfig.
+	 *
+	 * @throws IOException because there is no upgrade url.
+	 */
+	@Test(expected = NodeStepException.class)
+	public void testNullLaunchConfig() throws NodeStepException, IOException {
+		map.put("type", "service");
+		when(node.getAttributes()).thenReturn(map);
+		String text = readFromInputStream(getResourceStream("service.json"));
+		ObjectMapper mapper = new ObjectMapper();
+		ObjectNode json1 = (ObjectNode) mapper.readTree(text);
+		json1.remove("upgrade");
+		json1.put(LAUNCH_CONFIG, (String) null);
+		Response response0 = response(json1.toPrettyString());
+		try {
+			processService(json1, response0);
+		} catch (NodeStepException e) {
+			assertEquals("No upgrade data found", e.getMessage());
+			throw e;
+		}
+	}
+
+	@Test(expected = NodeStepException.class)
+	public void testPostFails() throws NodeStepException, IOException {
+		map.put("type", "service");
+		when(node.getAttributes()).thenReturn(map);
+
+		String text = readFromInputStream(getResourceStream("service.json"));
+		ObjectMapper mapper = new ObjectMapper();
+		ObjectNode json1 = (ObjectNode) mapper.readTree(text);
+		json1.put("state", "active");
+
+		Response response0 = response(json1.toPrettyString());
+
+		json1.put("state", "transitioning");
+		Response response1 = response(json1.toPrettyString(), 401);
+
+		when(call.execute()).thenReturn(response0, response1);
+
+		upgrade = new RancherUpgradeService(client);
+		try {
+			upgrade.executeNodeStep(ctx, cfg, node);
+		} catch (NodeStepException e) {
+			assertEquals("API post failed OK", e.getMessage());
+			throw e;
+		}
+		verify(call, times(2)).execute();
+	}
+
+	@Test(expected = NodeStepException.class)
+	public void testPostEmpty() throws NodeStepException, IOException {
+		map.put("type", "service");
+		when(node.getAttributes()).thenReturn(map);
+
+		String text = readFromInputStream(getResourceStream("service.json"));
+		ObjectMapper mapper = new ObjectMapper();
+		ObjectNode json1 = (ObjectNode) mapper.readTree(text);
+		json1.put("state", "active");
+
+		Response response0 = response(json1.toPrettyString());
+
+		Response response1 = response(null, 200);
+
+		when(call.execute()).thenReturn(response0, response1);
+
+		upgrade = new RancherUpgradeService(client);
+		try {
+			upgrade.executeNodeStep(ctx, cfg, node);
+		} catch (NodeStepException e) {
+			assertEquals("API POST returned incomplete data", e.getMessage());
+			throw e;
+		}
+		verify(call, times(2)).execute();
+	}
+
+	@Test(expected = NodeStepException.class)
+	public void testPostMissingLink() throws NodeStepException, IOException {
+		map.put("type", "service");
+		when(node.getAttributes()).thenReturn(map);
+
+		String text = readFromInputStream(getResourceStream("service.json"));
+		ObjectMapper mapper = new ObjectMapper();
+		ObjectNode json1 = (ObjectNode) mapper.readTree(text);
+		json1.put("state", "active");
+
+		Response response0 = response(json1.toPrettyString());
+
+		json1.remove(LINKS);
+		Response response1 = response(json1.toPrettyString());
+
+		when(call.execute()).thenReturn(response0, response1);
+
+		upgrade = new RancherUpgradeService(client);
+		try {
+			upgrade.executeNodeStep(ctx, cfg, node);
+		} catch (NodeStepException e) {
+			assertEquals("API POST returned incomplete data", e.getMessage());
+			throw e;
+		}
+		verify(call, times(2)).execute();
+	}
+
 	private Response response(InputStream stream) throws IOException {
 		return response(readFromInputStream(stream));
 	}
 
-	private Response response(String json) {
+	private Response response(String json, int code) {
 		Request request = new Request.Builder().url("https://example.com").build();
-		ResponseBody body = ResponseBody.create(MediaType.parse("text/json"), json);
+		ResponseBody body;
+		if (json != null) {
+			body = ResponseBody.create(MediaType.parse("text/json"), json);
+		} else {
+			body = null;
+		}
 		Builder builder = new Response.Builder().request(request).protocol(Protocol.HTTP_2);
-		builder.body(body).code(200).message("OK");
+		builder.body(body).code(code).message("OK");
 		return builder.build();
+	}
+
+	private Response response(String json) {
+		return response(json, 200);
 	}
 
 	private InputStream getResourceStream(String resource) {
