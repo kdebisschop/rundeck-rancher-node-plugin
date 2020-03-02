@@ -20,6 +20,7 @@
         "restart": "https://rancher.example.com/v2-beta/projects/1a10/services/1s56/?action=restart",
         "update": "https://rancher.example.com/v2-beta/projects/1a10/services/1s56/?action=update",
         "remove": "https://rancher.example.com/v2-beta/projects/1a10/services/1s56/?action=remove",
+        "activate": "https://rancher.example.com/v2-beta/projects/1a10/services/1s56/?action=activate",
         "deactivate": "https://rancher.example.com/v2-beta/projects/1a10/services/1s56/?action=deactivate",
         "removeservicelink": "https://rancher.example.com/v2-beta/projects/1a10/services/1s56/?action=removeservicelink",
         "addservicelink": "https://rancher.example.com/v2-beta/projects/1a10/services/1s56/?action=addservicelink",

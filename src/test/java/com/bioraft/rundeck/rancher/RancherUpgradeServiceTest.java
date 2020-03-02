@@ -124,7 +124,6 @@ public class RancherUpgradeServiceTest {
 		assertNotNull(subject);
 	}
 
-
 	@Test
 	public void selectForService() throws NodeStepException, IOException {
 		map.put("type", "service");
