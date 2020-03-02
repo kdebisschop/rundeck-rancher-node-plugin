@@ -16,7 +16,6 @@
 package com.bioraft.rundeck.rancher;
 
 import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.plugins.PluginLogger;
@@ -25,7 +24,6 @@ import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.dtolabs.rundeck.plugins.step.StepPlugin;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.ImmutableMap;
 
@@ -33,7 +31,7 @@ import java.io.IOException;
 import java.util.Map;
 
 import static com.bioraft.rundeck.rancher.RancherShared.*;
-import static com.bioraft.rundeck.rancher.RancherShared.loadStoragePathData;
+import static com.bioraft.rundeck.rancher.RancherShared.ErrorCause.*;
 import static com.dtolabs.rundeck.core.Constants.ERR_LEVEL;
 import static com.dtolabs.rundeck.core.Constants.INFO_LEVEL;
 
@@ -66,14 +64,14 @@ public class RancherNewStack implements StepPlugin {
             stackName = (String) configuration.get("stack");
         }
         if (stackName == null || stackName.isEmpty()) {
-            throw new StepException("Stack name cannot be empty", RancherNewStackFailureReason.InvalidStackName);
+            throw new StepException("Stack name cannot be empty", INVALID_STACK_NAME);
         }
 
         if (environment == null || environment.isEmpty()) {
             environment = (String) configuration.get("environment");
         }
         if (environment == null || environment.isEmpty()) {
-            throw new StepException("Environment cannot be empty", RancherNewStackFailureReason.InvalidEnvironmentName);
+            throw new StepException("Environment cannot be empty", INVALID_ENVIRONMENT_NAME);
         }
 
         Framework framework = context.getFramework();
@@ -99,17 +97,17 @@ public class RancherNewStack implements StepPlugin {
             String secretKey = loadStoragePathData(context.getExecutionContext(), secretKeyPath);
             client.setSecretKey(secretKey);
         } catch (IOException e) {
-            throw new StepException("Could not get secret storage path", e, ErrorCause.IOException);
+            throw new StepException("Could not get secret storage path", e, IO_EXCEPTION);
         }
 
         try {
             JsonNode check = client.get(spec, ImmutableMap.<String, String>builder().put("name", stackName).build());
             if (check.path("data").has(0)) {
                 logger.log(ERR_LEVEL, "FATAL: A stack with the name " + stackName + " already exists.");
-                throw new StepException("Stack already exists", RancherNewStackFailureReason.InvalidConfiguration);
+                throw new StepException("Stack already exists", INVALID_CONFIGURATION);
             }
         } catch (IOException e) {
-            throw new StepException("Failed posting to " + spec, e, RancherNewStackFailureReason.IOException);
+            throw new StepException("Failed posting to " + spec, e, IO_EXCEPTION);
         }
 
         try {
@@ -121,14 +119,7 @@ public class RancherNewStack implements StepPlugin {
             logger.log(INFO_LEVEL, "New stack ID:" + stackResult.path("id").asText());
             logger.log(INFO_LEVEL, "New stack name:" + stackResult.path("name").asText());
         } catch (IOException e) {
-            throw new StepException("Failed posting to " + spec, e, RancherNewStackFailureReason.InvalidConfiguration);
+            throw new StepException("Failed posting to " + spec, e, INVALID_CONFIGURATION);
         }
-    }
-
-    public enum RancherNewStackFailureReason implements FailureReason {
-        InvalidConfiguration,
-        InvalidStackName,
-        InvalidEnvironmentName,
-        IOException
     }
 }

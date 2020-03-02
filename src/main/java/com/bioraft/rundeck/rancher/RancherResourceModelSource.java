@@ -19,6 +19,7 @@ package com.bioraft.rundeck.rancher;
 import java.io.IOException;
 import java.util.*;
 
+import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import org.apache.log4j.Level;
 
 import com.dtolabs.rundeck.core.common.Framework;
@@ -81,7 +82,7 @@ public class RancherResourceModelSource implements ResourceModelSource {
 	 *
 	 * @param configuration Configuration variables set in RancherResourceModelSourceFactory
 	 */
-	public RancherResourceModelSource(Properties configuration) {
+	public RancherResourceModelSource(Properties configuration) throws ConfigurationException {
 		this.init(configuration, new OkHttpClient());
 	}
 
@@ -91,11 +92,11 @@ public class RancherResourceModelSource implements ResourceModelSource {
 	 * @param configuration Configuration variables set in RancherResourceModelSourceFactory
 	 * @param client HTTP client used for unit testing.
 	 */
-	public RancherResourceModelSource(Properties configuration, OkHttpClient client) {
+	public RancherResourceModelSource(Properties configuration, OkHttpClient client) throws ConfigurationException {
 		this.init(configuration, client);
 	}
 
-	private void init(Properties configuration, OkHttpClient client) {
+	private void init(Properties configuration, OkHttpClient client) throws ConfigurationException {
 		this.client = client;
 		this.configuration = configuration;
 		tags = configuration.getProperty("tags");

@@ -101,18 +101,6 @@ public class RancherResourceModelSourceFactory implements ResourceModelSourceFac
         builder.property(PropertyUtil.string(CONFIG_LABELS_INCLUDE_TAGS, "Labels made into tags",
                 "A regular expression for labels whose values will be used as tags for a node", false, ""));
 
-//        builder.mapping(CONFIG_ENDPOINT, PROJECT_PREFIX + PROJ_CONFIG_ENDPOINT);
-//        builder.frameworkMapping(CONFIG_ENDPOINT, FRAMEWORK_PREFIX + PROJ_CONFIG_ENDPOINT);
-//
-//        builder.mapping(CONFIG_ENVIRONMENT_IDS, PROJECT_PREFIX + PROJ_CONFIG_ENVIRONMENT_IDS);
-//        builder.frameworkMapping(CONFIG_ENVIRONMENT_IDS, FRAMEWORK_PREFIX + PROJ_CONFIG_ENVIRONMENT_IDS);
-//
-//        builder.mapping(CONFIG_ACCESSKEY_PATH, PROJECT_PREFIX + PROJ_CONFIG_ACCESSKEY_PATH);
-//        builder.frameworkMapping(CONFIG_ACCESSKEY_PATH, FRAMEWORK_PREFIX + PROJ_CONFIG_ACCESSKEY_PATH);
-//
-//        builder.mapping(CONFIG_SECRETKEY_PATH, PROJECT_PREFIX + PROJ_CONFIG_SECRETKEY_PATH);
-//        builder.frameworkMapping(CONFIG_SECRETKEY_PATH, FRAMEWORK_PREFIX + PROJ_CONFIG_SECRETKEY_PATH);
-//
         DESC = builder.build();
     }
 

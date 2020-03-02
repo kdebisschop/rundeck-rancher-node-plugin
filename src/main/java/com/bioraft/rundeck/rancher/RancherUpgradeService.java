@@ -135,7 +135,7 @@ public class RancherUpgradeService implements NodeStepPlugin {
 			accessKey = loadStoragePathData(executionContext, attributes.get(RancherShared.CONFIG_ACCESSKEY_PATH));
 			secretKey = loadStoragePathData(executionContext, attributes.get(RancherShared.CONFIG_SECRETKEY_PATH));
 		} catch (IOException e) {
-			throw new NodeStepException("Could not get secret storage path", e, ErrorCause.IOException, this.nodeName);
+			throw new NodeStepException("Could not get secret storage path", e, ErrorCause.IO_EXCEPTION, this.nodeName);
 		}
 
 		JsonNode service;
@@ -147,12 +147,12 @@ public class RancherUpgradeService implements NodeStepPlugin {
 		String serviceState = service.path(STATE).asText();
 		if (!serviceState.equals(STATE_ACTIVE)) {
 			String message = "Service state must be running, was " + serviceState;
-			throw new NodeStepException(message, ErrorCause.ServiceNotRunning, node.getNodename());
+			throw new NodeStepException(message, ErrorCause.SERVICE_NOT_RUNNING, node.getNodename());
 		}
 
 		String upgradeUrl = service.path("actions").path("upgrade").asText("");
 		if (upgradeUrl.length() == 0) {
-			throw new NodeStepException("No upgrade URL found", ErrorCause.MissingUpgradeURL, node.getNodename());
+			throw new NodeStepException("No upgrade URL found", ErrorCause.MISSING_UPGRADE_URL, node.getNodename());
 		}
 
 		launchConfig = service.path("upgrade").path("inServiceStrategy").path(LAUNCH_CONFIG);
@@ -160,7 +160,7 @@ public class RancherUpgradeService implements NodeStepPlugin {
 			launchConfig = service.path(LAUNCH_CONFIG);
 		}
 		if (launchConfig.isMissingNode() || launchConfig.isNull()) {
-			throw new NodeStepException("No upgrade data found", ErrorCause.NoUpgradeData, node.getNodename());
+			throw new NodeStepException("No upgrade data found", ErrorCause.NO_UPGRADE_DATA, node.getNodename());
 		}
 		launchConfigObject = (ObjectNode) launchConfig;
 
@@ -243,12 +243,12 @@ public class RancherUpgradeService implements NodeStepPlugin {
 			upgrade = "{\"type\":\"serviceUpgrade\",\"inServiceStrategy\":" + mapper.writeValueAsString(inServiceStrategy) + "}";
 			logger.log(DEBUG_LEVEL, upgrade);
 		} catch (JsonProcessingException e) {
-			throw new NodeStepException("Failed post to " + upgradeUrl, e, ErrorCause.InvalidConfiguration, nodeName);
+			throw new NodeStepException("Failed post to " + upgradeUrl, e, ErrorCause.INVALID_CONFIGURATION, nodeName);
 		}
 
 		JsonNode service = apiPost(accessKey, secretKey, upgradeUrl, upgrade);
 		if (!service.has(STATE) || !service.path(LINKS).has("self")) {
-			throw new NodeStepException("API POST returned incomplete data", ErrorCause.NoUpgradeData, nodeName);
+			throw new NodeStepException("API POST returned incomplete data", ErrorCause.NO_UPGRADE_DATA, nodeName);
 		}
 		String state = service.get(STATE).asText();
 		String link = service.get(LINKS).get("self").asText();
@@ -260,7 +260,7 @@ public class RancherUpgradeService implements NodeStepPlugin {
 				Thread.sleep(sleepInterval);
 			} catch (InterruptedException e) {
 				Thread.currentThread().interrupt();
-				throw new NodeStepException(e, ErrorCause.Interrupted, nodeName);
+				throw new NodeStepException(e, ErrorCause.INTERRUPTED, nodeName);
 			}
 			service = apiGet(accessKey, secretKey, link);
 			state = service.get(STATE).asText();
@@ -282,7 +282,7 @@ public class RancherUpgradeService implements NodeStepPlugin {
 					Thread.sleep(sleepInterval);
 				} catch (InterruptedException e) {
 					Thread.currentThread().interrupt();
-					throw new NodeStepException(e, ErrorCause.Interrupted, nodeName);
+					throw new NodeStepException(e, ErrorCause.INTERRUPTED, nodeName);
 				}
 			}
 		}
@@ -312,7 +312,7 @@ public class RancherUpgradeService implements NodeStepPlugin {
 			}
 			return mapper.readTree(response.body().string());
 		} catch (IOException e) {
-			throw new NodeStepException(e.getMessage(), e, ErrorCause.NoServiceObject, nodeName);
+			throw new NodeStepException(e.getMessage(), e, ErrorCause.NO_SERVICE_OBJECT, nodeName);
 		}
 	}
 
@@ -342,7 +342,7 @@ public class RancherUpgradeService implements NodeStepPlugin {
 			}
 			return mapper.readTree(response.body().string());
 		} catch (IOException e) {
-			throw new NodeStepException(e.getMessage(), e, ErrorCause.UpgradeFailure, nodeName);
+			throw new NodeStepException(e.getMessage(), e, ErrorCause.UPGRADE_FAILURE, nodeName);
 		}
 	}
 }
