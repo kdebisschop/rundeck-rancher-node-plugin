@@ -129,7 +129,7 @@ public class RancherLaunchConfig {
 				logger.log(Constants.INFO_LEVEL, "Setting " + field + ":" + key + " to " + value);
 			}
 		} catch (JsonProcessingException e) {
-			throw new NodeStepException("Invalid " + field + " JSON data", ErrorCause.InvalidJson, this.nodeName);
+			throw new NodeStepException("Invalid " + field + " JSON data", ErrorCause.INVALID_JSON, this.nodeName);
 		}
 	}
 
@@ -158,7 +158,7 @@ public class RancherLaunchConfig {
 				objectNode.remove(entry);
 			}
 		} catch (JsonProcessingException e) {
-			throw new NodeStepException("Invalid " + field + " array", ErrorCause.InvalidJson, this.nodeName);
+			throw new NodeStepException("Invalid " + field + " array", ErrorCause.INVALID_JSON, this.nodeName);
 		}
 	}
 
@@ -225,7 +225,7 @@ public class RancherLaunchConfig {
 				mounts.forEachRemaining(spec -> hashMap.put(mountPoint(spec.asText()), spec.asText()));
 
 			} catch (JsonProcessingException e) {
-				throw new NodeStepException("Could not parse JSON for " + "dataVolumes" + "\n" + newData, e, ErrorCause.InvalidConfiguration, nodeName);
+				throw new NodeStepException("Could not parse JSON for " + "dataVolumes" + "\n" + newData, e, ErrorCause.INVALID_CONFIGURATION, nodeName);
 			}
 
 			ArrayNode updatedArray = launchConfigObject.putArray("dataVolumes");

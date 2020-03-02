@@ -28,15 +28,12 @@ import com.dtolabs.rundeck.plugins.descriptions.SelectValues;
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import okhttp3.*;
-import okhttp3.Request.Builder;
 
 import java.io.IOException;
 import java.util.Map;
 
 import static com.bioraft.rundeck.rancher.RancherShared.ErrorCause;
-import static com.bioraft.rundeck.rancher.RancherShared.ErrorCause.NoServiceObject;
+import static com.bioraft.rundeck.rancher.RancherShared.ErrorCause.NO_SERVICE_OBJECT;
 import static com.bioraft.rundeck.rancher.RancherShared.loadStoragePathData;
 
 /**
@@ -52,8 +49,6 @@ public class RancherManageService implements NodeStepPlugin {
 	@PluginProperty(title = "Action", description = "What action is desired", required = true)
 	@SelectValues(values = {"activate", "deactivate", "restart"})
 	private String action;
-
-	private String nodeName;
 
 	HttpClient client;
 
@@ -71,7 +66,7 @@ public class RancherManageService implements NodeStepPlugin {
 
 		action = cfg.getOrDefault("action", action).toString();
 
-		this.nodeName = node.getNodename();
+		String nodeName = node.getNodename();
 		ExecutionContext executionContext = ctx.getExecutionContext();
 		PluginLogger logger = ctx.getLogger();
 
@@ -85,7 +80,7 @@ public class RancherManageService implements NodeStepPlugin {
 			client.setAccessKey(accessKey);
 			client.setSecretKey(secretKey);
 		} catch (IOException e) {
-			throw new NodeStepException("Could not get secret storage path", e, ErrorCause.IOException, nodeName);
+			throw new NodeStepException("Could not get secret storage path", e, ErrorCause.IO_EXCEPTION, nodeName);
 		}
 
 		JsonNode service;
@@ -96,7 +91,7 @@ public class RancherManageService implements NodeStepPlugin {
 				service = client.get(attributes.get("self"));
 			}
 		} catch (IOException e) {
-			throw new NodeStepException("Could not get service definition", e, NoServiceObject, nodeName);
+			throw new NodeStepException("Could not get service definition", e, NO_SERVICE_OBJECT, nodeName);
 		}
 		String serviceState = service.path("state").asText();
 
@@ -104,28 +99,28 @@ public class RancherManageService implements NodeStepPlugin {
 		if (action.equals("activate")) {
 			if (serviceState.equals("active")) {
 				String message = "Service state is already active";
-				throw new NodeStepException(message, NoServiceObject, nodeName);
+				throw new NodeStepException(message, NO_SERVICE_OBJECT, nodeName);
 			}
 		} else if (action.equals("deactivate") || action.equals("restart")) {
 			if (!serviceState.equals("active")) {
 				String message = "Service state must be running, was " + serviceState;
-				throw new NodeStepException(message, ErrorCause.ServiceNotRunning, nodeName);
+				throw new NodeStepException(message, ErrorCause.SERVICE_NOT_RUNNING, nodeName);
 			}
 		} else {
 			String message = "Invalid action: " + action;
-			throw new NodeStepException(message, ErrorCause.ActionNotSupported, nodeName);
+			throw new NodeStepException(message, ErrorCause.ACTION_NOT_SUPPORTED, nodeName);
 		}
 
 		String url = service.path("actions").path(action).asText();
 		if (url.length() == 0) {
-			throw new NodeStepException("No " + action + " URL found", ErrorCause.MissingActionURL, nodeName);
+			throw new NodeStepException("No " + action + " URL found", ErrorCause.MISSING_ACTION_URL, nodeName);
 		}
 
 		String body = "";
 		try {
-			JsonNode newService = client.post(url, body);
+			client.post(url, body);
 		} catch (IOException e) {
-			throw new NodeStepException("Upgrade failed", e, ErrorCause.ActionFailed, nodeName);
+			throw new NodeStepException("Upgrade failed", e, ErrorCause.ACTION_FAILED, nodeName);
 		}
 
 		logger.log(Constants.INFO_LEVEL, "Upgraded " + nodeName);

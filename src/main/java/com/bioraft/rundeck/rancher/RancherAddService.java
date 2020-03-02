@@ -33,11 +33,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.bioraft.rundeck.rancher.Constants.*;
 import static com.bioraft.rundeck.rancher.RancherShared.*;
+import static com.bioraft.rundeck.rancher.RancherShared.ErrorCause.*;
 import static com.dtolabs.rundeck.core.Constants.ERR_LEVEL;
 import static com.dtolabs.rundeck.core.Constants.INFO_LEVEL;
 import static com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants.CODE_SYNTAX_MODE;
 import static com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants.DISPLAY_TYPE_KEY;
+import static org.apache.commons.lang.StringUtils.defaultString;
 
 @Plugin(name = RancherAddService.SERVICE_PROVIDER_NAME, service = ServiceNameConstants.WorkflowStep)
 @PluginDescription(title = "Rancher - Create New Service", description = "Creates a new service in a rancher stack.")
@@ -58,22 +61,22 @@ public class RancherAddService implements StepPlugin {
 
     @PluginProperty(title = "Data Volumes", description = "JSON array Lines of \"source:mountPoint\"")
     @RenderingOptions({
-            @RenderingOption(key = DISPLAY_TYPE_KEY, value = "CODE"),
-            @RenderingOption(key = CODE_SYNTAX_MODE, value = "json"),
+            @RenderingOption(key = DISPLAY_TYPE_KEY, value = DISPLAY_CODE),
+            @RenderingOption(key = CODE_SYNTAX_MODE, value = SYNTAX_MODE_JSON),
     })
     private String dataVolumes;
 
     @PluginProperty(title = "Container OS Environment", description = "JSON object of \"variable\": \"value\"")
     @RenderingOptions({
-            @RenderingOption(key = DISPLAY_TYPE_KEY, value = "CODE"),
-            @RenderingOption(key = CODE_SYNTAX_MODE, value = "json"),
+            @RenderingOption(key = DISPLAY_TYPE_KEY, value = DISPLAY_CODE),
+            @RenderingOption(key = CODE_SYNTAX_MODE, value = SYNTAX_MODE_JSON),
     })
     private String environment;
 
     @PluginProperty(title = "Service Labels", description = "JSON object of \"variable\": \"value\"")
     @RenderingOptions({
-            @RenderingOption(key = DISPLAY_TYPE_KEY, value = "CODE"),
-            @RenderingOption(key = CODE_SYNTAX_MODE, value = "json"),
+            @RenderingOption(key = DISPLAY_TYPE_KEY, value = DISPLAY_CODE),
+            @RenderingOption(key = CODE_SYNTAX_MODE, value = SYNTAX_MODE_JSON),
     })
     private String labels;
 
@@ -97,48 +100,40 @@ public class RancherAddService implements StepPlugin {
             StepException {
         this.configuration = configuration;
 
-        if (environmentId == null || environmentId.isEmpty()) {
-            environmentId = (String) configuration.get("environmentId");
-        }
-        if (environmentId == null || environmentId.isEmpty()) {
-            throw new StepException("Environment ID cannot be empty", RancherNewStack.RancherNewStackFailureReason.InvalidEnvironmentName);
+        stackName = (String) configuration.getOrDefault(OPT_STACK_NAME, defaultString(stackName));
+        if (stackName.isEmpty()) {
+            throw new StepException("Stack name cannot be empty", INVALID_STACK_NAME);
         }
 
-        if (stackName == null || stackName.isEmpty()) {
-            stackName = (String) configuration.get("stackName");
-        }
-        if (stackName == null || stackName.isEmpty()) {
-            throw new StepException("Stack Name cannot be empty", ErrorCause.InvalidConfiguration);
+        environmentId = (String) configuration.getOrDefault(OPT_ENV_IDS, defaultString(environmentId));
+        if (environmentId.isEmpty()) {
+            throw new StepException("Environment cannot be empty", INVALID_ENVIRONMENT_NAME);
         }
 
-        if (serviceName == null || serviceName.isEmpty()) {
-            serviceName = (String) configuration.get("serviceName");
-        }
-        if (serviceName == null || serviceName.isEmpty()) {
-            throw new StepException("Service Name cannot be empty", ErrorCause.InvalidConfiguration);
+        serviceName = (String) configuration.getOrDefault(OPT_SERVICE_NAME, defaultString(serviceName));
+        if (serviceName.isEmpty()) {
+            throw new StepException("Service Name cannot be empty", INVALID_CONFIGURATION);
         }
 
-        if (imageUuid == null || imageUuid.isEmpty()) {
-            imageUuid = (String) configuration.get("imageUuid");
-        }
-        if (imageUuid == null || imageUuid.isEmpty()) {
-            throw new StepException("Image UUID cannot be empty", ErrorCause.InvalidConfiguration);
+        imageUuid = (String) configuration.getOrDefault(OPT_IMAGE_UUID, defaultString(imageUuid));
+        if (imageUuid.isEmpty()) {
+            throw new StepException("Image UUID cannot be empty", INVALID_CONFIGURATION);
         }
 
-        if (dataVolumes == null || dataVolumes.isEmpty()) {
-            dataVolumes = (String) configuration.get("environment");
+        if (defaultString(dataVolumes).isEmpty() && configuration.containsKey(OPT_DATA_VOLUMES)) {
+            dataVolumes = (String) configuration.get(OPT_DATA_VOLUMES);
         }
 
-        if (environment == null || environment.isEmpty()) {
-            environment = (String) configuration.get("environment");
+        if (defaultString(environment).isEmpty() && configuration.containsKey(OPT_ENV_VARS)) {
+            environment = (String) configuration.get(OPT_ENV_VARS);
         }
 
-        if ((labels == null || labels.isEmpty()) && configuration.containsKey("labels")) {
-            labels = (String) configuration.get("labels");
+        if (defaultString(labels).isEmpty() && configuration.containsKey(OPT_LABELS)) {
+            labels = (String) configuration.get(OPT_LABELS);
         }
 
-        if ((secrets == null || secrets.isEmpty()) && configuration.containsKey("secrets")) {
-            secrets = (String) configuration.get("secrets");
+        if (defaultString(secrets).isEmpty() && configuration.containsKey(OPT_SECRETS)) {
+            secrets = (String) configuration.get(OPT_SECRETS);
         }
 
         Framework framework = context.getFramework();
@@ -164,18 +159,18 @@ public class RancherAddService implements StepPlugin {
             String secretKey = loadStoragePathData(context.getExecutionContext(), secretKeyPath);
             client.setSecretKey(secretKey);
         } catch (IOException e) {
-            throw new StepException("Could not get secret storage path", e, ErrorCause.IOException);
+            throw new StepException("Could not get secret storage path", e, ErrorCause.IO_EXCEPTION);
         }
 
         ImmutableMap.Builder<String, Object> mapBuilder = ImmutableMap.builder();
         mapBuilder.put("type", "launchConfig");
-        mapBuilder.put("imageUuid", imageUuid);
+        mapBuilder.put(OPT_IMAGE_UUID, imageUuid);
         mapBuilder.put("kind", "container");
         mapBuilder.put("networkMode", "managed");
 
-        addJsonData("dataVolumes", ensureStringIsJsonArray(dataVolumes), mapBuilder);
-        addJsonData("environment", ensureStringIsJsonObject(environment), mapBuilder);
-        addJsonData("labels", ensureStringIsJsonObject(labels), mapBuilder);
+        addJsonData(OPT_DATA_VOLUMES, ensureStringIsJsonArray(dataVolumes), mapBuilder);
+        addJsonData(OPT_ENV_VARS, ensureStringIsJsonObject(environment), mapBuilder);
+        addJsonData(OPT_LABELS, ensureStringIsJsonObject(labels), mapBuilder);
 
         if (secrets != null && secrets.trim().length() > 0) {
             // Add in the new or replacement secrets specified in the step.
@@ -183,7 +178,7 @@ public class RancherAddService implements StepPlugin {
             for (String secretId : secrets.split("/[,; ]+/")) {
                 secretsArray.add(secretJson(secretId));
             }
-            mapBuilder.put("secrets", "[" + String.join(",", secretsArray) + "]");
+            mapBuilder.put(OPT_SECRETS, "[" + String.join(",", secretsArray) + "]");
         }
 
         JsonNode check;
@@ -203,7 +198,7 @@ public class RancherAddService implements StepPlugin {
             stackId = stackId(stackName, endpoint, logger);
         }
         if (stackId == null) {
-            throw new StepException("Stack does not exist: " + stackName, ErrorCause.InvalidConfiguration);
+            throw new StepException("Stack does not exist: " + stackName, ErrorCause.INVALID_CONFIGURATION);
         }
 
         try {
@@ -215,7 +210,7 @@ public class RancherAddService implements StepPlugin {
             logger.log(INFO_LEVEL, "New service ID:" + serviceResult.path("id").asText());
             logger.log(INFO_LEVEL, "New service name:" + serviceResult.path("name").asText());
         } catch (IOException e) {
-            throw new StepException("Failed posting to " + spec, e, ErrorCause.InvalidConfiguration);
+            throw new StepException("Failed posting to " + spec, e, ErrorCause.INVALID_CONFIGURATION);
         }
     }
 
@@ -228,11 +223,11 @@ public class RancherAddService implements StepPlugin {
                 return check.path("data").get(0).path("id").asText();
             } else {
                 logger.log(ERR_LEVEL, "FATAL: no stack `" + stackName + "` was found.");
-                throw new StepException("Stack does not exist", ErrorCause.InvalidConfiguration);
+                throw new StepException("Stack does not exist", ErrorCause.INVALID_CONFIGURATION);
             }
         } catch (IOException ex) {
             logger.log(ERR_LEVEL, "FATAL: no stack `" + stackName + "` was found.");
-            throw new StepException("Stack does not exist", ErrorCause.InvalidConfiguration);
+            throw new StepException("Stack does not exist", ErrorCause.INVALID_CONFIGURATION);
         }
     }
 
@@ -249,7 +244,7 @@ public class RancherAddService implements StepPlugin {
             JsonNode map = objectMapper.readTree(data);
             builder.put(name, map);
         } catch (JsonProcessingException e) {
-            throw new StepException("Could not parse JSON for " + name + "\n" + data, e, ErrorCause.InvalidConfiguration);
+            throw new StepException("Could not parse JSON for " + name + "\n" + data, e, ErrorCause.INVALID_CONFIGURATION);
         }
     }
 

@@ -18,7 +18,6 @@ package com.bioraft.rundeck.rancher;
 
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.storage.ResourceMeta;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -132,7 +131,7 @@ public class RancherShared {
         try {
             return (new ObjectMapper()).readTree(secretJson(secretId));
         } catch (JsonProcessingException e) {
-            throw new NodeStepException("Failed add secret", e, ErrorCause.InvalidJson, nodeName);
+            throw new NodeStepException("Failed add secret", e, ErrorCause.INVALID_JSON, nodeName);
         }
     }
 
@@ -150,18 +149,20 @@ public class RancherShared {
     }
 
     public enum ErrorCause implements FailureReason {
-        InvalidConfiguration,
-        InvalidJson,
-        IOException,
-        ActionFailed,
-        ActionNotSupported,
-        NoKeyStorage,
-        NoServiceObject,
-        ServiceNotRunning,
-        MissingActionURL,
-        MissingUpgradeURL,
-        NoUpgradeData,
-        UpgradeFailure,
-        Interrupted
+        INVALID_CONFIGURATION,
+        INVALID_JSON,
+        IO_EXCEPTION,
+        ACTION_FAILED,
+        ACTION_NOT_SUPPORTED,
+        NO_KEY_STORAGE,
+        NO_SERVICE_OBJECT,
+        SERVICE_NOT_RUNNING,
+        MISSING_ACTION_URL,
+        MISSING_UPGRADE_URL,
+        NO_UPGRADE_DATA,
+        UPGRADE_FAILURE,
+        INTERRUPTED,
+        INVALID_STACK_NAME,
+        INVALID_ENVIRONMENT_NAME
     }
 }

@@ -26,6 +26,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 
+import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -91,7 +92,7 @@ public class RancherResourceModelSourceTest {
 	}
 
 	@Test
-	public void processOneNode() throws ResourceModelSourceException, IOException {
+	public void processOneNode() throws ResourceModelSourceException, IOException, ConfigurationException {
 		String json1 = "{\"name\": \"" + environment + "\"}";
 		String json2 = "{\"data\":[" + item("1") + "]}";
 		when(call.execute()).thenReturn(response(json1), response(json2));
@@ -112,7 +113,7 @@ public class RancherResourceModelSourceTest {
 	}
 
 	@Test
-	public void processTwoNodes() throws ResourceModelSourceException, IOException {
+	public void processTwoNodes() throws ResourceModelSourceException, IOException, ConfigurationException {
 		String json1 = "{\"name\": \"" + environment + "\"}";
 		String json2 = "{\"data\":[" + item("1") + "," + item("2") + "]}";
 		when(call.execute()).thenReturn(response(json1), response(json2));
@@ -145,7 +146,7 @@ public class RancherResourceModelSourceTest {
 	}
 
 	@Test
-	public void processContinued() throws ResourceModelSourceException, IOException {
+	public void processContinued() throws ResourceModelSourceException, IOException, ConfigurationException {
 		String json1 = "{\"name\": \"" + environment + "\"}";
 		String url = configuration.getProperty(RancherShared.RANCHER_CONFIG_ENDPOINT);
 		String json2 = "{\"data\":[" + item("1") + "], \"pagination\": {\"next\": \"" + url +"\"}}";

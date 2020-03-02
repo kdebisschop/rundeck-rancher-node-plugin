@@ -33,6 +33,7 @@ import java.io.InputStreamReader;
 import java.util.Map;
 
 import static com.bioraft.rundeck.rancher.RancherShared.*;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.when;
 
@@ -42,73 +43,73 @@ import static org.mockito.Mockito.when;
  * @author Karl DeBisschop <kdebisschop@gmail.com>
  * @since 2019-12-11
  */
-public class PluginStepTest {
+public abstract class PluginStepTest {
 
-	protected static final String endpoint = "https://rancher.example.com/v2-beta/";
-	protected static final String accessKey = "keys/rancher/access.key";
-	protected static final String secretKey = "keys/rancher/secret.key";
-	protected static final String project = "1a10";
+    protected static String projectEndpoint = "https://rancher.example.com/v2-beta/";
+    protected static String projectAccessKey = "keys/rancher/access.key";
+    protected static String projectSecretKey = "keys/rancher/secret.key";
+    protected static String projectName = "1a10";
 
-	@Mock
-	HttpClient client;
+    @Mock
+    HttpClient client;
 
-	@Mock
-	PluginStepContext ctx;
+    @Mock
+    PluginStepContext ctx;
 
-	@Mock
-	PluginLogger logger;
+    @Mock
+    PluginLogger logger;
 
-	@Mock
-	Framework framework;
+    @Mock
+    Framework framework;
 
-	@Mock
-	ExecutionContext executionContext;
+    @Mock
+    ExecutionContext executionContext;
 
-	@Mock
-	Resource<ResourceMeta> treeResource;
+    @Mock
+    Resource<ResourceMeta> treeResource;
 
-	@Mock
-	ResourceMeta contents;
+    @Mock
+    ResourceMeta contents;
 
-	@Mock
-	StorageTree storageTree;
+    @Mock
+    StorageTree storageTree;
 
-	@Mock
-	Map<String, Object> cfg;
+    @Mock
+    Map<String, Object> cfg;
 
-	public void setUp() {
-		when(ctx.getLogger()).thenReturn(logger);
-		when(ctx.getFramework()).thenReturn(framework);
-		when(ctx.getFrameworkProject()).thenReturn(project);
-		when(ctx.getExecutionContext()).thenReturn(executionContext);
+    public void setUp() {
+        when(ctx.getLogger()).thenReturn(logger);
+        when(ctx.getFramework()).thenReturn(framework);
+        when(ctx.getFrameworkProject()).thenReturn(projectName);
+        when(ctx.getExecutionContext()).thenReturn(executionContext);
 
-		when(framework.getProjectProperty(project, PROJ_RANCHER_ENDPOINT)).thenReturn(endpoint);
-		when(framework.getProjectProperty(project, PROJ_RANCHER_ACCESSKEY_PATH)).thenReturn(accessKey);
-		when(framework.getProjectProperty(project, PROJ_RANCHER_SECRETKEY_PATH)).thenReturn(secretKey);
+        when(framework.getProperty(eq(FMWK_RANCHER_ENDPOINT))).thenReturn("framework.endpoint");
+        when(framework.getProperty(eq(FMWK_RANCHER_ACCESSKEY_PATH))).thenReturn("framework.accessKey");
+        when(framework.getProperty(eq(FMWK_RANCHER_SECRETKEY_PATH))).thenReturn("framework.secretKey");
 
-		when(executionContext.getStorageTree()).thenReturn(storageTree);
-		when(storageTree.getResource(anyString())).thenReturn(treeResource);
-		when(treeResource.getContents()).thenReturn(contents);
-		when(cfg.get("stack")).thenReturn("testStack");
-	}
+        when(executionContext.getStorageTree()).thenReturn(storageTree);
+        when(storageTree.getResource(anyString())).thenReturn(treeResource);
+        when(treeResource.getContents()).thenReturn(contents);
+        when(cfg.get("stack")).thenReturn("testStack");
+    }
 
-	protected InputStream getResourceStream(String resource) {
-		ClassLoader classLoader = getClass().getClassLoader();
-		InputStream stream = classLoader.getResourceAsStream(resource);
-		if (stream == null) throw new AssertionError();
-		return stream;
-	}
+    protected InputStream getResourceStream(String resource) {
+        ClassLoader classLoader = getClass().getClassLoader();
+        InputStream stream = classLoader.getResourceAsStream(resource);
+        if (stream == null) throw new AssertionError();
+        return stream;
+    }
 
-	protected JsonNode readFromInputStream(InputStream inputStream) throws IOException {
-		StringBuilder resultStringBuilder = new StringBuilder();
-		InputStreamReader reader = new InputStreamReader(inputStream);
-		try (BufferedReader br = new BufferedReader(reader)) {
-			String line;
-			while ((line = br.readLine()) != null) {
-				resultStringBuilder.append(line).append("\n");
-			}
-		}
-		ObjectMapper mapper = new ObjectMapper();
-		return mapper.readTree(resultStringBuilder.toString());
-	}
+    protected JsonNode readFromInputStream(InputStream inputStream) throws IOException {
+        StringBuilder resultStringBuilder = new StringBuilder();
+        InputStreamReader reader = new InputStreamReader(inputStream);
+        try (BufferedReader br = new BufferedReader(reader)) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                resultStringBuilder.append(line).append("\n");
+            }
+        }
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.readTree(resultStringBuilder.toString());
+    }
 }
