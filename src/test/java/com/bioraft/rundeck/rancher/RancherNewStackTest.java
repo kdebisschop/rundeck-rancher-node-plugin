@@ -25,6 +25,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import java.io.IOException;
 
 import static com.bioraft.rundeck.rancher.RancherShared.*;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
 
@@ -42,6 +43,12 @@ public class RancherNewStackTest extends PluginStepTest {
 	@Before
 	public void implSetUp() {
 		setUp();
+	}
+
+	@Test
+	public void validateDefaultConstructor() {
+		RancherNewStack subject = new RancherNewStack();
+		assertNotNull(subject);
 	}
 
 	/**

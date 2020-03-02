@@ -25,6 +25,8 @@ import org.mockito.runners.MockitoJUnitRunner;
 import java.io.IOException;
 
 import static com.bioraft.rundeck.rancher.RancherShared.*;
+import static org.junit.Assert.assertNotNull;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
 
 /**
@@ -44,14 +46,20 @@ public class RancherAddServiceTest extends PluginStepTest {
 	}
 
 	@Test
+	public void validateDefaultConstructor() {
+		RancherAddService subject = new RancherAddService();
+		assertNotNull(subject);
+	}
+
+	@Test
 	public void whenStackIdIsGiven() throws StepException, IOException {
 		when(framework.getProjectProperty(projectName, PROJ_RANCHER_ENDPOINT)).thenReturn(projectEndpoint);
 		when(framework.getProjectProperty(projectName, PROJ_RANCHER_ACCESSKEY_PATH)).thenReturn(projectAccessKey);
 		when(framework.getProjectProperty(projectName, PROJ_RANCHER_SECRETKEY_PATH)).thenReturn(projectSecretKey);
 		when(cfg.getOrDefault(eq("stackName"), any())).thenReturn("testStack");
 		when(cfg.getOrDefault(eq("environmentId"), any())).thenReturn("1a10");
-		when(cfg.get("serviceName")).thenReturn("testService");
-		when(cfg.get("imageUuid")).thenReturn("repo/image:tag");
+		when(cfg.getOrDefault(eq("serviceName"), any())).thenReturn("testService");
+		when(cfg.getOrDefault(eq("imageUuid"), any())).thenReturn("repo/image:tag");
 
 		JsonNode stack = readFromInputStream(getResourceStream("stack.json"));
 		when(client.get(anyString())).thenReturn(stack);
@@ -71,8 +79,8 @@ public class RancherAddServiceTest extends PluginStepTest {
 	public void whenStackNameIsGiven() throws StepException, IOException {
 		when(cfg.getOrDefault(eq("stackName"), any())).thenReturn("testStack");
 		when(cfg.getOrDefault(eq("environmentId"), any())).thenReturn("1a10");
-		when(cfg.get("serviceName")).thenReturn("testService");
-		when(cfg.get("imageUuid")).thenReturn("repo/image:tag");
+		when(cfg.getOrDefault(eq("serviceName"), any())).thenReturn("testService");
+		when(cfg.getOrDefault(eq("imageUuid"), any())).thenReturn("repo/image:tag");
 
 		JsonNode notFound = readFromInputStream(getResourceStream("not-found.json"));
 		JsonNode stacks = readFromInputStream(getResourceStream("stacks.json"));
@@ -95,8 +103,8 @@ public class RancherAddServiceTest extends PluginStepTest {
 	public void whenStackDoesNotExist() throws StepException, IOException {
 		when(cfg.getOrDefault(eq("stackName"), any())).thenReturn("testStack");
 		when(cfg.getOrDefault(eq("environmentId"), any())).thenReturn("1a10");
-		when(cfg.get("serviceName")).thenReturn("testService");
-		when(cfg.get("imageUuid")).thenReturn("repo/image:tag");
+		when(cfg.getOrDefault(eq("serviceName"), any())).thenReturn("testService");
+		when(cfg.getOrDefault(eq("imageUuid"), any())).thenReturn("repo/image:tag");
 
 		JsonNode notFound = readFromInputStream(getResourceStream("not-found.json"));
 		when(client.get(anyString())).thenReturn(notFound);
@@ -116,8 +124,8 @@ public class RancherAddServiceTest extends PluginStepTest {
 	public void whenStackIsNotSet() throws StepException, IOException {
 		when(cfg.getOrDefault(eq("stackName"), any())).thenReturn("");
 		when(cfg.getOrDefault(eq("environmentId"), any())).thenReturn("1a10");
-		when(cfg.get("serviceName")).thenReturn("testService");
-		when(cfg.get("imageUuid")).thenReturn("repo/image:tag");
+		when(cfg.getOrDefault(eq("serviceName"), any())).thenReturn("testService");
+		when(cfg.getOrDefault(eq("imageUuid"), any())).thenReturn("repo/image:tag");
 
 		JsonNode notFound = readFromInputStream(getResourceStream("not-found.json"));
 		when(client.get(anyString())).thenReturn(notFound);
@@ -134,11 +142,53 @@ public class RancherAddServiceTest extends PluginStepTest {
 	}
 
 	@Test(expected = StepException.class)
-	public void whenEnvironmentIsNotSet() throws StepException, IOException {
+	public void whenEnvironmentIdIsNotSet() throws StepException, IOException {
 		when(cfg.getOrDefault(eq("stackName"), any())).thenReturn("testStack");
 		when(cfg.getOrDefault(eq("environmentId"), any())).thenReturn("");
-		when(cfg.get("serviceName")).thenReturn("testService");
-		when(cfg.get("imageUuid")).thenReturn("repo/image:tag");
+		when(cfg.getOrDefault(eq("serviceName"), any())).thenReturn("testService");
+		when(cfg.getOrDefault(eq("imageUuid"), any())).thenReturn("repo/image:tag");
+
+		JsonNode notFound = readFromInputStream(getResourceStream("not-found.json"));
+		when(client.get(anyString())).thenReturn(notFound);
+
+		JsonNode noStacks = readFromInputStream(getResourceStream("no-stacks.json"));
+		when(client.get(anyString(), anyMapOf(String.class, String.class))).thenReturn(noStacks);
+
+		upgrade = new RancherAddService(client);
+		upgrade.executeStep(ctx, cfg);
+
+		verify(client, times(0)).get(anyString());
+		verify(client, times(0)).get(anyString(), anyMapOf(String.class, String.class));
+		verify(client, times(0)).post(anyString(), anyMapOf(String.class, Object.class));
+	}
+
+	@Test(expected = StepException.class)
+	public void whenServiceNameIsNotSet() throws StepException, IOException {
+		when(cfg.getOrDefault(eq("stackName"), any())).thenReturn("testStack");
+		when(cfg.getOrDefault(eq("environmentId"), any())).thenReturn("1a10");
+		when(cfg.getOrDefault(eq("serviceName"), any())).thenReturn("");
+		when(cfg.getOrDefault(eq("imageUuid"), any())).thenReturn("repo/image:tag");
+
+		JsonNode notFound = readFromInputStream(getResourceStream("not-found.json"));
+		when(client.get(anyString())).thenReturn(notFound);
+
+		JsonNode noStacks = readFromInputStream(getResourceStream("no-stacks.json"));
+		when(client.get(anyString(), anyMapOf(String.class, String.class))).thenReturn(noStacks);
+
+		upgrade = new RancherAddService(client);
+		upgrade.executeStep(ctx, cfg);
+
+		verify(client, times(0)).get(anyString());
+		verify(client, times(0)).get(anyString(), anyMapOf(String.class, String.class));
+		verify(client, times(0)).post(anyString(), anyMapOf(String.class, Object.class));
+	}
+
+	@Test(expected = StepException.class)
+	public void whenImageUuidIsNotSet() throws StepException, IOException {
+		when(cfg.getOrDefault(eq("stackName"), any())).thenReturn("testStack");
+		when(cfg.getOrDefault(eq("environmentId"), any())).thenReturn("1a10");
+		when(cfg.getOrDefault(eq("serviceName"), any())).thenReturn("testService");
+		when(cfg.getOrDefault(eq("imageUuid"), any())).thenReturn("");
 
 		JsonNode notFound = readFromInputStream(getResourceStream("not-found.json"));
 		when(client.get(anyString())).thenReturn(notFound);

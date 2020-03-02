@@ -34,12 +34,12 @@ import java.util.List;
 import java.util.Map;
 
 import static com.bioraft.rundeck.rancher.RancherShared.*;
-import static com.bioraft.rundeck.rancher.RancherShared.ErrorCause.INVALID_ENVIRONMENT_NAME;
-import static com.bioraft.rundeck.rancher.RancherShared.ErrorCause.INVALID_STACK_NAME;
+import static com.bioraft.rundeck.rancher.RancherShared.ErrorCause.*;
 import static com.dtolabs.rundeck.core.Constants.ERR_LEVEL;
 import static com.dtolabs.rundeck.core.Constants.INFO_LEVEL;
 import static com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants.CODE_SYNTAX_MODE;
 import static com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants.DISPLAY_TYPE_KEY;
+import static org.apache.commons.lang.StringUtils.defaultString;
 
 @Plugin(name = RancherAddService.SERVICE_PROVIDER_NAME, service = ServiceNameConstants.WorkflowStep)
 @PluginDescription(title = "Rancher - Create New Service", description = "Creates a new service in a rancher stack.")
@@ -99,28 +99,24 @@ public class RancherAddService implements StepPlugin {
             StepException {
         this.configuration = configuration;
 
-        stackName = configuration.getOrDefault("stackName", ((stackName == null) ? "" : stackName)).toString();
+        stackName = (String) configuration.getOrDefault("stackName", defaultString(stackName));
         if (stackName.isEmpty()) {
             throw new StepException("Stack name cannot be empty", INVALID_STACK_NAME);
         }
 
-        environmentId = configuration.getOrDefault("environmentId", ((environment == null) ? "" : environment)).toString();
+        environmentId = (String) configuration.getOrDefault("environmentId", defaultString(environmentId));
         if (environmentId.isEmpty()) {
             throw new StepException("Environment cannot be empty", INVALID_ENVIRONMENT_NAME);
         }
 
-        if (serviceName == null || serviceName.isEmpty()) {
-            serviceName = (String) configuration.get("serviceName");
-        }
-        if (serviceName == null || serviceName.isEmpty()) {
-            throw new StepException("Service Name cannot be empty", ErrorCause.INVALID_CONFIGURATION);
+        serviceName = (String) configuration.getOrDefault("serviceName", defaultString(serviceName));
+        if (serviceName.isEmpty()) {
+            throw new StepException("Service Name cannot be empty", INVALID_CONFIGURATION);
         }
 
-        if (imageUuid == null || imageUuid.isEmpty()) {
-            imageUuid = (String) configuration.get("imageUuid");
-        }
-        if (imageUuid == null || imageUuid.isEmpty()) {
-            throw new StepException("Image UUID cannot be empty", ErrorCause.INVALID_CONFIGURATION);
+        imageUuid = (String) configuration.getOrDefault("imageUuid", defaultString(imageUuid));
+        if (imageUuid.isEmpty()) {
+            throw new StepException("Image UUID cannot be empty", INVALID_CONFIGURATION);
         }
 
         if (dataVolumes == null || dataVolumes.isEmpty()) {

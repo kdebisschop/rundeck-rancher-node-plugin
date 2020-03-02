@@ -34,6 +34,7 @@ import static com.bioraft.rundeck.rancher.RancherShared.*;
 import static com.bioraft.rundeck.rancher.RancherShared.ErrorCause.*;
 import static com.dtolabs.rundeck.core.Constants.ERR_LEVEL;
 import static com.dtolabs.rundeck.core.Constants.INFO_LEVEL;
+import static org.apache.commons.lang.StringUtils.defaultString;
 
 @Plugin(name = RancherNewStack.SERVICE_PROVIDER_NAME, service = ServiceNameConstants.WorkflowStep)
 @PluginDescription(title = "Rancher - Create New Stack", description = "Creates a new stack in rancher.")
@@ -60,12 +61,12 @@ public class RancherNewStack implements StepPlugin {
     public void executeStep(final PluginStepContext context, final Map<String, Object> configuration) throws
             StepException {
 
-        stackName = configuration.getOrDefault("stackName", ((stackName == null) ? "" : stackName)).toString();
+        stackName = (String) configuration.getOrDefault("stackName", defaultString(stackName));
         if (stackName.isEmpty()) {
             throw new StepException("Stack name cannot be empty", INVALID_STACK_NAME);
         }
 
-        environment = configuration.getOrDefault("environment", ((environment == null) ? "" : environment)).toString();
+        environment = (String) configuration.getOrDefault("environment", defaultString(environment));
         if (environment.isEmpty()) {
             throw new StepException("Environment cannot be empty", INVALID_ENVIRONMENT_NAME);
         }
