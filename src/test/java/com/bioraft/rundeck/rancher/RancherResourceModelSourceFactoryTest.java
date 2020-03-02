@@ -19,7 +19,16 @@ public class RancherResourceModelSourceFactoryTest {
     Properties configuration;
 
     @Test
-    public void validateDefaultConstructor() throws ConfigurationException {
+    public void validateDefaultConstructor() {
+        RancherResourceModelSourceFactory subject = new RancherResourceModelSourceFactory();
+        assertNotNull(subject);
+        String description = subject.getDescription().getDescription();
+        assertTrue(description, description.endsWith("remote rancher node."));
+    }
+
+
+    @Test(expected = ConfigurationException.class)
+    public void testConfigurationException() throws ConfigurationException {
         RancherResourceModelSourceFactory subject = new RancherResourceModelSourceFactory();
         assertNotNull(subject);
         String description = subject.getDescription().getDescription();
@@ -28,6 +37,4 @@ public class RancherResourceModelSourceFactoryTest {
         ResourceModelSource source = subject.createResourceModelSource(configuration);
         assertNotNull(source);
     }
-
-
 }
