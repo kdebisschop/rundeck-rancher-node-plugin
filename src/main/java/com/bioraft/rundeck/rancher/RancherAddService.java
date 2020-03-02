@@ -119,19 +119,19 @@ public class RancherAddService implements StepPlugin {
             throw new StepException("Image UUID cannot be empty", INVALID_CONFIGURATION);
         }
 
-        if (dataVolumes == null || dataVolumes.isEmpty()) {
-            dataVolumes = (String) configuration.get("environment");
+        if (defaultString(dataVolumes).isEmpty() && configuration.containsKey("dataVolumes")) {
+            dataVolumes = (String) configuration.get("dataVolumes");
         }
 
-        if (environment == null || environment.isEmpty()) {
+        if (defaultString(environment).isEmpty() && configuration.containsKey("environment")) {
             environment = (String) configuration.get("environment");
         }
 
-        if ((labels == null || labels.isEmpty()) && configuration.containsKey("labels")) {
+        if (defaultString(labels).isEmpty() && configuration.containsKey("labels")) {
             labels = (String) configuration.get("labels");
         }
 
-        if ((secrets == null || secrets.isEmpty()) && configuration.containsKey("secrets")) {
+        if (defaultString(secrets).isEmpty() && configuration.containsKey("secrets")) {
             secrets = (String) configuration.get("secrets");
         }
 
