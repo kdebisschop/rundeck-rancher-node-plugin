@@ -35,6 +35,7 @@ import java.util.Map;
 
 import static com.bioraft.rundeck.rancher.RancherShared.*;
 import static com.bioraft.rundeck.rancher.RancherShared.ErrorCause.INVALID_ENVIRONMENT_NAME;
+import static com.bioraft.rundeck.rancher.RancherShared.ErrorCause.INVALID_STACK_NAME;
 import static com.dtolabs.rundeck.core.Constants.ERR_LEVEL;
 import static com.dtolabs.rundeck.core.Constants.INFO_LEVEL;
 import static com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants.CODE_SYNTAX_MODE;
@@ -98,18 +99,14 @@ public class RancherAddService implements StepPlugin {
             StepException {
         this.configuration = configuration;
 
-        if (environmentId == null || environmentId.isEmpty()) {
-            environmentId = (String) configuration.get("environmentId");
-        }
-        if (environmentId == null || environmentId.isEmpty()) {
-            throw new StepException("Environment ID cannot be empty", INVALID_ENVIRONMENT_NAME);
+        stackName = configuration.getOrDefault("stackName", ((stackName == null) ? "" : stackName)).toString();
+        if (stackName.isEmpty()) {
+            throw new StepException("Stack name cannot be empty", INVALID_STACK_NAME);
         }
 
-        if (stackName == null || stackName.isEmpty()) {
-            stackName = (String) configuration.get("stackName");
-        }
-        if (stackName == null || stackName.isEmpty()) {
-            throw new StepException("Stack Name cannot be empty", ErrorCause.INVALID_CONFIGURATION);
+        environmentId = configuration.getOrDefault("environmentId", ((environment == null) ? "" : environment)).toString();
+        if (environmentId.isEmpty()) {
+            throw new StepException("Environment cannot be empty", INVALID_ENVIRONMENT_NAME);
         }
 
         if (serviceName == null || serviceName.isEmpty()) {

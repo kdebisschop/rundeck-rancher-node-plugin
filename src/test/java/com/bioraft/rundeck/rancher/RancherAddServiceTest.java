@@ -44,8 +44,8 @@ public class RancherAddServiceTest extends PluginStepTest {
 
 	@Test
 	public void whenStackIdIsGiven() throws StepException, IOException {
-		when(cfg.get("environmentId")).thenReturn("1a10");
-		when(cfg.get("stackName")).thenReturn("testStack");
+		when(cfg.getOrDefault(eq("stackName"), any())).thenReturn("testStack");
+		when(cfg.getOrDefault(eq("environmentId"), any())).thenReturn("1a10");
 		when(cfg.get("serviceName")).thenReturn("testService");
 		when(cfg.get("imageUuid")).thenReturn("repo/image:tag");
 
@@ -65,8 +65,8 @@ public class RancherAddServiceTest extends PluginStepTest {
 
 	@Test
 	public void whenStackNameIsGiven() throws StepException, IOException {
-		when(cfg.get("environmentId")).thenReturn("1a10");
-		when(cfg.get("stackName")).thenReturn("testStack");
+		when(cfg.getOrDefault(eq("stackName"), any())).thenReturn("testStack");
+		when(cfg.getOrDefault(eq("environmentId"), any())).thenReturn("1a10");
 		when(cfg.get("serviceName")).thenReturn("testService");
 		when(cfg.get("imageUuid")).thenReturn("repo/image:tag");
 
@@ -89,8 +89,8 @@ public class RancherAddServiceTest extends PluginStepTest {
 
 	@Test(expected = StepException.class)
 	public void whenStackDoesNotExist() throws StepException, IOException {
-		when(cfg.get("environmentId")).thenReturn("1a10");
-		when(cfg.get("stackName")).thenReturn("testStack");
+		when(cfg.getOrDefault(eq("stackName"), any())).thenReturn("testStack");
+		when(cfg.getOrDefault(eq("environmentId"), any())).thenReturn("1a10");
 		when(cfg.get("serviceName")).thenReturn("testService");
 		when(cfg.get("imageUuid")).thenReturn("repo/image:tag");
 
