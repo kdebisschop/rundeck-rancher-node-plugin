@@ -142,13 +142,49 @@ public class RancherManageServiceTest {
     }
 
     @Test(expected = NodeStepException.class)
+    public void testPostFailure() throws IOException, NodeStepException {
+        RancherManageService subject = new RancherManageService(client);
+        cfg.put("action", "restart");
+        ObjectMapper mapper = new ObjectMapper();
+
+        String text = readFromInputStream(getResourceStream("service.json"));
+        ObjectNode json1 = (ObjectNode) mapper.readTree(text);
+        ObjectNode json2 = (ObjectNode) mapper.readTree(text);
+
+        when(client.get(any())).thenReturn(json1);
+        when(client.post(any(), eq(""))).thenThrow(new IOException());
+        subject.executeNodeStep(ctx, cfg, node);
+        verify(client, times(1)).get(any());
+        verify(client, times(1)).post(any(), eq(""));
+    }
+
+    @Test(expected = NodeStepException.class)
+    public void testNoKey() throws IOException, NodeStepException {
+        cfg.put("action", "restart");
+        map.remove(RancherShared.CONFIG_ACCESSKEY_PATH);
+        ObjectMapper mapper = new ObjectMapper();
+
+        String text = readFromInputStream(getResourceStream("service.json"));
+        ObjectNode json1 = (ObjectNode) mapper.readTree(text);
+
+        when(client.get(any())).thenReturn(json1);
+
+        try {
+            RancherManageService subject = new RancherManageService(client);
+            subject.executeNodeStep(ctx, cfg, node);
+        } catch (NodeStepException e) {
+            assertEquals("Could not get secret storage path", e.getMessage());
+            throw e;
+        }
+    }
+
+    @Test(expected = NodeStepException.class)
     public void testUnsupportedAction() throws IOException, NodeStepException {
         cfg.put("action", "unsupported");
         ObjectMapper mapper = new ObjectMapper();
 
         String text = readFromInputStream(getResourceStream("service.json"));
         ObjectNode json1 = (ObjectNode) mapper.readTree(text);
-        ObjectNode json2 = (ObjectNode) mapper.readTree(text);
 
         when(client.get(any())).thenReturn(json1);
 
@@ -157,6 +193,42 @@ public class RancherManageServiceTest {
             subject.executeNodeStep(ctx, cfg, node);
         } catch (NodeStepException e) {
             assertEquals("Invalid action: unsupported", e.getMessage());
+            throw e;
+        }
+    }
+
+    @Test(expected = NodeStepException.class)
+    public void testEmptyUrl() throws IOException, NodeStepException {
+        cfg.put("action", "restart");
+        ObjectMapper mapper = new ObjectMapper();
+
+        String text = readFromInputStream(getResourceStream("service.json"));
+        ObjectNode json1 = (ObjectNode) mapper.readTree(text);
+        ObjectNode actions = (ObjectNode) json1.get("actions");
+        actions.put("restart", "");
+
+        when(client.get(any())).thenReturn(json1);
+
+        try {
+            RancherManageService subject = new RancherManageService(client);
+            subject.executeNodeStep(ctx, cfg, node);
+        } catch (NodeStepException e) {
+            assertEquals("No restart URL found", e.getMessage());
+            throw e;
+        }
+    }
+
+    @Test(expected = NodeStepException.class)
+    public void testNoServiceDefinition() throws IOException, NodeStepException {
+        cfg.put("action", "restart");
+
+        when(client.get(any())).thenThrow(new IOException());
+
+        try {
+            RancherManageService subject = new RancherManageService(client);
+            subject.executeNodeStep(ctx, cfg, node);
+        } catch (NodeStepException e) {
+            assertEquals("Could not get service definition", e.getMessage());
             throw e;
         }
     }
