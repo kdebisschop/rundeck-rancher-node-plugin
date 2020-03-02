@@ -16,4 +16,13 @@ public class Constants {
     public static final String LINKS = "links";
 
     public static final String JSON = "json";
+
+    public static final String OPT_DATA_VOLUMES = "dataVolumes";
+    public static final String OPT_ENV_VARS = "environment";
+    public static final String OPT_ENV_IDS = "environmentId";
+    public static final String OPT_IMAGE_UUID = "imageUuid";
+    public static final String OPT_LABELS = "labels";
+    public static final String OPT_SECRETS = "secrets";
+    public static final String OPT_SERVICE_NAME = "serviceName";
+    public static final String OPT_STACK_NAME = "stackName";
 }

@@ -24,6 +24,8 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.IOException;
 
+import static com.bioraft.rundeck.rancher.Constants.OPT_ENV_IDS;
+import static com.bioraft.rundeck.rancher.Constants.OPT_STACK_NAME;
 import static com.bioraft.rundeck.rancher.RancherShared.*;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.eq;
@@ -60,8 +62,8 @@ public class RancherNewStackTest extends PluginStepTest {
 		when(framework.getProjectProperty(projectName, PROJ_RANCHER_ACCESSKEY_PATH)).thenReturn(projectAccessKey);
 		when(framework.getProjectProperty(projectName, PROJ_RANCHER_SECRETKEY_PATH)).thenReturn(projectSecretKey);
 
-		when(cfg.getOrDefault(eq("stackName"), any())).thenReturn("testStack");
-		when(cfg.getOrDefault(eq("environment"), any())).thenReturn("1a10");
+		when(cfg.getOrDefault(eq(OPT_STACK_NAME), any())).thenReturn("testStack");
+		when(cfg.getOrDefault(eq(OPT_ENV_IDS), any())).thenReturn("1a10");
 
 		JsonNode stacks = readFromInputStream(getResourceStream("no-stacks.json"));
 		when(client.get(anyString(), anyMapOf(String.class, String.class))).thenReturn(stacks);
@@ -81,8 +83,8 @@ public class RancherNewStackTest extends PluginStepTest {
 	 */
 	@Test(expected = StepException.class)
 	public void whenStackExists() throws StepException, IOException {
-		when(cfg.getOrDefault(eq("stackName"), any())).thenReturn("testStack");
-		when(cfg.getOrDefault(eq("environment"), any())).thenReturn("1a10");
+		when(cfg.getOrDefault(eq(OPT_STACK_NAME), any())).thenReturn("testStack");
+		when(cfg.getOrDefault(eq(OPT_ENV_IDS), any())).thenReturn("1a10");
 
 		JsonNode stacks = readFromInputStream(getResourceStream("stacks.json"));
 		when(client.get(anyString(), anyMapOf(String.class, String.class))).thenReturn(stacks);
@@ -99,8 +101,8 @@ public class RancherNewStackTest extends PluginStepTest {
 	 */
 	@Test(expected = StepException.class)
 	public void whenStackNameIsEmpty() throws StepException, IOException {
-		when(cfg.getOrDefault(eq("stackName"), any())).thenReturn("");
-		when(cfg.getOrDefault(eq("environment"), any())).thenReturn("1a10");
+		when(cfg.getOrDefault(eq(OPT_STACK_NAME), any())).thenReturn("");
+		when(cfg.getOrDefault(eq(OPT_ENV_IDS), any())).thenReturn("1a10");
 
 		upgrade = new RancherNewStack(client);
 		upgrade.executeStep(ctx, cfg);
@@ -114,8 +116,8 @@ public class RancherNewStackTest extends PluginStepTest {
 	 */
 	@Test(expected = StepException.class)
 	public void whenEnvironmentIsEmpty() throws StepException, IOException {
-		when(cfg.getOrDefault(eq("stackName"), any())).thenReturn("TestStack");
-		when(cfg.getOrDefault(eq("environment"), any())).thenReturn("");
+		when(cfg.getOrDefault(eq(OPT_STACK_NAME), any())).thenReturn("TestStack");
+		when(cfg.getOrDefault(eq(OPT_ENV_IDS), any())).thenReturn("");
 
 		upgrade = new RancherNewStack(client);
 		upgrade.executeStep(ctx, cfg);
@@ -129,8 +131,8 @@ public class RancherNewStackTest extends PluginStepTest {
 	 */
 	@Test
 	public void whenEndpointIsNull() throws StepException, IOException {
-		when(cfg.getOrDefault(eq("stackName"), any())).thenReturn("TestStack");
-		when(cfg.getOrDefault(eq("environment"), any())).thenReturn("1a10");
+		when(cfg.getOrDefault(eq(OPT_STACK_NAME), any())).thenReturn("TestStack");
+		when(cfg.getOrDefault(eq(OPT_ENV_IDS), any())).thenReturn("1a10");
 
 		JsonNode stacks = readFromInputStream(getResourceStream("no-stacks.json"));
 		when(client.get(anyString(), anyMapOf(String.class, String.class))).thenReturn(stacks);

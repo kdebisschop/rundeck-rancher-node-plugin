@@ -30,6 +30,8 @@ import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.util.Map;
 
+import static com.bioraft.rundeck.rancher.Constants.OPT_ENV_IDS;
+import static com.bioraft.rundeck.rancher.Constants.OPT_STACK_NAME;
 import static com.bioraft.rundeck.rancher.RancherShared.*;
 import static com.bioraft.rundeck.rancher.RancherShared.ErrorCause.*;
 import static com.dtolabs.rundeck.core.Constants.ERR_LEVEL;
@@ -45,7 +47,7 @@ public class RancherNewStack implements StepPlugin {
     private String stackName;
 
     @PluginProperty(name = CONFIG_ENVIRONMENT_IDS, title = "Environment ID", description = "The ID of the environment to create the stack in", required = true)
-    String environment;
+    String environmentId;
 
     HttpClient client;
 
@@ -61,13 +63,13 @@ public class RancherNewStack implements StepPlugin {
     public void executeStep(final PluginStepContext context, final Map<String, Object> configuration) throws
             StepException {
 
-        stackName = (String) configuration.getOrDefault("stackName", defaultString(stackName));
+        stackName = (String) configuration.getOrDefault(OPT_STACK_NAME, defaultString(stackName));
         if (stackName.isEmpty()) {
             throw new StepException("Stack name cannot be empty", INVALID_STACK_NAME);
         }
 
-        environment = (String) configuration.getOrDefault("environment", defaultString(environment));
-        if (environment.isEmpty()) {
+        environmentId = (String) configuration.getOrDefault(OPT_ENV_IDS, defaultString(environmentId));
+        if (environmentId.isEmpty()) {
             throw new StepException("Environment cannot be empty", INVALID_ENVIRONMENT_NAME);
         }
 
@@ -87,7 +89,7 @@ public class RancherNewStack implements StepPlugin {
             secretKeyPath = framework.getProperty(FMWK_RANCHER_SECRETKEY_PATH);
         }
 
-        String spec = endpoint + "/projects/" + environment + "/stacks/";
+        String spec = endpoint + "/projects/" + environmentId + "/stacks/";
         try {
             String accessKey = loadStoragePathData(context.getExecutionContext(), accessKeyPath);
             client.setAccessKey(accessKey);

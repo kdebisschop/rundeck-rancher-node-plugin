@@ -24,6 +24,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.IOException;
 
+import static com.bioraft.rundeck.rancher.Constants.*;
 import static com.bioraft.rundeck.rancher.RancherShared.*;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.eq;
@@ -56,10 +57,10 @@ public class RancherAddServiceTest extends PluginStepTest {
 		when(framework.getProjectProperty(projectName, PROJ_RANCHER_ENDPOINT)).thenReturn(projectEndpoint);
 		when(framework.getProjectProperty(projectName, PROJ_RANCHER_ACCESSKEY_PATH)).thenReturn(projectAccessKey);
 		when(framework.getProjectProperty(projectName, PROJ_RANCHER_SECRETKEY_PATH)).thenReturn(projectSecretKey);
-		when(cfg.getOrDefault(eq("stackName"), any())).thenReturn("testStack");
-		when(cfg.getOrDefault(eq("environmentId"), any())).thenReturn("1a10");
-		when(cfg.getOrDefault(eq("serviceName"), any())).thenReturn("testService");
-		when(cfg.getOrDefault(eq("imageUuid"), any())).thenReturn("repo/image:tag");
+		when(cfg.getOrDefault(eq(OPT_STACK_NAME), any())).thenReturn("testStack");
+		when(cfg.getOrDefault(eq(OPT_ENV_IDS), any())).thenReturn("1a10");
+		when(cfg.getOrDefault(eq(OPT_SERVICE_NAME), any())).thenReturn("testService");
+		when(cfg.getOrDefault(eq(OPT_IMAGE_UUID), any())).thenReturn("repo/image:tag");
 
 		JsonNode stack = readFromInputStream(getResourceStream("stack.json"));
 		when(client.get(anyString())).thenReturn(stack);
@@ -77,19 +78,19 @@ public class RancherAddServiceTest extends PluginStepTest {
 
 	@Test
 	public void whenStackNameIsGiven() throws StepException, IOException {
-		when(cfg.getOrDefault(eq("stackName"), any())).thenReturn("testStack");
-		when(cfg.getOrDefault(eq("environmentId"), any())).thenReturn("1a10");
-		when(cfg.getOrDefault(eq("serviceName"), any())).thenReturn("testService");
-		when(cfg.getOrDefault(eq("imageUuid"), any())).thenReturn("repo/image:tag");
+		when(cfg.getOrDefault(eq(OPT_STACK_NAME), any())).thenReturn("testStack");
+		when(cfg.getOrDefault(eq(OPT_ENV_IDS), any())).thenReturn("1a10");
+		when(cfg.getOrDefault(eq(OPT_SERVICE_NAME), any())).thenReturn("testService");
+		when(cfg.getOrDefault(eq(OPT_IMAGE_UUID), any())).thenReturn("repo/image:tag");
 		runSuccess();
 	}
 
 	@Test(expected = StepException.class)
 	public void whenStackDoesNotExist() throws StepException, IOException {
-		when(cfg.getOrDefault(eq("stackName"), any())).thenReturn("testStack");
-		when(cfg.getOrDefault(eq("environmentId"), any())).thenReturn("1a10");
-		when(cfg.getOrDefault(eq("serviceName"), any())).thenReturn("testService");
-		when(cfg.getOrDefault(eq("imageUuid"), any())).thenReturn("repo/image:tag");
+		when(cfg.getOrDefault(eq(OPT_STACK_NAME), any())).thenReturn("testStack");
+		when(cfg.getOrDefault(eq(OPT_ENV_IDS), any())).thenReturn("1a10");
+		when(cfg.getOrDefault(eq(OPT_SERVICE_NAME), any())).thenReturn("testService");
+		when(cfg.getOrDefault(eq(OPT_IMAGE_UUID), any())).thenReturn("repo/image:tag");
 
 		JsonNode notFound = readFromInputStream(getResourceStream("not-found.json"));
 		when(client.get(anyString())).thenReturn(notFound);
@@ -107,70 +108,70 @@ public class RancherAddServiceTest extends PluginStepTest {
 
 	@Test(expected = StepException.class)
 	public void whenStackIsNotSet() throws StepException, IOException {
-		when(cfg.getOrDefault(eq("stackName"), any())).thenReturn("");
-		when(cfg.getOrDefault(eq("environmentId"), any())).thenReturn("1a10");
-		when(cfg.getOrDefault(eq("serviceName"), any())).thenReturn("testService");
-		when(cfg.getOrDefault(eq("imageUuid"), any())).thenReturn("repo/image:tag");
+		when(cfg.getOrDefault(eq(OPT_STACK_NAME), any())).thenReturn("");
+		when(cfg.getOrDefault(eq(OPT_ENV_IDS), any())).thenReturn("1a10");
+		when(cfg.getOrDefault(eq(OPT_SERVICE_NAME), any())).thenReturn("testService");
+		when(cfg.getOrDefault(eq(OPT_IMAGE_UUID), any())).thenReturn("repo/image:tag");
 		runSuccess();
 	}
 
 	@Test(expected = StepException.class)
 	public void whenEnvironmentIdIsNotSet() throws StepException, IOException {
-		when(cfg.getOrDefault(eq("stackName"), any())).thenReturn("testStack");
-		when(cfg.getOrDefault(eq("environmentId"), any())).thenReturn("");
-		when(cfg.getOrDefault(eq("serviceName"), any())).thenReturn("testService");
-		when(cfg.getOrDefault(eq("imageUuid"), any())).thenReturn("repo/image:tag");
+		when(cfg.getOrDefault(eq(OPT_STACK_NAME), any())).thenReturn("testStack");
+		when(cfg.getOrDefault(eq(OPT_ENV_IDS), any())).thenReturn("");
+		when(cfg.getOrDefault(eq(OPT_SERVICE_NAME), any())).thenReturn("testService");
+		when(cfg.getOrDefault(eq(OPT_IMAGE_UUID), any())).thenReturn("repo/image:tag");
 		runSuccess();
 	}
 
 	@Test(expected = StepException.class)
 	public void whenServiceNameIsNotSet() throws StepException, IOException {
-		when(cfg.getOrDefault(eq("stackName"), any())).thenReturn("testStack");
-		when(cfg.getOrDefault(eq("environmentId"), any())).thenReturn("1a10");
-		when(cfg.getOrDefault(eq("serviceName"), any())).thenReturn("");
-		when(cfg.getOrDefault(eq("imageUuid"), any())).thenReturn("repo/image:tag");
+		when(cfg.getOrDefault(eq(OPT_STACK_NAME), any())).thenReturn("testStack");
+		when(cfg.getOrDefault(eq(OPT_ENV_IDS), any())).thenReturn("1a10");
+		when(cfg.getOrDefault(eq(OPT_SERVICE_NAME), any())).thenReturn("");
+		when(cfg.getOrDefault(eq(OPT_IMAGE_UUID), any())).thenReturn("repo/image:tag");
 		runSuccess();
 	}
 
 	@Test(expected = StepException.class)
 	public void whenImageUuidIsNotSet() throws StepException, IOException {
-		when(cfg.getOrDefault(eq("stackName"), any())).thenReturn("testStack");
-		when(cfg.getOrDefault(eq("environmentId"), any())).thenReturn("1a10");
-		when(cfg.getOrDefault(eq("serviceName"), any())).thenReturn("testService");
-		when(cfg.getOrDefault(eq("imageUuid"), any())).thenReturn("");
+		when(cfg.getOrDefault(eq(OPT_STACK_NAME), any())).thenReturn("testStack");
+		when(cfg.getOrDefault(eq(OPT_ENV_IDS), any())).thenReturn("1a10");
+		when(cfg.getOrDefault(eq(OPT_SERVICE_NAME), any())).thenReturn("testService");
+		when(cfg.getOrDefault(eq(OPT_IMAGE_UUID), any())).thenReturn("");
 		runSuccess();
 	}
 
 	@Test
 	public void whenDataVolumesIsGiven() throws StepException, IOException {
-		when(cfg.getOrDefault(eq("stackName"), any())).thenReturn("testStack");
-		when(cfg.getOrDefault(eq("environmentId"), any())).thenReturn("1a10");
-		when(cfg.getOrDefault(eq("serviceName"), any())).thenReturn("testService");
-		when(cfg.getOrDefault(eq("imageUuid"), any())).thenReturn("repo/image:tag");
-		when(cfg.containsKey(eq("dataVolumes"))).thenReturn(true);
-		when(cfg.get(eq("dataVolumes"))).thenReturn("[]");
+		when(cfg.getOrDefault(eq(OPT_STACK_NAME), any())).thenReturn("testStack");
+		when(cfg.getOrDefault(eq(OPT_ENV_IDS), any())).thenReturn("1a10");
+		when(cfg.getOrDefault(eq(OPT_SERVICE_NAME), any())).thenReturn("testService");
+		when(cfg.getOrDefault(eq(OPT_IMAGE_UUID), any())).thenReturn("repo/image:tag");
+		when(cfg.containsKey(eq(OPT_DATA_VOLUMES))).thenReturn(true);
+		when(cfg.get(eq(OPT_DATA_VOLUMES))).thenReturn("[]");
 		runSuccess();
 	}
 
 	@Test
 	public void whenEnvironmentIsGiven() throws StepException, IOException {
-		when(cfg.getOrDefault(eq("stackName"), any())).thenReturn("testStack");
-		when(cfg.getOrDefault(eq("environmentId"), any())).thenReturn("1a10");
-		when(cfg.getOrDefault(eq("serviceName"), any())).thenReturn("testService");
-		when(cfg.getOrDefault(eq("imageUuid"), any())).thenReturn("repo/image:tag");
-		when(cfg.containsKey(eq("environment"))).thenReturn(true);
-		when(cfg.get(eq("environment"))).thenReturn("{}");
+		when(cfg.getOrDefault(eq(OPT_STACK_NAME), any())).thenReturn("testStack");
+		when(cfg.getOrDefault(eq(OPT_ENV_IDS), any())).thenReturn("1a10");
+		when(cfg.getOrDefault(eq(OPT_SERVICE_NAME), any())).thenReturn("testService");
+		when(cfg.getOrDefault(eq(OPT_IMAGE_UUID), any())).thenReturn("repo/image:tag");
+		when(cfg.containsKey(eq(OPT_ENV_VARS))).thenReturn(true);
+		when(cfg.get(eq(OPT_ENV_VARS))).thenReturn("{}");
 		runSuccess();
 	}
 
 	@Test
 	public void whenLabelsIsGiven() throws StepException, IOException {
-		when(cfg.getOrDefault(eq("stackName"), any())).thenReturn("testStack");
-		when(cfg.getOrDefault(eq("environmentId"), any())).thenReturn("1a10");
-		when(cfg.getOrDefault(eq("serviceName"), any())).thenReturn("testService");
-		when(cfg.getOrDefault(eq("imageUuid"), any())).thenReturn("repo/image:tag");
-		when(cfg.containsKey(eq("labels"))).thenReturn(true);
-		when(cfg.get(eq("labels"))).thenReturn("{}");
+		when(cfg.getOrDefault(eq(OPT_STACK_NAME), any())).thenReturn("testStack");
+		when(cfg.getOrDefault(eq(OPT_ENV_IDS), any())).thenReturn("1a10");
+		when(cfg.getOrDefault(eq(OPT_SERVICE_NAME), any())).thenReturn("testService");
+		when(cfg.getOrDefault(eq(OPT_IMAGE_UUID), any())).thenReturn("repo/image:tag");
+		when(cfg.containsKey(eq(OPT_LABELS))).thenReturn(true);
+		when(cfg.get(eq(OPT_LABELS))).thenReturn("{}");
 		runSuccess();
 	}
 

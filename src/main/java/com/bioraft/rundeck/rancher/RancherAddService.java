@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.bioraft.rundeck.rancher.Constants.*;
 import static com.bioraft.rundeck.rancher.RancherShared.*;
 import static com.bioraft.rundeck.rancher.RancherShared.ErrorCause.*;
 import static com.dtolabs.rundeck.core.Constants.ERR_LEVEL;
@@ -99,40 +100,40 @@ public class RancherAddService implements StepPlugin {
             StepException {
         this.configuration = configuration;
 
-        stackName = (String) configuration.getOrDefault("stackName", defaultString(stackName));
+        stackName = (String) configuration.getOrDefault(OPT_STACK_NAME, defaultString(stackName));
         if (stackName.isEmpty()) {
             throw new StepException("Stack name cannot be empty", INVALID_STACK_NAME);
         }
 
-        environmentId = (String) configuration.getOrDefault("environmentId", defaultString(environmentId));
+        environmentId = (String) configuration.getOrDefault(OPT_ENV_IDS, defaultString(environmentId));
         if (environmentId.isEmpty()) {
             throw new StepException("Environment cannot be empty", INVALID_ENVIRONMENT_NAME);
         }
 
-        serviceName = (String) configuration.getOrDefault("serviceName", defaultString(serviceName));
+        serviceName = (String) configuration.getOrDefault(OPT_SERVICE_NAME, defaultString(serviceName));
         if (serviceName.isEmpty()) {
             throw new StepException("Service Name cannot be empty", INVALID_CONFIGURATION);
         }
 
-        imageUuid = (String) configuration.getOrDefault("imageUuid", defaultString(imageUuid));
+        imageUuid = (String) configuration.getOrDefault(OPT_IMAGE_UUID, defaultString(imageUuid));
         if (imageUuid.isEmpty()) {
             throw new StepException("Image UUID cannot be empty", INVALID_CONFIGURATION);
         }
 
-        if (defaultString(dataVolumes).isEmpty() && configuration.containsKey("dataVolumes")) {
-            dataVolumes = (String) configuration.get("dataVolumes");
+        if (defaultString(dataVolumes).isEmpty() && configuration.containsKey(OPT_DATA_VOLUMES)) {
+            dataVolumes = (String) configuration.get(OPT_DATA_VOLUMES);
         }
 
-        if (defaultString(environment).isEmpty() && configuration.containsKey("environment")) {
-            environment = (String) configuration.get("environment");
+        if (defaultString(environment).isEmpty() && configuration.containsKey(OPT_ENV_VARS)) {
+            environment = (String) configuration.get(OPT_ENV_VARS);
         }
 
-        if (defaultString(labels).isEmpty() && configuration.containsKey("labels")) {
-            labels = (String) configuration.get("labels");
+        if (defaultString(labels).isEmpty() && configuration.containsKey(OPT_LABELS)) {
+            labels = (String) configuration.get(OPT_LABELS);
         }
 
-        if (defaultString(secrets).isEmpty() && configuration.containsKey("secrets")) {
-            secrets = (String) configuration.get("secrets");
+        if (defaultString(secrets).isEmpty() && configuration.containsKey(OPT_SECRETS)) {
+            secrets = (String) configuration.get(OPT_SECRETS);
         }
 
         Framework framework = context.getFramework();
@@ -163,13 +164,13 @@ public class RancherAddService implements StepPlugin {
 
         ImmutableMap.Builder<String, Object> mapBuilder = ImmutableMap.builder();
         mapBuilder.put("type", "launchConfig");
-        mapBuilder.put("imageUuid", imageUuid);
+        mapBuilder.put(OPT_IMAGE_UUID, imageUuid);
         mapBuilder.put("kind", "container");
         mapBuilder.put("networkMode", "managed");
 
-        addJsonData("dataVolumes", ensureStringIsJsonArray(dataVolumes), mapBuilder);
-        addJsonData("environment", ensureStringIsJsonObject(environment), mapBuilder);
-        addJsonData("labels", ensureStringIsJsonObject(labels), mapBuilder);
+        addJsonData(OPT_DATA_VOLUMES, ensureStringIsJsonArray(dataVolumes), mapBuilder);
+        addJsonData(OPT_ENV_VARS, ensureStringIsJsonObject(environment), mapBuilder);
+        addJsonData(OPT_LABELS, ensureStringIsJsonObject(labels), mapBuilder);
 
         if (secrets != null && secrets.trim().length() > 0) {
             // Add in the new or replacement secrets specified in the step.
@@ -177,7 +178,7 @@ public class RancherAddService implements StepPlugin {
             for (String secretId : secrets.split("/[,; ]+/")) {
                 secretsArray.add(secretJson(secretId));
             }
-            mapBuilder.put("secrets", "[" + String.join(",", secretsArray) + "]");
+            mapBuilder.put(OPT_SECRETS, "[" + String.join(",", secretsArray) + "]");
         }
 
         JsonNode check;

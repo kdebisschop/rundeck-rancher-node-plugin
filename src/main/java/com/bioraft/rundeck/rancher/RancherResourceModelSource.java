@@ -39,6 +39,8 @@ import okhttp3.Request;
 import okhttp3.Request.Builder;
 import okhttp3.Response;
 
+import static org.apache.commons.lang.StringUtils.defaultString;
+
 /**
  * RancherResourceModelSource collects nodes from one or more Rancher
  * environments.
@@ -101,6 +103,9 @@ public class RancherResourceModelSource implements ResourceModelSource {
 		this.configuration = configuration;
 		tags = configuration.getProperty("tags");
 		url = configuration.getProperty(RancherShared.RANCHER_CONFIG_ENDPOINT);
+		if (defaultString(url).isEmpty()) {
+			throw new ConfigurationException("Endpoint URL cannot be empty");
+		}
 		attributeInclude = configuration.getProperty(RancherShared.CONFIG_LABELS_INCLUDE_ATTRIBUTES, "");
 		tagInclude = configuration.getProperty(RancherShared.CONFIG_LABELS_INCLUDE_TAGS, "");
 		stackInclude = configuration.getProperty(RancherShared.CONFIG_STACK_FILTER, "");
