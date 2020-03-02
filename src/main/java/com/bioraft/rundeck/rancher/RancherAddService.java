@@ -61,22 +61,22 @@ public class RancherAddService implements StepPlugin {
 
     @PluginProperty(title = "Data Volumes", description = "JSON array Lines of \"source:mountPoint\"")
     @RenderingOptions({
-            @RenderingOption(key = DISPLAY_TYPE_KEY, value = "CODE"),
-            @RenderingOption(key = CODE_SYNTAX_MODE, value = "json"),
+            @RenderingOption(key = DISPLAY_TYPE_KEY, value = DISPLAY_CODE),
+            @RenderingOption(key = CODE_SYNTAX_MODE, value = SYNTAX_MODE_JSON),
     })
     private String dataVolumes;
 
     @PluginProperty(title = "Container OS Environment", description = "JSON object of \"variable\": \"value\"")
     @RenderingOptions({
-            @RenderingOption(key = DISPLAY_TYPE_KEY, value = "CODE"),
-            @RenderingOption(key = CODE_SYNTAX_MODE, value = "json"),
+            @RenderingOption(key = DISPLAY_TYPE_KEY, value = DISPLAY_CODE),
+            @RenderingOption(key = CODE_SYNTAX_MODE, value = SYNTAX_MODE_JSON),
     })
     private String environment;
 
     @PluginProperty(title = "Service Labels", description = "JSON object of \"variable\": \"value\"")
     @RenderingOptions({
-            @RenderingOption(key = DISPLAY_TYPE_KEY, value = "CODE"),
-            @RenderingOption(key = CODE_SYNTAX_MODE, value = "json"),
+            @RenderingOption(key = DISPLAY_TYPE_KEY, value = DISPLAY_CODE),
+            @RenderingOption(key = CODE_SYNTAX_MODE, value = SYNTAX_MODE_JSON),
     })
     private String labels;
 

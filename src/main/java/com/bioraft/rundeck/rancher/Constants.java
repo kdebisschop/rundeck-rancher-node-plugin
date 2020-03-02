@@ -15,7 +15,8 @@ public class Constants {
     public static final String START_FIRST = "startFirst";
     public static final String LINKS = "links";
 
-    public static final String JSON = "json";
+    public static final String DISPLAY_CODE = "CODE";
+    public static final String SYNTAX_MODE_JSON = "json";
 
     public static final String OPT_DATA_VOLUMES = "dataVolumes";
     public static final String OPT_ENV_VARS = "environment";
