@@ -24,6 +24,8 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.IOException;
 
+import static com.bioraft.rundeck.rancher.RancherShared.*;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
 
 /**
@@ -42,10 +44,17 @@ public class RancherNewStackTest extends PluginStepTest {
 		setUp();
 	}
 
+	/**
+	 * When Stack does not already exist, we create it with API POST.
+	 */
 	@Test
 	public void whenStackDoesNotExist() throws StepException, IOException {
-		when(cfg.get("stackName")).thenReturn("testStack");
-		when(cfg.get("environment")).thenReturn("1a10");
+		when(framework.getProjectProperty(projectName, PROJ_RANCHER_ENDPOINT)).thenReturn(projectEndpoint);
+		when(framework.getProjectProperty(projectName, PROJ_RANCHER_ACCESSKEY_PATH)).thenReturn(projectAccessKey);
+		when(framework.getProjectProperty(projectName, PROJ_RANCHER_SECRETKEY_PATH)).thenReturn(projectSecretKey);
+
+		when(cfg.getOrDefault(eq("stackName"), any())).thenReturn("testStack");
+		when(cfg.getOrDefault(eq("environment"), any())).thenReturn("1a10");
 
 		JsonNode stacks = readFromInputStream(getResourceStream("no-stacks.json"));
 		when(client.get(anyString(), anyMapOf(String.class, String.class))).thenReturn(stacks);
@@ -60,10 +69,13 @@ public class RancherNewStackTest extends PluginStepTest {
 		verify(client, times(1)).post(anyString(), anyMapOf(String.class, Object.class));
 	}
 
+	/**
+	 * When Stack already exists, we do nothing and fail.
+	 */
 	@Test(expected = StepException.class)
 	public void whenStackExists() throws StepException, IOException {
-		when(cfg.get("stackName")).thenReturn("testStack");
-		when(cfg.get("environment")).thenReturn("1a10");
+		when(cfg.getOrDefault(eq("stackName"), any())).thenReturn("testStack");
+		when(cfg.getOrDefault(eq("environment"), any())).thenReturn("1a10");
 
 		JsonNode stacks = readFromInputStream(getResourceStream("stacks.json"));
 		when(client.get(anyString(), anyMapOf(String.class, String.class))).thenReturn(stacks);
@@ -73,5 +85,56 @@ public class RancherNewStackTest extends PluginStepTest {
 
 		verify(client, times(1)).get(anyString(), anyMapOf(String.class, String.class));
 		verify(client, times(0)).post(anyString(), anyMapOf(String.class, Object.class));
+	}
+
+	/**
+	 * When Stack name is empty, do nothing and fail.
+	 */
+	@Test(expected = StepException.class)
+	public void whenStackNameIsEmpty() throws StepException, IOException {
+		when(cfg.getOrDefault(eq("stackName"), any())).thenReturn("");
+		when(cfg.getOrDefault(eq("environment"), any())).thenReturn("1a10");
+
+		upgrade = new RancherNewStack(client);
+		upgrade.executeStep(ctx, cfg);
+
+		verify(client, times(0)).get(anyString(), anyMapOf(String.class, String.class));
+		verify(client, times(0)).post(anyString(), anyMapOf(String.class, Object.class));
+	}
+
+	/**
+	 * When Stack name is empty, do nothing and fail.
+	 */
+	@Test(expected = StepException.class)
+	public void whenEnvironmentIsEmpty() throws StepException, IOException {
+		when(cfg.getOrDefault(eq("stackName"), any())).thenReturn("TestStack");
+		when(cfg.getOrDefault(eq("environment"), any())).thenReturn("");
+
+		upgrade = new RancherNewStack(client);
+		upgrade.executeStep(ctx, cfg);
+
+		verify(client, times(0)).get(anyString(), anyMapOf(String.class, String.class));
+		verify(client, times(0)).post(anyString(), anyMapOf(String.class, Object.class));
+	}
+
+	/**
+	 * When Stack name is empty, do nothing and fail.
+	 */
+	@Test
+	public void whenEndpointIsNull() throws StepException, IOException {
+		when(cfg.getOrDefault(eq("stackName"), any())).thenReturn("TestStack");
+		when(cfg.getOrDefault(eq("environment"), any())).thenReturn("1a10");
+
+		JsonNode stacks = readFromInputStream(getResourceStream("no-stacks.json"));
+		when(client.get(anyString(), anyMapOf(String.class, String.class))).thenReturn(stacks);
+
+		JsonNode stack = readFromInputStream(getResourceStream("stack.json"));
+		when(client.post(anyString(), anyMapOf(String.class, Object.class))).thenReturn(stack);
+
+		upgrade = new RancherNewStack(client);
+		upgrade.executeStep(ctx, cfg);
+
+		verify(client, times(1)).get(anyString(), anyMapOf(String.class, String.class));
+		verify(client, times(1)).post(anyString(), anyMapOf(String.class, Object.class));
 	}
 }

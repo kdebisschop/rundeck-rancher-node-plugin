@@ -60,17 +60,13 @@ public class RancherNewStack implements StepPlugin {
     public void executeStep(final PluginStepContext context, final Map<String, Object> configuration) throws
             StepException {
 
-        if (stackName == null || stackName.isEmpty()) {
-            stackName = (String) configuration.get("stack");
-        }
-        if (stackName == null || stackName.isEmpty()) {
+        stackName = configuration.getOrDefault("stackName", ((stackName == null) ? "" : stackName)).toString();
+        if (stackName.isEmpty()) {
             throw new StepException("Stack name cannot be empty", INVALID_STACK_NAME);
         }
 
-        if (environment == null || environment.isEmpty()) {
-            environment = (String) configuration.get("environment");
-        }
-        if (environment == null || environment.isEmpty()) {
+        environment = configuration.getOrDefault("environment", ((environment == null) ? "" : environment)).toString();
+        if (environment.isEmpty()) {
             throw new StepException("Environment cannot be empty", INVALID_ENVIRONMENT_NAME);
         }
 

@@ -33,6 +33,7 @@ import java.io.InputStreamReader;
 import java.util.Map;
 
 import static com.bioraft.rundeck.rancher.RancherShared.*;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.when;
 
@@ -44,10 +45,10 @@ import static org.mockito.Mockito.when;
  */
 public abstract class PluginStepTest {
 
-    protected static final String endpoint = "https://rancher.example.com/v2-beta/";
-    protected static final String accessKey = "keys/rancher/access.key";
-    protected static final String secretKey = "keys/rancher/secret.key";
-    protected static final String project = "1a10";
+    protected static String projectEndpoint = "https://rancher.example.com/v2-beta/";
+    protected static String projectAccessKey = "keys/rancher/access.key";
+    protected static String projectSecretKey = "keys/rancher/secret.key";
+    protected static String projectName = "1a10";
 
     @Mock
     HttpClient client;
@@ -79,12 +80,12 @@ public abstract class PluginStepTest {
     public void setUp() {
         when(ctx.getLogger()).thenReturn(logger);
         when(ctx.getFramework()).thenReturn(framework);
-        when(ctx.getFrameworkProject()).thenReturn(project);
+        when(ctx.getFrameworkProject()).thenReturn(projectName);
         when(ctx.getExecutionContext()).thenReturn(executionContext);
 
-        when(framework.getProjectProperty(project, PROJ_RANCHER_ENDPOINT)).thenReturn(endpoint);
-        when(framework.getProjectProperty(project, PROJ_RANCHER_ACCESSKEY_PATH)).thenReturn(accessKey);
-        when(framework.getProjectProperty(project, PROJ_RANCHER_SECRETKEY_PATH)).thenReturn(secretKey);
+        when(framework.getProperty(eq(FMWK_RANCHER_ENDPOINT))).thenReturn("framework.endpoint");
+        when(framework.getProperty(eq(FMWK_RANCHER_ACCESSKEY_PATH))).thenReturn("framework.accessKey");
+        when(framework.getProperty(eq(FMWK_RANCHER_SECRETKEY_PATH))).thenReturn("framework.secretKey");
 
         when(executionContext.getStorageTree()).thenReturn(storageTree);
         when(storageTree.getResource(anyString())).thenReturn(treeResource);
