@@ -144,7 +144,7 @@ public class RancherUpgradeService implements NodeStepPlugin {
 		} else {
 			service = apiGet(accessKey, secretKey, attributes.get("self"));
 		}
-		String serviceState = service.path(STATE).asText();
+		String serviceState = service.path(NODE_STATE).asText();
 		if (!serviceState.equals(STATE_ACTIVE)) {
 			String message = "Service state must be running, was " + serviceState;
 			throw new NodeStepException(message, ErrorCause.SERVICE_NOT_RUNNING, node.getNodename());
@@ -247,10 +247,10 @@ public class RancherUpgradeService implements NodeStepPlugin {
 		}
 
 		JsonNode service = apiPost(accessKey, secretKey, upgradeUrl, upgrade);
-		if (!service.has(STATE) || !service.path(LINKS).has("self")) {
+		if (!service.has(NODE_STATE) || !service.path(LINKS).has("self")) {
 			throw new NodeStepException("API POST returned incomplete data", ErrorCause.NO_UPGRADE_DATA, nodeName);
 		}
-		String state = service.get(STATE).asText();
+		String state = service.get(NODE_STATE).asText();
 		String link = service.get(LINKS).get("self").asText();
 
 		// Poll until upgraded.
@@ -263,7 +263,7 @@ public class RancherUpgradeService implements NodeStepPlugin {
 				throw new NodeStepException(e, ErrorCause.INTERRUPTED, nodeName);
 			}
 			service = apiGet(accessKey, secretKey, link);
-			state = service.get(STATE).asText();
+			state = service.get(NODE_STATE).asText();
 			link = service.get(LINKS).get("self").asText();
 		}
 
@@ -271,11 +271,11 @@ public class RancherUpgradeService implements NodeStepPlugin {
 		logger.log(Constants.INFO_LEVEL, "Finishing upgrade " + service.path("name"));
 		link = service.get("actions").get("finishupgrade").asText();
 		service = apiPost(accessKey, secretKey, link, "");
-		state = service.get(STATE).asText();
+		state = service.get(NODE_STATE).asText();
 		link = service.get(LINKS).get("self").asText();
 		while (!state.equals(STATE_ACTIVE)) {
 			service = apiGet(accessKey, secretKey, link);
-			state = service.get(STATE).asText();
+			state = service.get(NODE_STATE).asText();
 			link = service.get(LINKS).get("self").asText();
 			if (!state.equals(STATE_ACTIVE)) {
 				try {

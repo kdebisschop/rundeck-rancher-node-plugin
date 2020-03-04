@@ -7,7 +7,24 @@ public class Constants {
 
     public static final int INTERVAL_MILLIS = 2000;
 
-    public static final String STATE = "state";
+    // These are fields in JSON from Rancher API.
+    public static final String NODE_ID = "id";
+    public static final String NODE_NAME = "name";
+    public static final String NODE_ACCOUNT_ID = "accountId";
+    public static final String NODE_STATE = "state";
+    public static final String NODE_IMAGE_UUID = "imageUuid";
+
+    // These are nodeEntry attributes we define and set.
+    public static final String NODE_ATT_ID = "id";
+    public static final String NODE_ATT_EXTERNAL_ID = "externalId";
+    public static final String NODE_ATT_FILE_COPIER = "file-copier";
+    public static final String NODE_ATT_NODE_EXECUTOR = "node-executor";
+    public static final String NODE_ATT_TYPE = "type";
+    public static final String NODE_ATT_STATE = "state";
+    public static final String NODE_ATT_ACCOUNT = "account";
+    public static final String NODE_ATT_ENVIRONMENT = "environment";
+    public static final String NODE_ATT_IMAGE = "image";
+
     public static final String STATE_ACTIVE = "active";
     public static final String STATE_UPGRADED = "upgraded";
 
