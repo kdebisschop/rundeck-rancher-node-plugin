@@ -26,4 +26,7 @@ public class Constants {
     public static final String OPT_SECRETS = "secrets";
     public static final String OPT_SERVICE_NAME = "serviceName";
     public static final String OPT_STACK_NAME = "stackName";
+
+    public static final String OPT_EXCLUDE = "Exclude";
+    public static final String OPT_INCLUDE = "Include";
 }

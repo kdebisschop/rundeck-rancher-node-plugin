@@ -27,6 +27,8 @@ import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 
+import static com.bioraft.rundeck.rancher.Constants.OPT_EXCLUDE;
+import static com.bioraft.rundeck.rancher.Constants.OPT_INCLUDE;
 import static com.bioraft.rundeck.rancher.RancherShared.*;
 
 /**
@@ -82,13 +84,13 @@ public class RancherResourceModelSourceFactory implements ResourceModelSourceFac
                 "Only run on one container for each service", true, "true"));
 
         builder.property(PropertyUtil.select(CONFIG_HANDLE_STOPPED, "Handle Stopped Containers",
-                "Exclude stopped containers", true, "Exclude", Arrays.asList("Exclude", "Include")));
+                "Exclude stopped containers", true, OPT_EXCLUDE, Arrays.asList(OPT_EXCLUDE, OPT_INCLUDE)));
 
         builder.property(PropertyUtil.select(CONFIG_HANDLE_SYSTEM, "Handle System Containers",
-                "Exclude system containers", true, "Exclude", Arrays.asList("Exclude", "Include")));
+                "Exclude system containers", true, OPT_EXCLUDE, Arrays.asList(OPT_EXCLUDE, OPT_INCLUDE)));
 
         builder.property(PropertyUtil.select(CONFIG_HANDLE_GLOBAL, "Handle Global Containers",
-                "Exclude global containers", true, "Exclude", Arrays.asList("Exclude", "Include")));
+                "Exclude global containers", true, OPT_EXCLUDE, Arrays.asList(OPT_EXCLUDE, OPT_INCLUDE)));
 
         builder.property(PropertyUtil.string(CONFIG_TAGS, "Tags",
                 "Tags to apply to all nodes in this set", false, "rancher"));

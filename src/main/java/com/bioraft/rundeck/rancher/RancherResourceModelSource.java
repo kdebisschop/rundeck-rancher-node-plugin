@@ -19,13 +19,10 @@ package com.bioraft.rundeck.rancher;
 import java.io.IOException;
 import java.util.*;
 
+import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import org.apache.log4j.Level;
 
-import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.INodeSet;
-import com.dtolabs.rundeck.core.common.NodeEntryImpl;
-import com.dtolabs.rundeck.core.common.NodeSetImpl;
 import com.dtolabs.rundeck.core.resources.ResourceModelSource;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -38,6 +35,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Request.Builder;
 import okhttp3.Response;
+import org.apache.log4j.Logger;
 
 import static org.apache.commons.lang.StringUtils.defaultString;
 
@@ -131,19 +129,20 @@ public class RancherResourceModelSource implements ResourceModelSource {
 	private void getNodesForEnvironment(String environmentId) {
 		ArrayList<JsonNode> data;
 		String environmentName;
+		Logger logger = FrameworkBase.logger;
 		try {
 			environmentName = this.getEnvironmentName(environmentId);
 		} catch (IOException e) {
 			environmentName = environmentId;
-			Framework.logger.log(Level.WARN, "Failed getting environment name");
-			Framework.logger.log(Level.WARN, e.getMessage());
+			logger.log(Level.WARN, "Failed getting environment name");
+			logger.log(Level.WARN, e.getMessage());
 		}
 
 		if (configuration.getProperty(RancherShared.CONFIG_NODE_TYPE_INCLUDE_CONTAINER, "true").equals("true")) {
 			try {
 				data = this.getContainers(environmentId);
 			} catch (IOException e) {
-				Framework.logger.log(Level.WARN, e.getMessage());
+				logger.log(Level.WARN, e.getMessage());
 				return;
 			}
 			for (JsonNode node : data) {
@@ -170,12 +169,12 @@ public class RancherResourceModelSource implements ResourceModelSource {
 					if (nodeEntry.getNodename() == null) {
 						String name = node.get("name").asText() + "(" + node.get("id").asText() + ")";
 						String self = node.get("links").get("self").asText();
-						Framework.logger.log(Level.WARN, name + " " + node.get("accountId").asText() + " " + self);
+						logger.log(Level.WARN, name + " " + node.get("accountId").asText() + " " + self);
 					} else {
 						iNodeEntries.putNode(nodeEntry);
 					}
 				} catch (IllegalArgumentException | NullPointerException e) {
-					Framework.logger.log(Level.WARN, e.getMessage());
+					logger.log(Level.WARN, e.getMessage());
 				}
 			}
 		}
@@ -194,16 +193,16 @@ public class RancherResourceModelSource implements ResourceModelSource {
 							String name = node.get("name").asText() + "(" + node.get("id").asText() + ")";
 							String self = node.get("links").get("self").asText();
 							String message = name + " " + node.get("accountId").asText() + " " + self;
-							Framework.logger.log(Level.WARN, message);
+							logger.log(Level.WARN, message);
 						} else {
 							iNodeEntries.putNode(nodeEntry);
 						}
 					} catch (IllegalArgumentException | NullPointerException e) {
-						Framework.logger.log(Level.WARN, e.getMessage());
+						logger.log(Level.WARN, e.getMessage());
 					}
 				}
 			} catch (IOException e) {
-				Framework.logger.log(Level.WARN, e.getMessage());
+				logger.log(Level.WARN, e.getMessage());
 			}
 		}
 	}
