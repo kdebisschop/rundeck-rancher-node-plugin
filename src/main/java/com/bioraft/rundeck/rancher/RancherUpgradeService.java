@@ -25,7 +25,6 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty;
 import com.dtolabs.rundeck.plugins.descriptions.RenderingOption;
-import com.dtolabs.rundeck.plugins.descriptions.RenderingOptions;
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -59,38 +58,28 @@ public class RancherUpgradeService implements NodeStepPlugin {
 	private String dockerImage;
 
 	@PluginProperty(title = "Container OS Environment", description = "JSON object of \"variable\": \"value\"")
-	@RenderingOptions({
-			@RenderingOption(key = DISPLAY_TYPE_KEY, value = DISPLAY_CODE),
-			@RenderingOption(key = CODE_SYNTAX_MODE, value = SYNTAX_MODE_JSON),
-	})
+	@RenderingOption(key = DISPLAY_TYPE_KEY, value = DISPLAY_CODE)
+	@RenderingOption(key = CODE_SYNTAX_MODE, value = SYNTAX_MODE_JSON)
 	private String environment;
 
 	@PluginProperty(title = "Data Volumes", description = "JSON array Lines of \"source:mountPoint\"")
-	@RenderingOptions({
-			@RenderingOption(key = DISPLAY_TYPE_KEY, value = DISPLAY_CODE),
-			@RenderingOption(key = CODE_SYNTAX_MODE, value = SYNTAX_MODE_JSON),
-	})
+	@RenderingOption(key = DISPLAY_TYPE_KEY, value = DISPLAY_CODE)
+	@RenderingOption(key = CODE_SYNTAX_MODE, value = SYNTAX_MODE_JSON)
 	private String dataVolumes;
 
 	@PluginProperty(title = "Service Labels", description = "JSON object of \"variable\": \"value\"")
-	@RenderingOptions({
-			@RenderingOption(key = DISPLAY_TYPE_KEY, value = DISPLAY_CODE),
-			@RenderingOption(key = CODE_SYNTAX_MODE, value = SYNTAX_MODE_JSON),
-	})
+	@RenderingOption(key = DISPLAY_TYPE_KEY, value = DISPLAY_CODE)
+	@RenderingOption(key = CODE_SYNTAX_MODE, value = SYNTAX_MODE_JSON)
 	private String labels;
 
 	@PluginProperty(title = "Remove OS Environment", description = "JSON array of variables (quoted)")
-	@RenderingOptions({
-			@RenderingOption(key = DISPLAY_TYPE_KEY, value = DISPLAY_CODE),
-			@RenderingOption(key = CODE_SYNTAX_MODE, value = SYNTAX_MODE_JSON),
-	})
+	@RenderingOption(key = DISPLAY_TYPE_KEY, value = DISPLAY_CODE)
+	@RenderingOption(key = CODE_SYNTAX_MODE, value = SYNTAX_MODE_JSON)
 	private String removeEnvironment;
 
 	@PluginProperty(title = "Remove Service Labels", description = "JSON array of labels (quoted)")
-	@RenderingOptions({
-			@RenderingOption(key = DISPLAY_TYPE_KEY, value = DISPLAY_CODE),
-			@RenderingOption(key = CODE_SYNTAX_MODE, value = SYNTAX_MODE_JSON),
-	})
+	@RenderingOption(key = DISPLAY_TYPE_KEY, value = DISPLAY_CODE)
+	@RenderingOption(key = CODE_SYNTAX_MODE, value = SYNTAX_MODE_JSON)
 	private String removeLabels;
 
 	@PluginProperty(title = "Secrets", description = "Keys for secrets separated by commas or spaces")

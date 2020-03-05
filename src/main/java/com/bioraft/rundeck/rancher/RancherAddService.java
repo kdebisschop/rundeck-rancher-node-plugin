@@ -60,24 +60,18 @@ public class RancherAddService implements StepPlugin {
     private String imageUuid;
 
     @PluginProperty(title = "Data Volumes", description = "JSON array Lines of \"source:mountPoint\"")
-    @RenderingOptions({
-            @RenderingOption(key = DISPLAY_TYPE_KEY, value = DISPLAY_CODE),
-            @RenderingOption(key = CODE_SYNTAX_MODE, value = SYNTAX_MODE_JSON),
-    })
+    @RenderingOption(key = DISPLAY_TYPE_KEY, value = DISPLAY_CODE)
+    @RenderingOption(key = CODE_SYNTAX_MODE, value = SYNTAX_MODE_JSON)
     private String dataVolumes;
 
     @PluginProperty(title = "Container OS Environment", description = "JSON object of \"variable\": \"value\"")
-    @RenderingOptions({
-            @RenderingOption(key = DISPLAY_TYPE_KEY, value = DISPLAY_CODE),
-            @RenderingOption(key = CODE_SYNTAX_MODE, value = SYNTAX_MODE_JSON),
-    })
+    @RenderingOption(key = DISPLAY_TYPE_KEY, value = DISPLAY_CODE)
+    @RenderingOption(key = CODE_SYNTAX_MODE, value = SYNTAX_MODE_JSON)
     private String environment;
 
     @PluginProperty(title = "Service Labels", description = "JSON object of \"variable\": \"value\"")
-    @RenderingOptions({
-            @RenderingOption(key = DISPLAY_TYPE_KEY, value = DISPLAY_CODE),
-            @RenderingOption(key = CODE_SYNTAX_MODE, value = SYNTAX_MODE_JSON),
-    })
+    @RenderingOption(key = DISPLAY_TYPE_KEY, value = DISPLAY_CODE)
+    @RenderingOption(key = CODE_SYNTAX_MODE, value = SYNTAX_MODE_JSON)
     private String labels;
 
     @PluginProperty(title = "Secret IDs", description = "List of secrets IDs, space or comma separated")
@@ -152,7 +146,7 @@ public class RancherAddService implements StepPlugin {
             secretKeyPath = framework.getProperty(FMWK_RANCHER_SECRETKEY_PATH);
         }
 
-        String spec = endpoint + "/projects/" + environmentId + "/services";
+        String spec = endpoint + apiPath(environmentId, "/services");
         try {
             String accessKey = loadStoragePathData(context.getExecutionContext(), accessKeyPath);
             client.setAccessKey(accessKey);
@@ -186,7 +180,7 @@ public class RancherAddService implements StepPlugin {
         String stackId;
         try {
             // First look for a stack with the designated ID.
-            stackCheck = endpoint + "/projects/" + environmentId + "/stacks/" + stackName;
+            stackCheck = endpoint + apiPath(environmentId, "/stacks/" + stackName);
             logger.log(INFO_LEVEL, "Looking for " + stackCheck);
             check = client.get(stackCheck);
             if (check.path("type").asText().equals("error")) {
@@ -216,7 +210,7 @@ public class RancherAddService implements StepPlugin {
 
     private String stackId(String stackName, String endpoint, PluginLogger logger) throws StepException {
         try {
-            String stackCheck = endpoint + "/projects/" + environmentId + "/stacks?name=" + stackName;
+            String stackCheck = endpoint + apiPath(environmentId, "/stacks?name=" + stackName);
             logger.log(INFO_LEVEL, "Looking for " + stackCheck);
             JsonNode check = client.get(stackCheck);
             if (check.path("data").has(0)) {
