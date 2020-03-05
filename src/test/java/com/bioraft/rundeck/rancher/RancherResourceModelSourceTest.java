@@ -22,8 +22,6 @@ import com.dtolabs.rundeck.core.resources.ResourceModelSourceException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import okhttp3.*;
-import okhttp3.Response.Builder;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -61,7 +59,7 @@ public class RancherResourceModelSourceTest {
 	private final static String serviceState = "running";
 
 	@Before
-	public void setUp() throws IOException {
+	public void setUp() {
 		configuration = new Properties();
 		configuration.setProperty("project", "MyProject");
 		configuration.setProperty(RancherShared.RANCHER_CONFIG_ENDPOINT, "https://example.com/v2");
@@ -88,7 +86,7 @@ public class RancherResourceModelSourceTest {
 
 	@Test
 	public void processOneNode() throws ResourceModelSourceException, IOException, ConfigurationException {
-		when(client.get(anyString())).thenReturn(env(environment), item("1"));
+		when(client.get(anyString())).thenReturn(env(), item("1"));
 		configuration.setProperty(RancherShared.CONFIG_STACK_FILTER, "");
 		source = new RancherResourceModelSource(configuration, client);
 		INodeSet nodeList = source.getNodes();
@@ -106,6 +104,36 @@ public class RancherResourceModelSourceTest {
 	}
 
 	@Test
+	public void processContainers() throws ResourceModelSourceException, IOException, ConfigurationException {
+		configuration.setProperty(RancherShared.CONFIG_ENVIRONMENT_IDS, "1a10");
+		configuration.setProperty(RancherShared.CONFIG_STACK_FILTER, "");
+		configuration.setProperty(RancherShared.CONFIG_NODE_TYPE_INCLUDE_SERVICE, "false");
+		configuration.setProperty(RancherShared.CONFIG_NODE_TYPE_INCLUDE_CONTAINER, "true");
+		configuration.setProperty(RancherShared.CONFIG_LABELS_INCLUDE_ATTRIBUTES, "com.example.(description|group)");
+		configuration.setProperty(RancherShared.CONFIG_LABELS_INCLUDE_TAGS, "com.example.(group|site)");
+
+		JsonNode jsonNode = resourceToJson("containers.json");
+		assert jsonNode != null;
+		assertEquals(1, jsonNode.path("data").size());
+		when(client.get(anyString())).thenReturn(env(), jsonNode);
+
+		source = new RancherResourceModelSource(configuration, client);
+		INodeSet nodeList = source.getNodes();
+
+		verify(client, times(1)).get(matches(".*/projects/1a10$"));
+		verify(client, times(1)).get(matches(".*/projects/1a10/containers$"));
+
+		assertEquals(1, nodeList.getNodes().size());
+		INodeEntry node = nodeList.iterator().next();
+		assertEquals("myEnvironment_mysite-dev-frontend-1", node.getNodename());
+		assertEquals("1h70", node.getHostname());
+		assertEquals("root", node.getUsername());
+		Map<String, String> attributes = node.getAttributes();
+		assertEquals("abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef", attributes.get("externalId"));
+		assertEquals("running", attributes.get("state"));
+	}
+
+	@Test
 	public void processServices() throws ResourceModelSourceException, IOException, ConfigurationException {
 		configuration.setProperty(RancherShared.CONFIG_ENVIRONMENT_IDS, "1a10");
 		configuration.setProperty(RancherShared.CONFIG_STACK_FILTER, "");
@@ -113,8 +141,9 @@ public class RancherResourceModelSourceTest {
 		configuration.setProperty(RancherShared.CONFIG_NODE_TYPE_INCLUDE_CONTAINER, "false");
 
 		JsonNode jsonNode = resourceToJson("services.json");
+		assert jsonNode != null;
 		assertEquals(1, jsonNode.path("data").size());
-		when(client.get(anyString())).thenReturn(env(environment), jsonNode);
+		when(client.get(anyString())).thenReturn(env(), jsonNode);
 
 		source = new RancherResourceModelSource(configuration, client);
 		INodeSet nodeList = source.getNodes();
@@ -136,7 +165,7 @@ public class RancherResourceModelSourceTest {
 
 	@Test
 	public void processNodeWithLabels() throws ResourceModelSourceException, IOException, ConfigurationException {
-		when(client.get(anyString())).thenReturn(env(environment), itemPlus("1"));
+		when(client.get(anyString())).thenReturn(env(), itemPlus());
 
 		source = new RancherResourceModelSource(configuration, client);
 		INodeSet nodeList = source.getNodes();
@@ -155,7 +184,7 @@ public class RancherResourceModelSourceTest {
 
 	@Test
 	public void processTwoNodes() throws ResourceModelSourceException, IOException, ConfigurationException {
-		when(client.get(anyString())).thenReturn(env(environment), twoItems("1", "2"));
+		when(client.get(anyString())).thenReturn(env(), twoItems());
 		configuration.setProperty(RancherShared.CONFIG_HANDLE_SYSTEM, "Include");
 
 		source = new RancherResourceModelSource(configuration, client);
@@ -188,7 +217,7 @@ public class RancherResourceModelSourceTest {
 	@Test
 	public void processContinued() throws ResourceModelSourceException, IOException, ConfigurationException {
 		String url = configuration.getProperty(RancherShared.RANCHER_CONFIG_ENDPOINT);
-		when(client.get(anyString())).thenReturn(env(environment), continuedItems("1", "2", url), item("3"));
+		when(client.get(anyString())).thenReturn(env(), continuedItems(url), item("3"));
 
 		source = new RancherResourceModelSource(configuration, client);
 		INodeSet nodeList = source.getNodes();
@@ -226,28 +255,20 @@ public class RancherResourceModelSourceTest {
 		assertEquals(0, nodes.getNodes().size());
 	}
 
-	private Response response(String json) {
-		Request request = new Request.Builder().url("https://example.com").build();
-		ResponseBody body = ResponseBody.create(MediaType.parse("text/json"), json);
-		Builder builder = new Response.Builder().request(request).protocol(Protocol.HTTP_2);
-		builder.body(body).code(200).message("OK");
-		return builder.build();
-	}
-
-	private JsonNode item(String item) throws JsonProcessingException {
+	private JsonNode item(String item) {
 		return toJson("{\"data\":[" + itemText(item) + "]}");
 	}
 
-	private JsonNode itemPlus(String item) throws JsonProcessingException {
-		return toJson("{\"data\":[" + itemPlusText(item) + "]}");
+	private JsonNode itemPlus() {
+		return toJson("{\"data\":[" + itemPlusText() + "]}");
 	}
 
-	private JsonNode twoItems(String item1, String item2) throws JsonProcessingException {
-		return toJson("{\"data\":[" + itemText(item1) + "," + itemText(item2) + "]}");
+	private JsonNode twoItems() {
+		return toJson("{\"data\":[" + itemText("1") + "," + itemText("2") + "]}");
 	}
 
-	private JsonNode continuedItems(String item1, String item2, String url) throws JsonProcessingException {
-		return toJson("{\"data\":[" + itemText(item1) + "," + itemText(item2) + "],  \"pagination\": {\"next\": \"" + url +"\"}}");
+	private JsonNode continuedItems(String url) {
+		return toJson("{\"data\":[" + itemText("1") + "," + itemText("2") + "],  \"pagination\": {\"next\": \"" + url +"\"}}");
 	}
 
 	private String itemText(String item) {
@@ -269,20 +290,20 @@ public class RancherResourceModelSourceTest {
 				"}";
 	}
 
-	private String itemPlusText(String item) {
+	private String itemPlusText() {
 		String accessKeyPath = RancherShared.CONFIG_ACCESSKEY_PATH;
 		String secretKeyPath = RancherShared.CONFIG_SECRETKEY_PATH;
 		return "{\"state\": \"" + serviceState + "\"" + //
-				",\"name\": \"name" + item + "\"" + //
-				",\"hostId\": \"hostId" + item + "\"" + //
-				",\"id\": \"id" + item + "\"" + //
-				",\"externalId\": \"externalId" + item + "\"" + //
+				",\"name\": \"name" + "1" + "\"" + //
+				",\"hostId\": \"hostId" + "1" + "\"" + //
+				",\"id\": \"id" + "1" + "\"" + //
+				",\"externalId\": \"externalId" + "1" + "\"" + //
 				",\"file-copier\": \"" + RancherShared.RANCHER_SERVICE_PROVIDER + "\"" + //
 				",\"node-executor\": \"" + RancherShared.RANCHER_SERVICE_PROVIDER + "\"" + //
 				",\"type\": \"" + nodeType + "\"" + //
 				",\"account\": \"" + configuration.getProperty(RancherShared.CONFIG_ENVIRONMENT_IDS) + "\"" + //
 				",\"environment\": \"" + environment + "\"" + //
-				",\"image\": \"image" + item + "\"" + //
+				",\"image\": \"image" + "1" + "\"" + //
 				",\"labels\": {\n" +
 				"    \"com.example.description\": \"mysite.development.example.com\",\n" +
 				"    \"com.example.group\": \"dev\",\n" +
@@ -302,13 +323,13 @@ public class RancherResourceModelSourceTest {
 				"    \"io.rancher.container.mac_address\": \"11:22:33:44:55:66\",\n" +
 				"    \"io.rancher.container.name\": \"mysite-dev-frontend-1\"\n" +
 				"}\n" + //
-				",\"" + accessKeyPath + "\": \"" + accessKeyPath + item + "\"" + //
-				",\"" + secretKeyPath + "\": \"" + secretKeyPath + item + "\"" + //
+				",\"" + accessKeyPath + "\": \"" + accessKeyPath + "1" + "\"" + //
+				",\"" + secretKeyPath + "\": \"" + secretKeyPath + "1" + "\"" + //
 				"}";
 	}
 
-	private JsonNode env(String item) throws JsonProcessingException {
-		String json = "{\"name\": \"" + item + "\"}";
+	private JsonNode env() {
+		String json = "{\"name\": \"" + RancherResourceModelSourceTest.environment + "\"}";
 		return toJson(json);
 	}
 
