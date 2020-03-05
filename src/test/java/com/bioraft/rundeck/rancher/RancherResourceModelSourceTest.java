@@ -35,6 +35,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 
+import static com.bioraft.rundeck.rancher.TestHelper.resourceToJson;
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
@@ -88,7 +89,7 @@ public class RancherResourceModelSourceTest {
 	@Test
 	public void processOneNode() throws ResourceModelSourceException, IOException, ConfigurationException {
 		when(client.get(anyString())).thenReturn(env(environment), item("1"));
-
+		configuration.setProperty(RancherShared.CONFIG_STACK_FILTER, "");
 		source = new RancherResourceModelSource(configuration, client);
 		INodeSet nodeList = source.getNodes();
 
@@ -105,10 +106,38 @@ public class RancherResourceModelSourceTest {
 	}
 
 	@Test
+	public void processServices() throws ResourceModelSourceException, IOException, ConfigurationException {
+		configuration.setProperty(RancherShared.CONFIG_ENVIRONMENT_IDS, "1a10");
+		configuration.setProperty(RancherShared.CONFIG_STACK_FILTER, "");
+		configuration.setProperty(RancherShared.CONFIG_NODE_TYPE_INCLUDE_SERVICE, "true");
+		configuration.setProperty(RancherShared.CONFIG_NODE_TYPE_INCLUDE_CONTAINER, "false");
+
+		JsonNode jsonNode = resourceToJson("services.json");
+		assertEquals(1, jsonNode.path("data").size());
+		when(client.get(anyString())).thenReturn(env(environment), jsonNode);
+
+		source = new RancherResourceModelSource(configuration, client);
+		INodeSet nodeList = source.getNodes();
+
+		verify(client, times(1)).get(matches(".*/projects/1a10$"));
+		verify(client, times(1)).get(matches(".*/projects/1a10/stacks$"));
+		verify(client, times(1)).get(matches(".*/projects/1a10/services$"));
+//		verify(client, times(2)).get(anyString());
+
+		assertEquals(1, nodeList.getNodes().size());
+		INodeEntry node = nodeList.iterator().next();
+		assertEquals("myEnvironment_null-frontend", node.getNodename());
+		assertNull(node.getHostname());
+		assertEquals("root", node.getUsername());
+		Map<String, String> attributes = node.getAttributes();
+		assertNull(attributes.get("externalId"));
+		assertEquals("active", attributes.get("state"));
+	}
+
+	@Test
 	public void processNodeWithLabels() throws ResourceModelSourceException, IOException, ConfigurationException {
 		when(client.get(anyString())).thenReturn(env(environment), itemPlus("1"));
 
-		configuration.setProperty(RancherShared.CONFIG_STACK_FILTER, "");
 		source = new RancherResourceModelSource(configuration, client);
 		INodeSet nodeList = source.getNodes();
 
@@ -127,6 +156,7 @@ public class RancherResourceModelSourceTest {
 	@Test
 	public void processTwoNodes() throws ResourceModelSourceException, IOException, ConfigurationException {
 		when(client.get(anyString())).thenReturn(env(environment), twoItems("1", "2"));
+		configuration.setProperty(RancherShared.CONFIG_HANDLE_SYSTEM, "Include");
 
 		source = new RancherResourceModelSource(configuration, client);
 		INodeSet nodeList = source.getNodes();
@@ -254,21 +284,21 @@ public class RancherResourceModelSourceTest {
 				",\"environment\": \"" + environment + "\"" + //
 				",\"image\": \"image" + item + "\"" + //
 				",\"labels\": {\n" +
-				"    \"io.rancher.service.deployment.unit\": \"00000000-0000-0000-0000-000000000000\",\n" +
-				"    \"io.rancher.stack_service.name\": \"mysite-dev/frontend\",\n" +
-				"    \"io.rancher.service.launch.config\": \"io.rancher.service.primary.launch.config\",\n" +
-				"    \"com.example.service\": \"frontend\",\n" +
-				"    \"io.rancher.project.name\": \"mysite-dev\",\n" +
-				"    \"io.rancher.project_service.name\": \"mysite-dev/frontend\",\n" +
 				"    \"com.example.description\": \"mysite.development.example.com\",\n" +
 				"    \"com.example.group\": \"dev\",\n" +
-				"    \"io.rancher.stack.name\": \"mysite-dev\",\n" +
-				"    \"io.rancher.service.hash\": \"0123456789012345678901234567890123456789\",\n" +
+				"    \"com.example.service\": \"frontend\",\n" +
 				"    \"com.example.site\": \"mysite\",\n" +
-				"    \"io.rancher.container.ip\": \"10.0.0.11/16\",\n" +
-				"    \"io.rancher.container.uuid\": \"00000000-0000-0000-0000-000000000000\",\n" +
 				"    \"io.rancher.cni.network\": \"ipsec\",\n" +
 				"    \"io.rancher.cni.wait\": \"true\",\n" +
+				"    \"io.rancher.project.name\": \"mysite-dev\",\n" +
+				"    \"io.rancher.project_service.name\": \"mysite-dev/frontend\",\n" +
+				"    \"io.rancher.service.deployment.unit\": \"00000000-0000-0000-0000-000000000000\",\n" +
+				"    \"io.rancher.stack_service.name\": \"mysite-dev/frontend\",\n" +
+				"    \"io.rancher.service.hash\": \"0123456789012345678901234567890123456789\",\n" +
+				"    \"io.rancher.service.launch.config\": \"io.rancher.service.primary.launch.config\",\n" +
+				"    \"io.rancher.stack.name\": \"mysite-dev\",\n" +
+				"    \"io.rancher.container.ip\": \"10.0.0.11/16\",\n" +
+				"    \"io.rancher.container.uuid\": \"00000000-0000-0000-0000-000000000000\",\n" +
 				"    \"io.rancher.container.mac_address\": \"11:22:33:44:55:66\",\n" +
 				"    \"io.rancher.container.name\": \"mysite-dev-frontend-1\"\n" +
 				"}\n" + //

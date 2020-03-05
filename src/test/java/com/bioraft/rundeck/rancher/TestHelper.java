@@ -1,16 +1,37 @@
 package com.bioraft.rundeck.rancher;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.*;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
+import static org.junit.Assert.fail;
 
 public class TestHelper {
 
-    private Response response(InputStream stream) throws IOException {
-        return response(readFromInputStream(stream));
+    public static JsonNode resourceToJson(String resource) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            return objectMapper.readTree(getResourceStream(resource));
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            fail();
+            return null;
+        }
+    }
+    
+    private static String getResourceStream(String resource) {
+        String path = "src/test/resources/" + resource;
+        try {
+            return new String(Files.readAllBytes(Paths.get(path)));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return "";
     }
 
     public static Response response(String json, int code) {
@@ -28,17 +49,5 @@ public class TestHelper {
 
     public static Response response(String json) {
         return response(json, 200);
-    }
-
-    public static String readFromInputStream(InputStream inputStream) throws IOException {
-        StringBuilder resultStringBuilder = new StringBuilder();
-        InputStreamReader reader = new InputStreamReader(inputStream);
-        try (BufferedReader br = new BufferedReader(reader)) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                resultStringBuilder.append(line).append("\n");
-            }
-        }
-        return resultStringBuilder.toString();
     }
 }
