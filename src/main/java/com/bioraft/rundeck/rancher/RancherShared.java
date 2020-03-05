@@ -102,6 +102,10 @@ public class RancherShared {
         return trimmed + (trimmed.endsWith("]") ? "" : "]");
     }
 
+    public static String apiPath(String environmentId, String target) {
+        return "/projects/" + environmentId + target;
+    }
+
     /**
      * Get a (secret) value from password storage.
      *
