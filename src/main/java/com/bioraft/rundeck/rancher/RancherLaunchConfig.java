@@ -111,7 +111,7 @@ public class RancherLaunchConfig {
 	 * @param field The field to update.
 	 * @param newData JSON Object representing the new name-value pairs.
 	 */
-	private void setField(String field, String newData) throws NodeStepException {
+	public void setField(String field, String newData) throws NodeStepException {
 		if (newData == null || newData.length() == 0) {
 			return;
 		}
@@ -139,7 +139,7 @@ public class RancherLaunchConfig {
 	 * @param field Name of the object to remove from.
 	 * @param remove String representation of fields to be removed (JSON array).
 	 */
-	private void removeField(String field, String remove) throws NodeStepException {
+	public void removeField(String field, String remove) throws NodeStepException {
 		if (remove == null || remove.length() == 0) {
 			return;
 		}
@@ -181,19 +181,23 @@ public class RancherLaunchConfig {
 
 			// Copy existing secrets, skipping any that we want to add or overwrite.
 			if (hasOldSecrets && elements != null) {
-				while (elements.hasNext()) {
-					JsonNode secretObject = elements.next();
-					// @todo this only works for a single secret added.
-					if (!secretObject.path("secretId").asText().equals(secrets)) {
-						secretsArray.add(secretObject);
-					}
-				}
+				copyOldSecrets(elements, secretsArray);
 			}
 
 			// Add in the new or replacement secrets specified in the step.
 			for (String secretId : secrets.split("[,; ]+")) {
 				secretsArray.add(buildSecret(secretId));
 				logger.log(Constants.INFO_LEVEL, "Adding secret map to " + secretId);
+			}
+		}
+	}
+
+	private void copyOldSecrets(Iterator<JsonNode> elements, ArrayNode secretsArray) {
+		while (elements.hasNext()) {
+			JsonNode secretObject = elements.next();
+			// @todo this only works for a single secret added.
+			if (!secretObject.path("secretId").asText().equals(secrets)) {
+				secretsArray.add(secretObject);
 			}
 		}
 	}

@@ -133,7 +133,7 @@ public class RancherShared {
         return (new ObjectMapper()).valueToTree(secretJsonMap(secretId));
     }
 
-    public static HashMap<String, String> secretJsonMap(String secretId) {
+    public static Map<String, String> secretJsonMap(String secretId) {
         HashMap<String, String> map = new HashMap<>();
         map.put("type", "secretReference");
         map.put("uid", "0");

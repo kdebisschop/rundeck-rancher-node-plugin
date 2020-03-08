@@ -125,6 +125,16 @@
     "scale": 1,
     "scalePolicy": null,
     "secondaryLaunchConfigs": [ ],
+    "secrets": [
+        {
+            "type": "secretReference",
+            "gid": "0",
+            "mode": "444",
+            "name": "",
+            "secretId": "1se1",
+            "uid": "0"
+        }
+    ],
     "selectorContainer": null,
     "selectorLink": null,
     "stackId": "1st3107",

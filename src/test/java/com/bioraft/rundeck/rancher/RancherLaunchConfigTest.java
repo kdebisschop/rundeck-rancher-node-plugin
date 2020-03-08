@@ -51,6 +51,17 @@ public class RancherLaunchConfigTest {
 
     @Test
     /*
+     * If nothing is changed, the launchConfig should be unchanged.
+     */
+    public void removeField() throws NodeStepException {
+        verify(logger,never()).log(anyInt(), anyString());
+        RancherLaunchConfig rancherLaunchConfig = new RancherLaunchConfig(name, objectNode, logger);
+        rancherLaunchConfig.removeField("NoSuchField", "NoSuchValue");
+        assertEquals(reference, rancherLaunchConfig.update());
+    }
+
+    @Test
+    /*
      * Test by inserting values and verifying object changes, then removing them and ensuring
      * object has return to its original value.
      */
@@ -65,6 +76,24 @@ public class RancherLaunchConfigTest {
         verify(logger, times(3)).log(anyInt(), anyString());
 
         assertEquals(reference, result);
+    }
+
+    @Test
+    /*
+     * Test by inserting values and verifying object changes, then removing them and ensuring
+     * object has return to its original value.
+     */
+    public void updateEnvironmentNoMatch() throws NodeStepException {
+        RancherLaunchConfig rancherLaunchConfig = new RancherLaunchConfig(name, objectNode, logger);
+        rancherLaunchConfig.setEnvironment("{\"VAR\": \"value\"}");
+        assertNotEquals(reference, rancherLaunchConfig.update());
+        verify(logger, times(1)).log(anyInt(), anyString());
+
+        rancherLaunchConfig.removeEnvironment("[\"NO_VAR\"]");
+        ObjectNode result = rancherLaunchConfig.update();
+        verify(logger, times(3)).log(anyInt(), anyString());
+
+        assertNotEquals(reference, result);
     }
 
     @Test

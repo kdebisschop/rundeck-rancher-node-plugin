@@ -15,7 +15,9 @@
  */
 package com.bioraft.rundeck.rancher;
 
+import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
+import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Before;
@@ -23,6 +25,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
+import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.runners.MockitoJUnitRunner;
 
@@ -54,6 +57,12 @@ public class RancherAddServiceTest extends PluginStepTest {
 	String stackName = "testStack";
 	Map<String, Object> postMap;
 
+	@Mock
+	PluginStepContext pluginStepContext;
+
+	@Mock
+	ExecutionContext noStorageExecutionContext;
+
 	@Captor
 	ArgumentCaptor<Map<String, Object>> captor;
 
@@ -67,6 +76,25 @@ public class RancherAddServiceTest extends PluginStepTest {
 	public void validateDefaultConstructor() {
 		RancherAddService subject = new RancherAddService();
 		assertNotNull(subject);
+	}
+
+	@Test(expected = StepException.class)
+	public void throwExceptionWhenAccessKeyIsMissing() throws StepException {
+		when(cfg.getOrDefault(eq(OPT_STACK_NAME), any())).thenReturn(stackName);
+		when(cfg.getOrDefault(eq(OPT_ENV_IDS), any())).thenReturn(envIds);
+		when(cfg.getOrDefault(eq(OPT_SERVICE_NAME), any())).thenReturn(serviceName);
+		when(cfg.getOrDefault(eq(OPT_IMAGE_UUID), any())).thenReturn(imageUuid);
+
+		when(framework.getProperty(eq(FMWK_RANCHER_ENDPOINT))).thenReturn("https://rancher.example.com/v1");
+		when(framework.getProperty(eq(FMWK_RANCHER_ACCESSKEY_PATH))).thenReturn(null);
+		when(framework.getProperty(eq(FMWK_RANCHER_SECRETKEY_PATH))).thenReturn(null);
+
+		when(pluginStepContext.getFramework()).thenReturn(framework);
+		when(pluginStepContext.getFrameworkProject()).thenReturn(projectName);
+		when(pluginStepContext.getExecutionContext()).thenReturn(noStorageExecutionContext);
+
+		upgrade = new RancherAddService(client);
+		upgrade.executeStep(pluginStepContext, cfg);
 	}
 
 	@Test
