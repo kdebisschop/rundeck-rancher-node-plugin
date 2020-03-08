@@ -50,6 +50,8 @@ public class RancherLaunchConfig {
 
 	private String secrets = "";
 
+	private Map<String, String> secretMap;
+
 	private String nodeName;
 
 	private PluginLogger logger;
@@ -77,8 +79,10 @@ public class RancherLaunchConfig {
 	}
 
 	public void setDockerImage(String dockerImage) {
-		logger.log(Constants.INFO_LEVEL, "Setting image to " + dockerImage);
-		launchConfigObject.put("imageUuid","docker:" + dockerImage);
+		if (dockerImage != null && !dockerImage.isEmpty()) {
+			logger.log(Constants.INFO_LEVEL, "Setting image to " + dockerImage);
+			launchConfigObject.put("imageUuid", "docker:" + dockerImage);
+		}
 	}
 
 	public void setEnvironment(String environment) {
@@ -103,6 +107,13 @@ public class RancherLaunchConfig {
 
 	public void setSecrets(String secrets) {
 		this.secrets = secrets;
+		if (secrets != null && secrets.trim().length() > 0) {
+			// Add in the new or replacement secrets specified in the step.
+			secretMap = new HashMap<>();
+			for (String secretId : secrets.split("[,; ]+")) {
+				secretMap.put(secretId, secretId);
+			}
+		}
 	}
 
 	/**
@@ -111,14 +122,20 @@ public class RancherLaunchConfig {
 	 * @param field The field to update.
 	 * @param newData JSON Object representing the new name-value pairs.
 	 */
-	private void setField(String field, String newData) throws NodeStepException {
+	public void setField(String field, String newData) throws NodeStepException {
 		if (newData == null || newData.length() == 0) {
 			return;
 		}
-
-		ObjectNode objectNode = (ObjectNode) launchConfigObject.get(field);
+		ObjectNode objectNode;
+		JsonNode jsonNode = launchConfigObject.path(field);
+		boolean originalNodeIsEmpty = jsonNode.isMissingNode() || jsonNode.isNull();
 		ObjectMapper objectMapper = new ObjectMapper();
 		try {
+			if (originalNodeIsEmpty) {
+				objectNode = (ObjectNode) objectMapper.readTree("{}");
+			} else {
+				objectNode = (ObjectNode) jsonNode;
+			}
 			JsonNode map = objectMapper.readTree(ensureStringIsJsonObject(newData));
 			Iterator<Map.Entry<String, JsonNode>> iterator = map.fields();
 			while (iterator.hasNext()) {
@@ -131,6 +148,9 @@ public class RancherLaunchConfig {
 		} catch (JsonProcessingException e) {
 			throw new NodeStepException("Invalid " + field + " JSON data", ErrorCause.INVALID_JSON, this.nodeName);
 		}
+		if (originalNodeIsEmpty) {
+			launchConfigObject.replace(field, objectNode);
+		}
 	}
 
 	/**
@@ -139,7 +159,7 @@ public class RancherLaunchConfig {
 	 * @param field Name of the object to remove from.
 	 * @param remove String representation of fields to be removed (JSON array).
 	 */
-	private void removeField(String field, String remove) throws NodeStepException {
+	public void removeField(String field, String remove) throws NodeStepException {
 		if (remove == null || remove.length() == 0) {
 			return;
 		}
@@ -166,35 +186,37 @@ public class RancherLaunchConfig {
 	 * Add or replace secrets.
 	 *
 	 * @param launchConfig JsonNode representing the target upgraded configuration.
-	 * @throws NodeStepException when secret JSON is malformed (passed up from {@see this.buildSecret()}.
 	 */
-	private void addSecrets(ObjectNode launchConfig) throws NodeStepException {
+	private void addSecrets(ObjectNode launchConfig) {
 		if (secrets != null && secrets.length() > 0) {
 			// Copy existing secrets, skipping any that we want to add or overwrite.
 			Iterator<JsonNode> elements = null;
 			boolean hasOldSecrets = false;
 			if (launchConfig.has("secrets") && !launchConfig.get("secrets").isNull()) {
-				hasOldSecrets = true;
 				elements = launchConfig.get("secrets").elements();
+				hasOldSecrets = elements.hasNext();
 			}
 
 			ArrayNode secretsArray = launchConfig.putArray("secrets");
 
 			// Copy existing secrets, skipping any that we want to add or overwrite.
-			if (hasOldSecrets && elements != null) {
-				while (elements.hasNext()) {
-					JsonNode secretObject = elements.next();
-					// @todo this only works for a single secret added.
-					if (!secretObject.path("secretId").asText().equals(secrets)) {
-						secretsArray.add(secretObject);
-					}
-				}
+			if (hasOldSecrets) {
+				copyOldSecrets(elements, secretsArray);
 			}
 
 			// Add in the new or replacement secrets specified in the step.
-			for (String secretId : secrets.split("/[,; ]+/")) {
-				secretsArray.add(buildSecret(secretId, this.nodeName));
+			for (String secretId : secrets.split("[,; ]+")) {
+				secretsArray.add(buildSecret(secretId));
 				logger.log(Constants.INFO_LEVEL, "Adding secret map to " + secretId);
+			}
+		}
+	}
+
+	private void copyOldSecrets(Iterator<JsonNode> elements, ArrayNode secretsArray) {
+		while (elements.hasNext()) {
+			JsonNode secretObject = elements.next();
+			if (!secretMap.containsKey(secretObject.path("secretId").asText())) {
+				secretsArray.add(secretObject);
 			}
 		}
 	}

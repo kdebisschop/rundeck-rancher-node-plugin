@@ -18,18 +18,17 @@ package com.bioraft.rundeck.rancher;
 
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.storage.ResourceMeta;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
-import static com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory.PROJECT_PREFIX;
 import static com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory.FRAMEWORK_PREFIX;
+import static com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory.PROJECT_PREFIX;
 
 /**
  * Shared code and constants for Rancher node.
@@ -90,16 +89,22 @@ public class RancherShared {
         if (string == null) {
             return "";
         }
-        String trimmed = string.replaceFirst("^\\s*\\{?", "{").replaceFirst("\\s*$", "");
-        return trimmed + (trimmed.endsWith("}") ? "" : "}");
+        string = string.trim();
+        if (string.isEmpty()) {
+            return "";
+        }
+        return (string.startsWith("{") ? "" : "{") + string + (string.endsWith("}") ? "" : "}");
     }
 
     public static String ensureStringIsJsonArray(String string) {
         if (string == null) {
             return "";
         }
-        String trimmed = string.replaceFirst("^\\s*\\[?", "[").replaceFirst("\\s*$", "");
-        return trimmed + (trimmed.endsWith("]") ? "" : "]");
+        string = string.trim();
+        if (string.isEmpty()) {
+            return "";
+        }
+        return (string.startsWith("[") ? "" : "[") + string + (string.endsWith("]") ? "" : "]");
     }
 
     public static String apiPath(String environmentId, String target) {
@@ -129,27 +134,24 @@ public class RancherShared {
      *
      * @param secretId A secret ID from Rancher (like "1se1")
      * @return JSON expression for secret reference.
-     * @throws NodeStepException when JSON is not valid.
      */
-    public static JsonNode buildSecret(String secretId, String nodeName) throws NodeStepException {
-        try {
-            return (new ObjectMapper()).readTree(secretJson(secretId));
-        } catch (JsonProcessingException e) {
-            throw new NodeStepException("Failed add secret", e, ErrorCause.INVALID_JSON, nodeName);
-        }
+    public static JsonNode buildSecret(String secretId) {
+        return (new ObjectMapper()).valueToTree(secretJsonMap(secretId));
     }
 
-    public static String secretJson(String secretId) {
-        return "{ \"type\": \"secretReference\", \"gid\": \"0\", \"mode\": \"444\", \"name\": \"\", \"secretId\": \""
-                + secretId + "\", \"uid\": \"0\"}";
+    public static Map<String, String> secretJsonMap(String secretId) {
+        HashMap<String, String> map = new HashMap<>();
+        map.put("type", "secretReference");
+        map.put("uid", "0");
+        map.put("gid", "0");
+        map.put("mode", "444");
+        map.put("name", "");
+        map.put("secretId", secretId);
+        return map;
     }
 
     public static String mountPoint(String mountSpec) {
         return mountSpec.replaceFirst("[^:]+:", "").replaceFirst(":.*", "");
-    }
-
-    public static boolean mapIfNotEmpty(Map<String, Object> cfg, String key) {
-        return cfg.containsKey(key) && cfg.get(key) != null && cfg.get(key) != "";
     }
 
     public enum ErrorCause implements FailureReason {
@@ -158,7 +160,6 @@ public class RancherShared {
         IO_EXCEPTION,
         ACTION_FAILED,
         ACTION_NOT_SUPPORTED,
-        NO_KEY_STORAGE,
         NO_SERVICE_OBJECT,
         SERVICE_NOT_RUNNING,
         MISSING_ACTION_URL,

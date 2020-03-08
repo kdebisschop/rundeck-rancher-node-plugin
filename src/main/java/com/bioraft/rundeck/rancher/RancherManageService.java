@@ -37,7 +37,7 @@ import static com.bioraft.rundeck.rancher.RancherShared.ErrorCause.NO_SERVICE_OB
 import static com.bioraft.rundeck.rancher.RancherShared.loadStoragePathData;
 
 /**
- * Workflow Node Step Plug-in to upgrade a service associated with a node.
+ * Workflow Node Step Plug-in to manage a service associated with a node.
  *
  * @author Karl DeBisschop <kdebisschop@gmail.com>
  * @since 2019-12-20
@@ -120,9 +120,9 @@ public class RancherManageService implements NodeStepPlugin {
 		try {
 			client.post(url, body);
 		} catch (IOException e) {
-			throw new NodeStepException("Upgrade failed", e, ErrorCause.ACTION_FAILED, nodeName);
+			throw new NodeStepException("Step " + action + " failed", e, ErrorCause.ACTION_FAILED, nodeName);
 		}
 
-		logger.log(Constants.INFO_LEVEL, "Upgraded " + nodeName);
+		logger.log(Constants.INFO_LEVEL, "Step " + action + " complete on " + nodeName);
 	}
 }
