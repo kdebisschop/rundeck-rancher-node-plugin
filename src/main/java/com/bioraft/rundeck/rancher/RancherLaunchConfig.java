@@ -50,6 +50,8 @@ public class RancherLaunchConfig {
 
 	private String secrets = "";
 
+	private Map<String, String> secretMap;
+
 	private String nodeName;
 
 	private PluginLogger logger;
@@ -103,6 +105,13 @@ public class RancherLaunchConfig {
 
 	public void setSecrets(String secrets) {
 		this.secrets = secrets;
+		if (secrets != null && secrets.trim().length() > 0) {
+			// Add in the new or replacement secrets specified in the step.
+			secretMap = new HashMap<>();
+			for (String secretId : secrets.split("[,; ]+")) {
+				secretMap.put(secretId, secretId);
+			}
+		}
 	}
 
 	/**
@@ -195,8 +204,7 @@ public class RancherLaunchConfig {
 	private void copyOldSecrets(Iterator<JsonNode> elements, ArrayNode secretsArray) {
 		while (elements.hasNext()) {
 			JsonNode secretObject = elements.next();
-			// @todo this only works for a single secret added.
-			if (!secretObject.path("secretId").asText().equals(secrets)) {
+			if (!secretMap.containsKey(secretObject.path("secretId").asText())) {
 				secretsArray.add(secretObject);
 			}
 		}
