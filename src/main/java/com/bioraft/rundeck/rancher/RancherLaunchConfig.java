@@ -166,9 +166,8 @@ public class RancherLaunchConfig {
 	 * Add or replace secrets.
 	 *
 	 * @param launchConfig JsonNode representing the target upgraded configuration.
-	 * @throws NodeStepException when secret JSON is malformed (passed up from {@see this.buildSecret()}.
 	 */
-	private void addSecrets(ObjectNode launchConfig) throws NodeStepException {
+	private void addSecrets(ObjectNode launchConfig) {
 		if (secrets != null && secrets.length() > 0) {
 			// Copy existing secrets, skipping any that we want to add or overwrite.
 			Iterator<JsonNode> elements = null;
@@ -192,8 +191,8 @@ public class RancherLaunchConfig {
 			}
 
 			// Add in the new or replacement secrets specified in the step.
-			for (String secretId : secrets.split("/[,; ]+/")) {
-				secretsArray.add(buildSecret(secretId, this.nodeName));
+			for (String secretId : secrets.split("[,; ]+")) {
+				secretsArray.add(buildSecret(secretId));
 				logger.log(Constants.INFO_LEVEL, "Adding secret map to " + secretId);
 			}
 		}

@@ -45,7 +45,7 @@ import static org.mockito.Mockito.when;
  */
 public abstract class PluginStepTest {
 
-    protected static String projectEndpoint = "https://rancher.example.com/v2-beta/";
+    protected static String projectEndpoint = "https://rancher.example.com/v2-beta";
     protected static String projectAccessKey = "keys/rancher/access.key";
     protected static String projectSecretKey = "keys/rancher/secret.key";
     protected static String projectName = "1a10";
@@ -83,7 +83,7 @@ public abstract class PluginStepTest {
         when(ctx.getFrameworkProject()).thenReturn(projectName);
         when(ctx.getExecutionContext()).thenReturn(executionContext);
 
-        when(framework.getProperty(eq(FMWK_RANCHER_ENDPOINT))).thenReturn("framework.endpoint");
+        when(framework.getProperty(eq(FMWK_RANCHER_ENDPOINT))).thenReturn("https://rancher.example.com/v1");
         when(framework.getProperty(eq(FMWK_RANCHER_ACCESSKEY_PATH))).thenReturn("framework.accessKey");
         when(framework.getProperty(eq(FMWK_RANCHER_SECRETKEY_PATH))).thenReturn("framework.secretKey");
 

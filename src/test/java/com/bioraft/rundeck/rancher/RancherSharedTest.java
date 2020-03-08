@@ -84,13 +84,6 @@ public class RancherSharedTest {
         RancherShared.loadStoragePathData(ctx, path);
     }
 
-    @Test(expected = NodeStepException.class)
-    public void testIllegalSecretNameThrowsException() throws NodeStepException {
-        String secretId = "secret\"id";
-        String nodeName = "node";
-        buildSecret(secretId, nodeName);
-    }
-
     private String wrapArray(String string) {
         return "[" + string + "]";
     }

@@ -38,6 +38,8 @@ import static com.bioraft.rundeck.rancher.RancherShared.*;
 import static com.bioraft.rundeck.rancher.RancherShared.ErrorCause.*;
 import static com.dtolabs.rundeck.core.Constants.ERR_LEVEL;
 import static com.dtolabs.rundeck.core.Constants.INFO_LEVEL;
+import static com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory.FRAMEWORK_PREFIX;
+import static com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory.PROJECT_PREFIX;
 import static com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants.CODE_SYNTAX_MODE;
 import static com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants.DISPLAY_TYPE_KEY;
 import static org.apache.commons.lang.StringUtils.defaultString;
@@ -114,42 +116,26 @@ public class RancherAddService implements StepPlugin {
             throw new StepException("Image UUID cannot be empty", INVALID_CONFIGURATION);
         }
 
-        if (defaultString(dataVolumes).isEmpty() && configuration.containsKey(OPT_DATA_VOLUMES)) {
-            dataVolumes = (String) configuration.get(OPT_DATA_VOLUMES);
-        }
+        dataVolumes = (String) configuration.getOrDefault(OPT_DATA_VOLUMES, defaultString(dataVolumes));
 
-        if (defaultString(environment).isEmpty() && configuration.containsKey(OPT_ENV_VARS)) {
-            environment = (String) configuration.get(OPT_ENV_VARS);
-        }
+        environment = (String) configuration.getOrDefault(OPT_ENV_VARS, defaultString(environment));
 
-        if (defaultString(labels).isEmpty() && configuration.containsKey(OPT_LABELS)) {
-            labels = (String) configuration.get(OPT_LABELS);
-        }
+        labels = (String) configuration.getOrDefault(OPT_LABELS, defaultString(labels));
 
-        if (defaultString(secrets).isEmpty() && configuration.containsKey(OPT_SECRETS)) {
-            secrets = (String) configuration.get(OPT_SECRETS);
-        }
+        secrets = (String) configuration.getOrDefault(OPT_SECRETS, defaultString(secrets));
 
         Framework framework = context.getFramework();
         String project = context.getFrameworkProject();
         PluginLogger logger = context.getLogger();
-        String endpoint = framework.getProjectProperty(project, PROJ_RANCHER_ENDPOINT);
-        if (endpoint == null) {
-            endpoint = framework.getProperty(FMWK_RANCHER_ENDPOINT);
-        }
-        String accessKeyPath = framework.getProjectProperty(project, PROJ_RANCHER_ACCESSKEY_PATH);
-        if (accessKeyPath == null) {
-            accessKeyPath = framework.getProperty(FMWK_RANCHER_ACCESSKEY_PATH);
-        }
-        String secretKeyPath = framework.getProjectProperty(project, PROJ_RANCHER_SECRETKEY_PATH);
-        if (secretKeyPath == null) {
-            secretKeyPath = framework.getProperty(FMWK_RANCHER_SECRETKEY_PATH);
-        }
 
+        String endpoint = cfgFromProjectOrFramework(framework, project, RANCHER_CONFIG_ENDPOINT);
         String spec = endpoint + apiPath(environmentId, "/services");
+
         try {
+            String accessKeyPath = cfgFromRancherProjectOrFramework(framework, project, CONFIG_ACCESSKEY_PATH);
             String accessKey = loadStoragePathData(context.getExecutionContext(), accessKeyPath);
             client.setAccessKey(accessKey);
+            String secretKeyPath = cfgFromRancherProjectOrFramework(framework, project, CONFIG_SECRETKEY_PATH);
             String secretKey = loadStoragePathData(context.getExecutionContext(), secretKeyPath);
             client.setSecretKey(secretKey);
         } catch (IOException e) {
@@ -165,15 +151,7 @@ public class RancherAddService implements StepPlugin {
         addJsonData(OPT_DATA_VOLUMES, ensureStringIsJsonArray(dataVolumes), mapBuilder);
         addJsonData(OPT_ENV_VARS, ensureStringIsJsonObject(environment), mapBuilder);
         addJsonData(OPT_LABELS, ensureStringIsJsonObject(labels), mapBuilder);
-
-        if (secrets != null && secrets.trim().length() > 0) {
-            // Add in the new or replacement secrets specified in the step.
-            List<String> secretsArray = new ArrayList<>();
-            for (String secretId : secrets.split("/[,; ]+/")) {
-                secretsArray.add(secretJson(secretId));
-            }
-            mapBuilder.put(OPT_SECRETS, "[" + String.join(",", secretsArray) + "]");
-        }
+        addSecrets(mapBuilder);
 
         JsonNode check;
         String stackCheck;
@@ -208,6 +186,18 @@ public class RancherAddService implements StepPlugin {
         }
     }
 
+    private String cfgFromProjectOrFramework(Framework framework, String project, String field) {
+        String config = framework.getProjectProperty(project, PROJECT_PREFIX + field);
+        if (config == null) {
+            config = framework.getProperty(FRAMEWORK_PREFIX + field);
+        }
+        return config;
+    }
+
+    private String cfgFromRancherProjectOrFramework(Framework framework, String project, String field) {
+        return cfgFromProjectOrFramework(framework, project, RANCHER_SERVICE_PROVIDER + "-" + field);
+    }
+
     private String stackId(String stackName, String endpoint, PluginLogger logger) throws StepException {
         try {
             String stackCheck = endpoint + apiPath(environmentId, "/stacks?name=" + stackName);
@@ -227,9 +217,6 @@ public class RancherAddService implements StepPlugin {
 
     private void addJsonData(String name, String data, ImmutableMap.Builder<String, Object> builder) throws StepException {
         if (data.isEmpty()) {
-            data = (String) configuration.get(name);
-        }
-        if (data == null || data.isEmpty()) {
             return;
         }
 
@@ -242,4 +229,14 @@ public class RancherAddService implements StepPlugin {
         }
     }
 
+    private void addSecrets(ImmutableMap.Builder<String, Object> mapBuilder) {
+        if (secrets != null && secrets.trim().length() > 0) {
+            // Add in the new or replacement secrets specified in the step.
+            List<Map<String, String>> secretsArray = new ArrayList<>();
+            for (String secretId : secrets.split("[,; ]+")) {
+                secretsArray.add(secretJsonMap(secretId));
+            }
+            mapBuilder.put(OPT_SECRETS, (new ObjectMapper()).valueToTree(secretsArray));
+        }
+    }
 }
