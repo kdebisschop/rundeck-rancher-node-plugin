@@ -48,6 +48,14 @@
             "name": "",
             "secretId": "1se1",
             "uid": "0"
+        },
+        {
+            "type": "secretReference",
+            "gid": "0",
+            "mode": "444",
+            "name": "",
+            "secretId": "1se2",
+            "uid": "0"
         }
     ],
     "startOnCreate": true,

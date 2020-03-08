@@ -2,6 +2,7 @@ package com.bioraft.rundeck.rancher;
 
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.plugins.PluginLogger;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -58,6 +59,78 @@ public class RancherLaunchConfigTest {
         RancherLaunchConfig rancherLaunchConfig = new RancherLaunchConfig(name, objectNode, logger);
         rancherLaunchConfig.removeField("NoSuchField", "NoSuchValue");
         assertEquals(reference, rancherLaunchConfig.update());
+    }
+
+    @Test
+    /*
+     * If nothing is changed, the launchConfig should be unchanged.
+     */
+    public void removeEmptyField() throws NodeStepException {
+        verify(logger,never()).log(anyInt(), anyString());
+        RancherLaunchConfig rancherLaunchConfig = new RancherLaunchConfig(name, objectNode, logger);
+        rancherLaunchConfig.setField("logConfig", "{\"type\": \"logConfig\"}");
+        assertEquals(reference, rancherLaunchConfig.update());
+        rancherLaunchConfig.removeField("logConfig", "[\"type\"]");
+        assertNotEquals(reference, rancherLaunchConfig.update());
+        rancherLaunchConfig.removeField("logConfig", "[\"type2\"]");
+        assertNotEquals(reference, rancherLaunchConfig.update());
+    }
+
+    @Test
+    /*
+     * If nothing is changed, the launchConfig should be unchanged.
+     */
+    public void removeNoField() throws NodeStepException {
+        verify(logger,never()).log(anyInt(), anyString());
+        objectNode.remove("logConfig");
+        RancherLaunchConfig rancherLaunchConfig = new RancherLaunchConfig(name, objectNode, logger);
+        assertNotEquals(reference, rancherLaunchConfig.update());
+        rancherLaunchConfig.removeField("logConfig", "[\"type\"]");
+        assertNotEquals(reference, rancherLaunchConfig.update());
+
+        rancherLaunchConfig.setField("logConfig", "{\"type\": \"logConfig\"}");
+        ObjectNode lc = rancherLaunchConfig.update();
+        String text = lc.path("logConfig").path("type").asText();
+        assertEquals("logConfig", text);
+    }
+
+    @Test
+    /*
+     * If nothing is changed, the launchConfig should be unchanged.
+     */
+    public void removeNullField() throws NodeStepException {
+        verify(logger,never()).log(anyInt(), anyString());
+        objectNode.put("logConfig", (String) null);
+        RancherLaunchConfig rancherLaunchConfig = new RancherLaunchConfig(name, objectNode, logger);
+        assertNotEquals(reference, rancherLaunchConfig.update());
+        rancherLaunchConfig.removeField("logConfig", "[\"type\"]");
+        assertNotEquals(reference, rancherLaunchConfig.update());
+
+        rancherLaunchConfig.setField("logConfig", "{\"type\": \"logConfig\"}");
+        ObjectNode lc = rancherLaunchConfig.update();
+        String text = lc.path("logConfig").path("type").asText();
+        assertEquals("logConfig", text);
+    }
+
+    @Test(expected = NodeStepException.class)
+    /*
+     * If nothing is changed, the launchConfig should be unchanged.
+     */
+    public void removeInvalidField() throws NodeStepException {
+        verify(logger,never()).log(anyInt(), anyString());
+        RancherLaunchConfig rancherLaunchConfig = new RancherLaunchConfig(name, objectNode, logger);
+        rancherLaunchConfig.removeField("environment", "[\"NoSuchValue\",]");
+        assertEquals(reference, rancherLaunchConfig.update());
+    }
+
+    @Test(expected = NodeStepException.class)
+    /*
+     * If nothing is changed, the launchConfig should be unchanged.
+     */
+    public void addInvalidField() throws NodeStepException {
+        verify(logger,never()).log(anyInt(), anyString());
+        RancherLaunchConfig rancherLaunchConfig = new RancherLaunchConfig(name, objectNode, logger);
+        rancherLaunchConfig.setField("NoSuchField", "NoSuchValue");
     }
 
     @Test
@@ -170,6 +243,101 @@ public class RancherLaunchConfigTest {
             }
         }
         assertEquals(originalCount + 1, newCount);
+    }
+
+    @Test(expected = NodeStepException.class)
+    /*
+     * If nothing is changed, the launchConfig should be unchanged.
+     */
+    public void invalidDataVolumes() throws NodeStepException {
+        verify(logger,never()).log(anyInt(), anyString());
+        RancherLaunchConfig rancherLaunchConfig = new RancherLaunchConfig(name, objectNode, logger);
+        rancherLaunchConfig.setDataVolumes("[\"NoSuchValue\",]");
+        assertEquals(reference, rancherLaunchConfig.update());
+    }
+
+    @Test
+    /*
+     * If nothing is changed, the launchConfig should be unchanged.
+     */
+    public void hasNullDataVolumes() throws NodeStepException {
+        objectNode.remove("dataVolumes");
+        objectNode.put("dataVolumes", (Short) null);
+        verify(logger,never()).log(anyInt(), anyString());
+        RancherLaunchConfig rancherLaunchConfig = new RancherLaunchConfig(name, objectNode, logger);
+        rancherLaunchConfig.setDataVolumes("[\"/source1:/mountpoint1\"]");
+        assertEquals(reference, rancherLaunchConfig.update());
+    }
+
+    @Test
+    /*
+     * If nothing is changed, the launchConfig should be unchanged.
+     */
+    public void hasNoDataVolumes() throws NodeStepException {
+        objectNode.remove("dataVolumes");
+        verify(logger,never()).log(anyInt(), anyString());
+        RancherLaunchConfig rancherLaunchConfig = new RancherLaunchConfig(name, objectNode, logger);
+        rancherLaunchConfig.setDataVolumes("[\"/source1:/mountpoint1\"]");
+        assertEquals(reference, rancherLaunchConfig.update());
+    }
+
+    @Test
+    /*
+     * If nothing is changed, the launchConfig should be unchanged.
+     */
+    public void addSameSecrets() throws NodeStepException {
+        verify(logger,never()).log(anyInt(), anyString());
+        RancherLaunchConfig rancherLaunchConfig = new RancherLaunchConfig(name, objectNode, logger);
+        rancherLaunchConfig.setSecrets("1se2");
+        assertEquals(reference, rancherLaunchConfig.update());
+    }
+
+    @Test
+    /*
+     * If nothing is changed, the launchConfig should be unchanged.
+     */
+    public void addBothSameSecrets() throws NodeStepException {
+        verify(logger,never()).log(anyInt(), anyString());
+        RancherLaunchConfig rancherLaunchConfig = new RancherLaunchConfig(name, objectNode, logger);
+        rancherLaunchConfig.setSecrets("1se1,1se2");
+        assertEquals(reference, rancherLaunchConfig.update());
+    }
+
+    @Test
+    /*
+     * If nothing is changed, the launchConfig should be unchanged.
+     */
+    public void addHasNoSecrets() throws NodeStepException {
+        objectNode.remove("secrets");
+        verify(logger,never()).log(anyInt(), anyString());
+        RancherLaunchConfig rancherLaunchConfig = new RancherLaunchConfig(name, objectNode, logger);
+        rancherLaunchConfig.setSecrets("1se1,1se2");
+        assertEquals(reference, rancherLaunchConfig.update());
+    }
+
+    @Test
+    /*
+     * If nothing is changed, the launchConfig should be unchanged.
+     */
+    public void addHasNullSecrets() throws NodeStepException {
+        objectNode.remove("secrets");
+        objectNode.put("secrets", (Short) null);
+        verify(logger,never()).log(anyInt(), anyString());
+        RancherLaunchConfig rancherLaunchConfig = new RancherLaunchConfig(name, objectNode, logger);
+        rancherLaunchConfig.setSecrets("1se1,1se2");
+        assertEquals(reference, rancherLaunchConfig.update());
+    }
+
+    @Test
+    /*
+     * If nothing is changed, the launchConfig should be unchanged.
+     */
+    public void addHasEmptySecrets() throws NodeStepException {
+        objectNode.putArray("secrets");
+        verify(logger,never()).log(anyInt(), anyString());
+        RancherLaunchConfig rancherLaunchConfig = new RancherLaunchConfig(name, objectNode, logger);
+        rancherLaunchConfig.setSecrets("1se1,1se2");
+        assertEquals(reference, rancherLaunchConfig.update());
     }
 
     protected InputStream getResourceStream() {

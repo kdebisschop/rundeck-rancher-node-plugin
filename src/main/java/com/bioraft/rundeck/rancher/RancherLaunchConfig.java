@@ -126,10 +126,16 @@ public class RancherLaunchConfig {
 		if (newData == null || newData.length() == 0) {
 			return;
 		}
-
-		ObjectNode objectNode = (ObjectNode) launchConfigObject.get(field);
+		ObjectNode objectNode;
+		JsonNode jsonNode = launchConfigObject.path(field);
+		boolean originalNodeIsEmpty = jsonNode.isMissingNode() || jsonNode.isNull();
 		ObjectMapper objectMapper = new ObjectMapper();
 		try {
+			if (originalNodeIsEmpty) {
+				objectNode = (ObjectNode) objectMapper.readTree("{}");
+			} else {
+				objectNode = (ObjectNode) jsonNode;
+			}
 			JsonNode map = objectMapper.readTree(ensureStringIsJsonObject(newData));
 			Iterator<Map.Entry<String, JsonNode>> iterator = map.fields();
 			while (iterator.hasNext()) {
@@ -141,6 +147,9 @@ public class RancherLaunchConfig {
 			}
 		} catch (JsonProcessingException e) {
 			throw new NodeStepException("Invalid " + field + " JSON data", ErrorCause.INVALID_JSON, this.nodeName);
+		}
+		if (originalNodeIsEmpty) {
+			launchConfigObject.replace(field, objectNode);
 		}
 	}
 
@@ -184,14 +193,14 @@ public class RancherLaunchConfig {
 			Iterator<JsonNode> elements = null;
 			boolean hasOldSecrets = false;
 			if (launchConfig.has("secrets") && !launchConfig.get("secrets").isNull()) {
-				hasOldSecrets = true;
 				elements = launchConfig.get("secrets").elements();
+				hasOldSecrets = elements.hasNext();
 			}
 
 			ArrayNode secretsArray = launchConfig.putArray("secrets");
 
 			// Copy existing secrets, skipping any that we want to add or overwrite.
-			if (hasOldSecrets && elements != null) {
+			if (hasOldSecrets) {
 				copyOldSecrets(elements, secretsArray);
 			}
 
