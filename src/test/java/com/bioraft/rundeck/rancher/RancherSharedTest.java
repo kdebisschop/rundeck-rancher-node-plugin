@@ -48,16 +48,6 @@ public class RancherSharedTest {
     }
 
     @Test
-    public void testArrayWrapping() {
-        String string = "\"a\": 1";
-        assertEquals(wrapArray(string), ensureStringIsJsonArray(string));
-
-        assertEquals(wrapArray(string), ensureStringIsJsonArray("[" + string + "]"));
-
-        assertEquals(wrapArray(string), ensureStringIsJsonArray("\r\n\t[" + string + "] \n "));
-    }
-
-    @Test
     public void testObjectWrapping() {
         String string = "\"a\": 1";
         assertEquals(wrapObject(string), ensureStringIsJsonObject(string));
@@ -65,6 +55,24 @@ public class RancherSharedTest {
         assertEquals(wrapObject(string), ensureStringIsJsonObject("{" + string + "}"));
 
         assertEquals(wrapObject(string), ensureStringIsJsonObject(" \n \t\r{" + string + "} \n\t"));
+
+        assertEquals("", ensureStringIsJsonObject("  "));
+
+        assertEquals("", ensureStringIsJsonObject(null));
+    }
+
+    @Test
+    public void testArrayWrapping() {
+        String string = "\"a\": 1";
+        assertEquals(wrapArray(string), ensureStringIsJsonArray(string));
+
+        assertEquals(wrapArray(string), ensureStringIsJsonArray("[" + string + "]"));
+
+        assertEquals(wrapArray(string), ensureStringIsJsonArray("\r\n\t[" + string + "] \n "));
+
+        assertEquals("", ensureStringIsJsonArray("  "));
+
+        assertEquals("", ensureStringIsJsonArray(null));
     }
 
     @Test

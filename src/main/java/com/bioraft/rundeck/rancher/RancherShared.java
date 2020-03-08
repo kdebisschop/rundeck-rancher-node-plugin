@@ -86,25 +86,25 @@ public class RancherShared {
     public static final String PROJ_RANCHER_ENVIRONMENT_IDS = PROJECT_PREFIX + RANCHER_SERVICE_PROVIDER + "-" + CONFIG_ENVIRONMENT_IDS;
 
     public static String ensureStringIsJsonObject(String string) {
-        if (string == null || string.isEmpty()) {
+        if (string == null) {
             return "";
         }
-        String trimmed = string.trim();
-        if (trimmed.isEmpty()) {
+        string = string.trim();
+        if (string.isEmpty()) {
             return "";
         }
-        return (trimmed.startsWith("{") ? "" : "{") + trimmed + (trimmed.endsWith("}") ? "" : "}");
+        return (string.startsWith("{") ? "" : "{") + string + (string.endsWith("}") ? "" : "}");
     }
 
     public static String ensureStringIsJsonArray(String string) {
-        if (string == null || string.isEmpty()) {
+        if (string == null) {
             return "";
         }
-        String trimmed = string.trim();
-        if (trimmed.isEmpty()) {
+        string = string.trim();
+        if (string.isEmpty()) {
             return "";
         }
-        return (trimmed.startsWith("[") ? "" : "[") + trimmed + (trimmed.endsWith("]") ? "" : "]");
+        return (string.startsWith("[") ? "" : "[") + string + (string.endsWith("]") ? "" : "]");
     }
 
     public static String apiPath(String environmentId, String target) {
