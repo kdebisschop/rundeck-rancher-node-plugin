@@ -79,8 +79,10 @@ public class RancherLaunchConfig {
 	}
 
 	public void setDockerImage(String dockerImage) {
-		logger.log(Constants.INFO_LEVEL, "Setting image to " + dockerImage);
-		launchConfigObject.put("imageUuid","docker:" + dockerImage);
+		if (dockerImage != null && !dockerImage.isEmpty()) {
+			logger.log(Constants.INFO_LEVEL, "Setting image to " + dockerImage);
+			launchConfigObject.put("imageUuid", "docker:" + dockerImage);
+		}
 	}
 
 	public void setEnvironment(String environment) {

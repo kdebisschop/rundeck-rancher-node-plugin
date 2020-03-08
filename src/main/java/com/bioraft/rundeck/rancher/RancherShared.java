@@ -89,16 +89,22 @@ public class RancherShared {
         if (string == null || string.isEmpty()) {
             return "";
         }
-        String trimmed = string.replaceFirst("^\\s*\\{?", "{").replaceFirst("\\s*$", "");
-        return trimmed + (trimmed.endsWith("}") ? "" : "}");
+        String trimmed = string.trim();
+        if (trimmed.isEmpty()) {
+            return "";
+        }
+        return (trimmed.startsWith("{") ? "" : "{") + trimmed + (trimmed.endsWith("}") ? "" : "}");
     }
 
     public static String ensureStringIsJsonArray(String string) {
         if (string == null || string.isEmpty()) {
             return "";
         }
-        String trimmed = string.replaceFirst("^\\s*\\[?", "[").replaceFirst("\\s*$", "");
-        return trimmed + (trimmed.endsWith("]") ? "" : "]");
+        String trimmed = string.trim();
+        if (trimmed.isEmpty()) {
+            return "";
+        }
+        return (trimmed.startsWith("[") ? "" : "[") + trimmed + (trimmed.endsWith("]") ? "" : "]");
     }
 
     public static String apiPath(String environmentId, String target) {
@@ -146,10 +152,6 @@ public class RancherShared {
 
     public static String mountPoint(String mountSpec) {
         return mountSpec.replaceFirst("[^:]+:", "").replaceFirst(":.*", "");
-    }
-
-    public static boolean mapIfNotEmpty(Map<String, Object> cfg, String key) {
-        return cfg.containsKey(key) && cfg.get(key) != null && cfg.get(key) != "";
     }
 
     public enum ErrorCause implements FailureReason {

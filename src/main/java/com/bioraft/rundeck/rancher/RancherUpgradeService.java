@@ -43,6 +43,7 @@ import static com.bioraft.rundeck.rancher.RancherShared.*;
 import static com.dtolabs.rundeck.core.Constants.DEBUG_LEVEL;
 import static com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants.CODE_SYNTAX_MODE;
 import static com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants.DISPLAY_TYPE_KEY;
+import static org.apache.commons.lang.StringUtils.defaultString;
 
 /**
  * Workflow Node Step Plug-in to upgrade a service associated with a node.
@@ -155,37 +156,15 @@ public class RancherUpgradeService implements NodeStepPlugin {
 
 		RancherLaunchConfig rancherLaunchConfig = new RancherLaunchConfig(nodeName, launchConfigObject, logger);
 
-		if (mapIfNotEmpty(cfg,"dockerImage")) {
-			dockerImage = (String) cfg.get("dockerImage");
-		}
-		if (dockerImage != null && dockerImage.length() > 0) {
-			rancherLaunchConfig.setDockerImage(dockerImage);
-		}
+		dockerImage = (String) cfg.getOrDefault("dockerImage", defaultString(dockerImage));
+		environment = (String) cfg.getOrDefault("environment", defaultString(environment));
+		dataVolumes = (String) cfg.getOrDefault("dataVolumes", defaultString(dataVolumes));
+		labels = (String) cfg.getOrDefault("labels", defaultString(labels));
+		secrets = (String) cfg.getOrDefault("secrets", defaultString(secrets));
+		removeEnvironment = (String) cfg.getOrDefault("removeEnvironment", defaultString(removeEnvironment));
+		removeLabels = (String) cfg.getOrDefault("removeLabels", defaultString(removeLabels));
 
-		if (mapIfNotEmpty(cfg, "environment")) {
-			environment = (String) cfg.get("environment");
-		}
-
-		if (mapIfNotEmpty(cfg, "dataVolumes")) {
-			dataVolumes = (String) cfg.get("dataVolumes");
-		}
-
-		if (mapIfNotEmpty(cfg, "labels")) {
-			labels = (String) cfg.get("labels");
-		}
-
-		if (mapIfNotEmpty(cfg, "secrets")) {
-			secrets = (String) cfg.get("secrets");
-		}
-
-		if (mapIfNotEmpty(cfg, "removeEnvironment")) {
-			removeEnvironment = (String) cfg.get("removeEnvironment");
-		}
-
-		if (mapIfNotEmpty(cfg, "removeLabels")) {
-			removeLabels = (String) cfg.get("removeLabels");
-		}
-
+		rancherLaunchConfig.setDockerImage(dockerImage);
 		rancherLaunchConfig.setEnvironment(environment);
 		rancherLaunchConfig.setDataVolumes(dataVolumes);
 		rancherLaunchConfig.setLabels(labels);
