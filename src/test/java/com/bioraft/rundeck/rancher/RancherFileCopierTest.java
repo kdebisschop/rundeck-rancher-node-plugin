@@ -2,6 +2,7 @@ package com.bioraft.rundeck.rancher;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.common.NodeEntryImpl;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.storage.ResourceMeta;
@@ -15,6 +16,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.rundeck.storage.api.Resource;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -24,7 +26,7 @@ import java.util.stream.Stream;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class RancherFileCopierTest {
@@ -53,6 +55,9 @@ public class RancherFileCopierTest {
     @Mock
     ResourceMeta contents;
 
+    @Mock
+    NodeEntryImpl host;
+
     Map<String, String> map;
 
     Map<String, Object> cfg;
@@ -73,6 +78,9 @@ public class RancherFileCopierTest {
         when(executionContext.getExecutionLogger()).thenReturn(logger);
         when(executionContext.getFramework()).thenReturn(framework);
         when(framework.getProjectProperty(anyString(), anyString())).thenReturn("");
+        when(framework.createFrameworkNode()).thenReturn(host);
+        when(framework.getProperty(anyString())).thenReturn("/tmp/");
+        when(host.getOsFamily()).thenReturn("unix");
     }
 
     @Test
@@ -84,13 +92,23 @@ public class RancherFileCopierTest {
     }
 
     @Test
-    public void testCopyFile() throws FileCopierException {
+    public void testCopyFile() throws FileCopierException, IOException, InterruptedException {
         RancherFileCopier subject = new RancherFileCopier(listener);
         String destination = "/tmp/file.txt";
         File file = new File(
                 Objects.requireNonNull(getClass().getClassLoader().getResource("stack.json")).getFile()
         );
         subject.copyFile(executionContext, file, node, destination);
+        verify(listener, times(1)).putFile(anyString(), anyString(), anyString(), eq(file), anyString());
+    }
+
+    @Test(expected = FileCopierException.class)
+    public void copyScriptThrowListener() throws FileCopierException, IOException, InterruptedException {
+        doThrow(new IOException()).when(listener).putFile(anyString(), anyString(), anyString(), any(File.class), anyString());
+        RancherFileCopier subject = new RancherFileCopier(listener);
+        String destination = "/tmp/file.txt";
+        String file = "foo";
+        subject.copyScriptContent(executionContext, file, node, destination);
     }
 
     @Test(expected = FileCopierException.class)
@@ -114,5 +132,20 @@ public class RancherFileCopierTest {
         RancherFileCopier subject = new RancherFileCopier(listener);
         String destination = "/tmp/file.txt";
         subject.copyFile(executionContext, file, node, destination);
+
+    }
+
+    @Test(expected = FileCopierException.class)
+    public void throwListenerException() throws FileCopierException, IOException, InterruptedException {
+        File file = new File(
+            Objects.requireNonNull(getClass().getClassLoader().getResource("stack.json")).getFile()
+        );
+        doThrow(new IOException()).when(listener).putFile(anyString(), anyString(), anyString(), eq(file), anyString());
+        map.put(RancherShared.CONFIG_ACCESSKEY_PATH, null);
+        map.put(RancherShared.CONFIG_SECRETKEY_PATH, null);
+        RancherFileCopier subject = new RancherFileCopier(listener);
+        String destination = "/tmp/file.txt";
+        subject.copyFile(executionContext, file, node, destination);
+
     }
 }
