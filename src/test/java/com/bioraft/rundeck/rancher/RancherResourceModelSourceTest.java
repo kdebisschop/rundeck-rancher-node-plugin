@@ -114,7 +114,7 @@ public class RancherResourceModelSourceTest {
 
 		JsonNode jsonNode = resourceToJson("containers.json");
 		assert jsonNode != null;
-		assertEquals(1, jsonNode.path("data").size());
+		assertEquals(3, jsonNode.path("data").size());
 		when(client.get(anyString())).thenReturn(env(), jsonNode);
 
 		source = new RancherResourceModelSource(configuration, client);
@@ -124,13 +124,64 @@ public class RancherResourceModelSourceTest {
 		verify(client, times(1)).get(matches(".*/projects/1a10/containers$"));
 
 		assertEquals(1, nodeList.getNodes().size());
-		INodeEntry node = nodeList.iterator().next();
+		Iterator<INodeEntry> iterator = nodeList.iterator();
+		INodeEntry node = iterator.next();
 		assertEquals("myEnvironment_mysite-dev-frontend-1", node.getNodename());
 		assertEquals("1h70", node.getHostname());
 		assertEquals("root", node.getUsername());
 		Map<String, String> attributes = node.getAttributes();
 		assertEquals("abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef", attributes.get("externalId"));
 		assertEquals("running", attributes.get("state"));
+		assertFalse(iterator.hasNext());
+	}
+
+	@Test
+	public void processMultipleContainers() throws ResourceModelSourceException, IOException, ConfigurationException {
+		configuration.setProperty(CONFIG_ENVIRONMENT_IDS, "1a10");
+		configuration.setProperty(CONFIG_STACK_FILTER, "");
+		configuration.setProperty(CONFIG_NODE_TYPE_INCLUDE_SERVICE, "false");
+		configuration.setProperty(CONFIG_NODE_TYPE_INCLUDE_CONTAINER, "true");
+		configuration.setProperty(CONFIG_LIMIT_ONE_CONTAINER, "false");
+		configuration.setProperty(CONFIG_LABELS_INCLUDE_ATTRIBUTES, "com.example.(description|group)");
+		configuration.setProperty(CONFIG_LABELS_INCLUDE_TAGS, "com.example.(group|site)");
+
+		JsonNode jsonNode = resourceToJson("containers.json");
+		assert jsonNode != null;
+		assertEquals(3, jsonNode.path("data").size());
+		when(client.get(anyString())).thenReturn(env(), jsonNode);
+
+		source = new RancherResourceModelSource(configuration, client);
+		INodeSet nodeList = source.getNodes();
+
+		verify(client, times(1)).get(matches(".*/projects/1a10$"));
+		verify(client, times(1)).get(matches(".*/projects/1a10/containers$"));
+
+		assertEquals(2, nodeList.getNodes().size());
+	}
+
+	@Test
+	public void processStopppedContainers() throws ResourceModelSourceException, IOException, ConfigurationException {
+		configuration.setProperty(CONFIG_ENVIRONMENT_IDS, "1a10");
+		configuration.setProperty(CONFIG_STACK_FILTER, "");
+		configuration.setProperty(CONFIG_NODE_TYPE_INCLUDE_SERVICE, "false");
+		configuration.setProperty(CONFIG_NODE_TYPE_INCLUDE_CONTAINER, "true");
+		configuration.setProperty(CONFIG_LIMIT_ONE_CONTAINER, "false");
+		configuration.setProperty(CONFIG_HANDLE_STOPPED, "true");
+		configuration.setProperty(CONFIG_LABELS_INCLUDE_ATTRIBUTES, "com.example.(description|group)");
+		configuration.setProperty(CONFIG_LABELS_INCLUDE_TAGS, "com.example.(group|site)");
+
+		JsonNode jsonNode = resourceToJson("containers.json");
+		assert jsonNode != null;
+		assertEquals(3, jsonNode.path("data").size());
+		when(client.get(anyString())).thenReturn(env(), jsonNode);
+
+		source = new RancherResourceModelSource(configuration, client);
+		INodeSet nodeList = source.getNodes();
+
+		verify(client, times(1)).get(matches(".*/projects/1a10$"));
+		verify(client, times(1)).get(matches(".*/projects/1a10/containers$"));
+
+		assertEquals(3, nodeList.getNodes().size());
 	}
 
 	@Test
@@ -151,7 +202,6 @@ public class RancherResourceModelSourceTest {
 		verify(client, times(1)).get(matches(".*/projects/1a10$"));
 		verify(client, times(1)).get(matches(".*/projects/1a10/stacks$"));
 		verify(client, times(1)).get(matches(".*/projects/1a10/services$"));
-//		verify(client, times(2)).get(anyString());
 
 		assertEquals(1, nodeList.getNodes().size());
 		INodeEntry node = nodeList.iterator().next();
