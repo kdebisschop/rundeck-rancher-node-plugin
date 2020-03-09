@@ -28,7 +28,6 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 
 import static com.bioraft.rundeck.rancher.Constants.*;
-import static com.bioraft.rundeck.rancher.RancherShared.*;
 
 /**
  * RancherResourceModelSourceFactory establishes parameters for Rancher node

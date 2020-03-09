@@ -16,13 +16,9 @@
 
 package com.bioraft.rundeck.rancher;
 
-import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.storage.ResourceMeta;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -62,24 +58,6 @@ public class RancherShared {
 
     public static String apiPath(String environmentId, String target) {
         return "/projects/" + environmentId + target;
-    }
-
-    /**
-     * Get a (secret) value from password storage.
-     *
-     * @param context             The current plugin execution context.
-     * @param passwordStoragePath The path to look up in storage.
-     * @return The requested secret or password.
-     * @throws IOException When there is an IO Exception writing to stream.
-     */
-    public static String loadStoragePathData(final ExecutionContext context, final String passwordStoragePath) throws IOException {
-        if (null == passwordStoragePath) {
-            throw new IOException("Storage path is not defined.");
-        }
-        ResourceMeta contents = context.getStorageTree().getResource(passwordStoragePath).getContents();
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        contents.writeContent(byteArrayOutputStream);
-        return new String(byteArrayOutputStream.toByteArray());
     }
 
     /**

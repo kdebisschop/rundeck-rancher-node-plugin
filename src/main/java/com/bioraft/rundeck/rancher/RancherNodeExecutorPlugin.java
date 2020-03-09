@@ -16,7 +16,6 @@
 
 package com.bioraft.rundeck.rancher;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
@@ -31,13 +30,11 @@ import com.dtolabs.rundeck.core.execution.utils.ResolverUtil;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
-import com.dtolabs.rundeck.core.storage.ResourceMeta;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 
 import static com.dtolabs.rundeck.core.Constants.DEBUG_LEVEL;
 import static com.bioraft.rundeck.rancher.Constants.*;
-import static com.bioraft.rundeck.rancher.RancherShared.*;
 
 /**
  * RancherNodeExecutorPlugin is a {@link NodeExecutor} plugin implementation for
@@ -85,8 +82,9 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
         }
 
         try {
-            accessKey = this.loadStoragePathData(context, nodeAttributes.get(CONFIG_ACCESSKEY_PATH));
-            secretKey = this.loadStoragePathData(context, nodeAttributes.get(CONFIG_SECRETKEY_PATH));
+            Storage storage = new Storage(context);
+            accessKey = storage.loadStoragePathData(nodeAttributes.get(CONFIG_ACCESSKEY_PATH));
+            secretKey = storage.loadStoragePathData(nodeAttributes.get(CONFIG_SECRETKEY_PATH));
         } catch (IOException e) {
             return NodeExecutorResultImpl.createFailure(StepFailureReason.IOFailure, e.getMessage(), node);
         }
@@ -155,26 +153,5 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
         StringBuilder output = new StringBuilder();
         RancherWebSocketListener.getFile(url, accessKey, secretKey, output, file);
         return output.toString();
-    }
-
-    /**
-     * Get a (secret) value from password storage.
-     *
-     * @param context             The execution object that contains a reference to Storage.
-     * @param passwordStoragePath A path in Rundeck stage where value is stored.
-	 *
-     * @return The specified password.
-	 *
-     * @throws IOException When connection to Rundeck storage fails.
-     */
-    private String loadStoragePathData(final ExecutionContext context, final String passwordStoragePath)
-            throws IOException {
-        if (null == passwordStoragePath) {
-            return null;
-        }
-        ResourceMeta contents = context.getStorageTree().getResource(passwordStoragePath).getContents();
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        contents.writeContent(byteArrayOutputStream);
-        return new String(byteArrayOutputStream.toByteArray());
     }
 }

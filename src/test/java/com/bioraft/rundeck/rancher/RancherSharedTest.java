@@ -15,12 +15,10 @@
  */
 package com.bioraft.rundeck.rancher;
 
-import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
@@ -81,14 +79,6 @@ public class RancherSharedTest {
 
     private void testOneMount(String mountPoint, String local, String options) {
         assertEquals(mountPoint, mountPoint(local + ":" + mountPoint + options));
-    }
-
-    @Test(expected = IOException.class)
-    public void testLoadStorageException() throws IOException {
-        ExecutionContext ctx = null;
-        String path = null;
-        String test = RancherShared.loadStoragePathData(ctx, path);
-        assertNull(test);
     }
 
     private String wrapArray(String string) {

@@ -34,7 +34,6 @@ import java.util.Map;
 
 import static com.bioraft.rundeck.rancher.Constants.*;
 import static com.bioraft.rundeck.rancher.Errors.ErrorCause.*;
-import static com.bioraft.rundeck.rancher.RancherShared.loadStoragePathData;
 
 /**
  * Workflow Node Step Plug-in to manage a service associated with a node.
@@ -75,8 +74,9 @@ public class RancherManageService implements NodeStepPlugin {
 		String accessKey;
 		String secretKey;
 		try {
-			accessKey = loadStoragePathData(executionContext, attributes.get(CONFIG_ACCESSKEY_PATH));
-			secretKey = loadStoragePathData(executionContext, attributes.get(CONFIG_SECRETKEY_PATH));
+			Storage storage = new Storage(executionContext);
+			accessKey = storage.loadStoragePathData(attributes.get(CONFIG_ACCESSKEY_PATH));
+			secretKey = storage.loadStoragePathData(attributes.get(CONFIG_SECRETKEY_PATH));
 			client.setAccessKey(accessKey);
 			client.setSecretKey(secretKey);
 		} catch (IOException e) {

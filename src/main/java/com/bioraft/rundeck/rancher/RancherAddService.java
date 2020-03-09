@@ -129,12 +129,11 @@ public class RancherAddService implements StepPlugin {
         String spec = endpoint + apiPath(environmentId, "/services");
 
         try {
+            Storage storage = new Storage(context.getExecutionContext());
             String accessKeyPath = cfgFromRancherProjectOrFramework(framework, project, CONFIG_ACCESSKEY_PATH);
-            String accessKey = loadStoragePathData(context.getExecutionContext(), accessKeyPath);
-            client.setAccessKey(accessKey);
+            client.setAccessKey(storage.loadStoragePathData(accessKeyPath));
             String secretKeyPath = cfgFromRancherProjectOrFramework(framework, project, CONFIG_SECRETKEY_PATH);
-            String secretKey = loadStoragePathData(context.getExecutionContext(), secretKeyPath);
-            client.setSecretKey(secretKey);
+            client.setSecretKey(storage.loadStoragePathData(secretKeyPath));
         } catch (IOException e) {
             throw new StepException("Could not get secret storage path", e, IO_EXCEPTION);
         }
