@@ -459,7 +459,7 @@ public class RancherUpgradeServiceTest {
 
 		Response response0 = response(json1.toPrettyString());
 
-		json1.remove(LINKS);
+		json1.remove(NODE_ATT_LINKS);
 		Response response1 = response(json1.toPrettyString());
 
 		when(call.execute()).thenReturn(response0, response1);
