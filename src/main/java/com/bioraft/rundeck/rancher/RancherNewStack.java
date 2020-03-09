@@ -30,10 +30,9 @@ import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.util.Map;
 
-import static com.bioraft.rundeck.rancher.Constants.OPT_ENV_IDS;
-import static com.bioraft.rundeck.rancher.Constants.OPT_STACK_NAME;
+import static com.bioraft.rundeck.rancher.Constants.*;
+import static com.bioraft.rundeck.rancher.Errors.ErrorCause.*;
 import static com.bioraft.rundeck.rancher.RancherShared.*;
-import static com.bioraft.rundeck.rancher.RancherShared.ErrorCause.*;
 import static com.dtolabs.rundeck.core.Constants.ERR_LEVEL;
 import static com.dtolabs.rundeck.core.Constants.INFO_LEVEL;
 import static org.apache.commons.lang.StringUtils.defaultString;
@@ -49,7 +48,7 @@ public class RancherNewStack implements StepPlugin {
     @PluginProperty(name = CONFIG_ENVIRONMENT_IDS, title = "Environment ID", description = "The ID of the environment to create the stack in", required = true)
     String environmentId;
 
-    HttpClient client;
+    final HttpClient client;
 
     public RancherNewStack () {
         client = new HttpClient();

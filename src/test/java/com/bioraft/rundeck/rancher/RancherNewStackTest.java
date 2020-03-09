@@ -24,11 +24,8 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.IOException;
 
-import static com.bioraft.rundeck.rancher.Constants.OPT_ENV_IDS;
-import static com.bioraft.rundeck.rancher.Constants.OPT_STACK_NAME;
-import static com.bioraft.rundeck.rancher.RancherShared.*;
+import static com.bioraft.rundeck.rancher.Constants.*;
 import static org.junit.Assert.assertNotNull;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
 
 /**

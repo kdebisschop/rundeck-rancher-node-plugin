@@ -35,7 +35,6 @@ import java.util.Map;
 import static com.bioraft.rundeck.rancher.Constants.*;
 import static com.bioraft.rundeck.rancher.RancherShared.*;
 import static org.junit.Assert.*;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
 
 /**
@@ -49,12 +48,12 @@ public class RancherAddServiceTest extends PluginStepTest {
 
 	RancherAddService upgrade;
 
-	String url = projectEndpoint + "/projects/";
-	String envIds = "1a10";
-	String imageUuid = "repo/image:tag";
-	String serviceName = "testService";
-	String stackId = "1st99";
-	String stackName = "testStack";
+	final String url = projectEndpoint + "/projects/";
+	final String envIds = "1a10";
+	final String imageUuid = "repo/image:tag";
+	final String serviceName = "testService";
+	final String stackId = "1st99";
+	final String stackName = "testStack";
 	Map<String, Object> postMap;
 
 	@Mock

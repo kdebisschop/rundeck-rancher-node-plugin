@@ -33,9 +33,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 
+import static com.bioraft.rundeck.rancher.Constants.*;
 import static com.bioraft.rundeck.rancher.TestHelper.resourceToJson;
 import static org.junit.Assert.*;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 
 /**
@@ -62,20 +62,20 @@ public class RancherResourceModelSourceTest {
 	public void setUp() {
 		configuration = new Properties();
 		configuration.setProperty("project", "MyProject");
-		configuration.setProperty(RancherShared.RANCHER_CONFIG_ENDPOINT, "https://example.com/v2");
-		configuration.setProperty(RancherShared.CONFIG_ENVIRONMENT_IDS, "1a1");
-		configuration.setProperty(RancherShared.CONFIG_ACCESSKEY, "accessKey");
-		configuration.setProperty(RancherShared.CONFIG_SECRETKEY, "secretKey");
-		configuration.setProperty(RancherShared.CONFIG_ACCESSKEY_PATH, "keys/rancher/access.key");
-		configuration.setProperty(RancherShared.CONFIG_SECRETKEY_PATH, "keys/rancher/secret.key");
-		configuration.setProperty(RancherShared.CONFIG_STACK_FILTER, "mysite-dev");
-		configuration.setProperty(RancherShared.CONFIG_LIMIT_ONE_CONTAINER, "true");
-		configuration.setProperty(RancherShared.CONFIG_HANDLE_STOPPED, "Exclude");
-		configuration.setProperty(RancherShared.CONFIG_HANDLE_SYSTEM, "Exclude");
-		configuration.setProperty(RancherShared.CONFIG_HANDLE_GLOBAL, "Exclude");
-		configuration.setProperty(RancherShared.CONFIG_TAGS, "rancher");
-		configuration.setProperty(RancherShared.CONFIG_LABELS_INCLUDE_ATTRIBUTES, "");
-		configuration.setProperty(RancherShared.CONFIG_LABELS_INCLUDE_TAGS, "");
+		configuration.setProperty(RANCHER_CONFIG_ENDPOINT, "https://example.com/v2");
+		configuration.setProperty(CONFIG_ENVIRONMENT_IDS, "1a1");
+		configuration.setProperty(CONFIG_ACCESSKEY, "accessKey");
+		configuration.setProperty(CONFIG_SECRETKEY, "secretKey");
+		configuration.setProperty(CONFIG_ACCESSKEY_PATH, "keys/rancher/access.key");
+		configuration.setProperty(CONFIG_SECRETKEY_PATH, "keys/rancher/secret.key");
+		configuration.setProperty(CONFIG_STACK_FILTER, "mysite-dev");
+		configuration.setProperty(CONFIG_LIMIT_ONE_CONTAINER, "true");
+		configuration.setProperty(CONFIG_HANDLE_STOPPED, "Exclude");
+		configuration.setProperty(CONFIG_HANDLE_SYSTEM, "Exclude");
+		configuration.setProperty(CONFIG_HANDLE_GLOBAL, "Exclude");
+		configuration.setProperty(CONFIG_TAGS, "rancher");
+		configuration.setProperty(CONFIG_LABELS_INCLUDE_ATTRIBUTES, "");
+		configuration.setProperty(CONFIG_LABELS_INCLUDE_TAGS, "");
 	}
 
 	@Test
@@ -87,7 +87,7 @@ public class RancherResourceModelSourceTest {
 	@Test
 	public void processOneNode() throws ResourceModelSourceException, IOException, ConfigurationException {
 		when(client.get(anyString())).thenReturn(env(), item("1"));
-		configuration.setProperty(RancherShared.CONFIG_STACK_FILTER, "");
+		configuration.setProperty(CONFIG_STACK_FILTER, "");
 		source = new RancherResourceModelSource(configuration, client);
 		INodeSet nodeList = source.getNodes();
 
@@ -105,12 +105,12 @@ public class RancherResourceModelSourceTest {
 
 	@Test
 	public void processContainers() throws ResourceModelSourceException, IOException, ConfigurationException {
-		configuration.setProperty(RancherShared.CONFIG_ENVIRONMENT_IDS, "1a10");
-		configuration.setProperty(RancherShared.CONFIG_STACK_FILTER, "");
-		configuration.setProperty(RancherShared.CONFIG_NODE_TYPE_INCLUDE_SERVICE, "false");
-		configuration.setProperty(RancherShared.CONFIG_NODE_TYPE_INCLUDE_CONTAINER, "true");
-		configuration.setProperty(RancherShared.CONFIG_LABELS_INCLUDE_ATTRIBUTES, "com.example.(description|group)");
-		configuration.setProperty(RancherShared.CONFIG_LABELS_INCLUDE_TAGS, "com.example.(group|site)");
+		configuration.setProperty(CONFIG_ENVIRONMENT_IDS, "1a10");
+		configuration.setProperty(CONFIG_STACK_FILTER, "");
+		configuration.setProperty(CONFIG_NODE_TYPE_INCLUDE_SERVICE, "false");
+		configuration.setProperty(CONFIG_NODE_TYPE_INCLUDE_CONTAINER, "true");
+		configuration.setProperty(CONFIG_LABELS_INCLUDE_ATTRIBUTES, "com.example.(description|group)");
+		configuration.setProperty(CONFIG_LABELS_INCLUDE_TAGS, "com.example.(group|site)");
 
 		JsonNode jsonNode = resourceToJson("containers.json");
 		assert jsonNode != null;
@@ -135,10 +135,10 @@ public class RancherResourceModelSourceTest {
 
 	@Test
 	public void processServices() throws ResourceModelSourceException, IOException, ConfigurationException {
-		configuration.setProperty(RancherShared.CONFIG_ENVIRONMENT_IDS, "1a10");
-		configuration.setProperty(RancherShared.CONFIG_STACK_FILTER, "");
-		configuration.setProperty(RancherShared.CONFIG_NODE_TYPE_INCLUDE_SERVICE, "true");
-		configuration.setProperty(RancherShared.CONFIG_NODE_TYPE_INCLUDE_CONTAINER, "false");
+		configuration.setProperty(CONFIG_ENVIRONMENT_IDS, "1a10");
+		configuration.setProperty(CONFIG_STACK_FILTER, "");
+		configuration.setProperty(CONFIG_NODE_TYPE_INCLUDE_SERVICE, "true");
+		configuration.setProperty(CONFIG_NODE_TYPE_INCLUDE_CONTAINER, "false");
 
 		JsonNode jsonNode = resourceToJson("services.json");
 		assert jsonNode != null;
@@ -185,7 +185,7 @@ public class RancherResourceModelSourceTest {
 	@Test
 	public void processTwoNodes() throws ResourceModelSourceException, IOException, ConfigurationException {
 		when(client.get(anyString())).thenReturn(env(), twoItems());
-		configuration.setProperty(RancherShared.CONFIG_HANDLE_SYSTEM, "Include");
+		configuration.setProperty(CONFIG_HANDLE_SYSTEM, "Include");
 
 		source = new RancherResourceModelSource(configuration, client);
 		INodeSet nodeList = source.getNodes();
@@ -216,7 +216,7 @@ public class RancherResourceModelSourceTest {
 
 	@Test
 	public void processContinued() throws ResourceModelSourceException, IOException, ConfigurationException {
-		String url = configuration.getProperty(RancherShared.RANCHER_CONFIG_ENDPOINT);
+		String url = configuration.getProperty(RANCHER_CONFIG_ENDPOINT);
 		when(client.get(anyString())).thenReturn(env(), continuedItems(url), item("3"));
 
 		source = new RancherResourceModelSource(configuration, client);
@@ -272,17 +272,17 @@ public class RancherResourceModelSourceTest {
 	}
 
 	private String itemText(String item) {
-		String accessKeyPath = RancherShared.CONFIG_ACCESSKEY_PATH;
-		String secretKeyPath = RancherShared.CONFIG_SECRETKEY_PATH;
+		String accessKeyPath = CONFIG_ACCESSKEY_PATH;
+		String secretKeyPath = CONFIG_SECRETKEY_PATH;
 		return "{\"state\": \"" + serviceState + "\"" + //
 				",\"name\": \"name" + item + "\"" + //
 				",\"hostId\": \"hostId" + item + "\"" + //
 				",\"id\": \"id" + item + "\"" + //
 				",\"externalId\": \"externalId" + item + "\"" + //
-				",\"file-copier\": \"" + RancherShared.RANCHER_SERVICE_PROVIDER + "\"" + //
-				",\"node-executor\": \"" + RancherShared.RANCHER_SERVICE_PROVIDER + "\"" + //
+				",\"file-copier\": \"" + RANCHER_SERVICE_PROVIDER + "\"" + //
+				",\"node-executor\": \"" + RANCHER_SERVICE_PROVIDER + "\"" + //
 				",\"type\": \"" + nodeType + "\"" + //
-				",\"account\": \"" + configuration.getProperty(RancherShared.CONFIG_ENVIRONMENT_IDS) + "\"" + //
+				",\"account\": \"" + configuration.getProperty(CONFIG_ENVIRONMENT_IDS) + "\"" + //
 				",\"environment\": \"" + environment + "\"" + //
 				",\"image\": \"image" + item + "\"" + //
 				",\"" + accessKeyPath + "\": \"" + accessKeyPath + item + "\"" + //
@@ -291,17 +291,17 @@ public class RancherResourceModelSourceTest {
 	}
 
 	private String itemPlusText() {
-		String accessKeyPath = RancherShared.CONFIG_ACCESSKEY_PATH;
-		String secretKeyPath = RancherShared.CONFIG_SECRETKEY_PATH;
+		String accessKeyPath = CONFIG_ACCESSKEY_PATH;
+		String secretKeyPath = CONFIG_SECRETKEY_PATH;
 		return "{\"state\": \"" + serviceState + "\"" + //
 				",\"name\": \"name" + "1" + "\"" + //
 				",\"hostId\": \"hostId" + "1" + "\"" + //
 				",\"id\": \"id" + "1" + "\"" + //
 				",\"externalId\": \"externalId" + "1" + "\"" + //
-				",\"file-copier\": \"" + RancherShared.RANCHER_SERVICE_PROVIDER + "\"" + //
-				",\"node-executor\": \"" + RancherShared.RANCHER_SERVICE_PROVIDER + "\"" + //
+				",\"file-copier\": \"" + RANCHER_SERVICE_PROVIDER + "\"" + //
+				",\"node-executor\": \"" + RANCHER_SERVICE_PROVIDER + "\"" + //
 				",\"type\": \"" + nodeType + "\"" + //
-				",\"account\": \"" + configuration.getProperty(RancherShared.CONFIG_ENVIRONMENT_IDS) + "\"" + //
+				",\"account\": \"" + configuration.getProperty(CONFIG_ENVIRONMENT_IDS) + "\"" + //
 				",\"environment\": \"" + environment + "\"" + //
 				",\"image\": \"image" + "1" + "\"" + //
 				",\"labels\": {\n" +

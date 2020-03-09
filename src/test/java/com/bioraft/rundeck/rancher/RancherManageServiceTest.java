@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.bioraft.rundeck.rancher.Constants.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.*;
@@ -71,8 +72,8 @@ public class RancherManageServiceTest {
                 .of(new String[][]{{"services", "https://rancher.example.com/v2-beta/"},
                         {"self", "https://rancher.example.com/v2-beta/"},
                         {"type", "service"},
-                        {RancherShared.CONFIG_ACCESSKEY_PATH, "keys/rancher/access.key"},
-                        {RancherShared.CONFIG_SECRETKEY_PATH, "keys/rancher/secret.key"},})
+                        {CONFIG_ACCESSKEY_PATH, "keys/rancher/access.key"},
+                        {CONFIG_SECRETKEY_PATH, "keys/rancher/secret.key"},})
                 .collect(Collectors.toMap(data -> data[0], data -> data[1]));
         Mockito.when(node.getAttributes()).thenReturn(map);
         Mockito.when(ctx.getLogger()).thenReturn(logger);
@@ -159,7 +160,7 @@ public class RancherManageServiceTest {
     @Test(expected = NodeStepException.class)
     public void testNoKey() throws IOException, NodeStepException {
         cfg.put("action", "restart");
-        map.remove(RancherShared.CONFIG_ACCESSKEY_PATH);
+        map.remove(CONFIG_ACCESSKEY_PATH);
         ObjectMapper mapper = new ObjectMapper();
 
         String text = readFromInputStream(getResourceStream("service.json"));

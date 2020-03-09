@@ -34,8 +34,8 @@ import java.util.List;
 import java.util.Map;
 
 import static com.bioraft.rundeck.rancher.Constants.*;
+import static com.bioraft.rundeck.rancher.Errors.ErrorCause.*;
 import static com.bioraft.rundeck.rancher.RancherShared.*;
-import static com.bioraft.rundeck.rancher.RancherShared.ErrorCause.*;
 import static com.dtolabs.rundeck.core.Constants.ERR_LEVEL;
 import static com.dtolabs.rundeck.core.Constants.INFO_LEVEL;
 import static com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory.FRAMEWORK_PREFIX;
@@ -79,9 +79,7 @@ public class RancherAddService implements StepPlugin {
     @PluginProperty(title = "Secret IDs", description = "List of secrets IDs, space or comma separated")
     private String secrets;
 
-    Map<String, Object> configuration;
-
-    HttpClient client;
+    final HttpClient client;
 
     public RancherAddService () {
         this.client = new HttpClient();
@@ -94,7 +92,6 @@ public class RancherAddService implements StepPlugin {
     @Override
     public void executeStep(final PluginStepContext context, final Map<String, Object> configuration) throws
             StepException {
-        this.configuration = configuration;
 
         stackName = (String) configuration.getOrDefault(OPT_STACK_NAME, defaultString(stackName));
         if (stackName.isEmpty()) {
@@ -139,7 +136,7 @@ public class RancherAddService implements StepPlugin {
             String secretKey = loadStoragePathData(context.getExecutionContext(), secretKeyPath);
             client.setSecretKey(secretKey);
         } catch (IOException e) {
-            throw new StepException("Could not get secret storage path", e, ErrorCause.IO_EXCEPTION);
+            throw new StepException("Could not get secret storage path", e, IO_EXCEPTION);
         }
 
         ImmutableMap.Builder<String, Object> mapBuilder = ImmutableMap.builder();
@@ -170,7 +167,7 @@ public class RancherAddService implements StepPlugin {
             stackId = stackId(stackName, endpoint, logger);
         }
         if (stackId == null) {
-            throw new StepException("Stack does not exist: " + stackName, ErrorCause.INVALID_CONFIGURATION);
+            throw new StepException("Stack does not exist: " + stackName, INVALID_CONFIGURATION);
         }
 
         try {
@@ -182,7 +179,7 @@ public class RancherAddService implements StepPlugin {
             logger.log(INFO_LEVEL, "New service ID:" + serviceResult.path("id").asText());
             logger.log(INFO_LEVEL, "New service name:" + serviceResult.path("name").asText());
         } catch (IOException e) {
-            throw new StepException("Failed posting to " + spec, e, ErrorCause.INVALID_CONFIGURATION);
+            throw new StepException("Failed posting to " + spec, e, INVALID_CONFIGURATION);
         }
     }
 
@@ -207,11 +204,11 @@ public class RancherAddService implements StepPlugin {
                 return check.path("data").get(0).path("id").asText();
             } else {
                 logger.log(ERR_LEVEL, "FATAL: no stack `" + stackName + "` was found.");
-                throw new StepException("Stack does not exist", ErrorCause.INVALID_CONFIGURATION);
+                throw new StepException("Stack does not exist", INVALID_CONFIGURATION);
             }
         } catch (IOException ex) {
             logger.log(ERR_LEVEL, "FATAL: no stack `" + stackName + "` was found.");
-            throw new StepException("Stack does not exist", ErrorCause.INVALID_CONFIGURATION);
+            throw new StepException("Stack does not exist", INVALID_CONFIGURATION);
         }
     }
 
@@ -225,7 +222,7 @@ public class RancherAddService implements StepPlugin {
             JsonNode map = objectMapper.readTree(data);
             builder.put(name, map);
         } catch (JsonProcessingException e) {
-            throw new StepException("Could not parse JSON for " + name + "\n" + data, e, ErrorCause.INVALID_CONFIGURATION);
+            throw new StepException("Could not parse JSON for " + name + "\n" + data, e, INVALID_CONFIGURATION);
         }
     }
 

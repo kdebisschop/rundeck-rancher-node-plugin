@@ -17,7 +17,6 @@
 package com.bioraft.rundeck.rancher;
 
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.storage.ResourceMeta;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -26,9 +25,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-
-import static com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory.FRAMEWORK_PREFIX;
-import static com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory.PROJECT_PREFIX;
 
 /**
  * Shared code and constants for Rancher node.
@@ -41,49 +37,6 @@ public class RancherShared {
     private RancherShared() {
         throw new IllegalStateException("Utility class");
     }
-
-    public static final String RANCHER_SERVICE_PROVIDER = "rancher";
-    public static final String RANCHER_SERVICE_CONTROLLER = "rancher-service-controller";
-
-    // Resource Model
-    public static final String RANCHER_CONFIG_ENDPOINT = "rancher-api-endpoint";
-	public static final String CONFIG_ACCESSKEY_PATH = "accessKey-storage-path";
-	public static final String CONFIG_SECRETKEY_PATH = "secretKey-storage-path";
-    public static final String CONFIG_ENVIRONMENT_IDS = "environment-ids";
-    public static final String CONFIG_ACCESSKEY = "access-key";
-    public static final String CONFIG_SECRETKEY = "secret-key";
-    public static final String CONFIG_STACK_FILTER = "stack-filter";
-    public static final String CONFIG_NODE_TYPE_INCLUDE_SERVICE = "node-type-include-service";
-    public static final String CONFIG_NODE_TYPE_INCLUDE_CONTAINER = "node-type-include-container";
-    public static final String CONFIG_LIMIT_ONE_CONTAINER = "limit-to-one";
-    public static final String CONFIG_HANDLE_STOPPED = "exclude-include-restrict-stopped";
-    public static final String CONFIG_HANDLE_SYSTEM = "io-rancher-container-system";
-    public static final String CONFIG_HANDLE_GLOBAL = "io-rancher-scheduler-global";
-    public static final String CONFIG_TAGS = "tags";
-    public static final String CONFIG_LABELS_INCLUDE_ATTRIBUTES = "labels-copied-to-attribs";
-    public static final String CONFIG_LABELS_INCLUDE_TAGS = "labels-copied-to-tags";
-
-    // Node Executor
-    public static final String RANCHER_CONFIG_EXECUTOR_TIMEOUT = "rancher-node-executor-timeout";
-	public static final String PROJ_RANCHER_EXECUTOR_TIMEOUT = PROJECT_PREFIX + RANCHER_CONFIG_EXECUTOR_TIMEOUT;
-	public static final String FMWK_RANCHER_EXECUTOR_TIMEOUT = FRAMEWORK_PREFIX + RANCHER_CONFIG_EXECUTOR_TIMEOUT;
-
-	// File Copier
-    public static final String RANCHER_CONFIG_CLI_PATH = "rancher-cli-path";
-	public static final String PROJ_RANCHER_CLI_PATH = PROJECT_PREFIX + RANCHER_CONFIG_CLI_PATH;
-	public static final String FMWK_RANCHER_CLI_PATH = FRAMEWORK_PREFIX + RANCHER_CONFIG_CLI_PATH;
-
-    // Step Plugins
-    public static final String PROJ_RANCHER_ENDPOINT = PROJECT_PREFIX + RANCHER_CONFIG_ENDPOINT;
-    public static final String FMWK_RANCHER_ENDPOINT = FRAMEWORK_PREFIX + RANCHER_CONFIG_ENDPOINT;
-
-    public static final String PROJ_RANCHER_ACCESSKEY_PATH = PROJECT_PREFIX + RANCHER_SERVICE_PROVIDER + "-" + CONFIG_ACCESSKEY_PATH;
-    public static final String FMWK_RANCHER_ACCESSKEY_PATH = FRAMEWORK_PREFIX + RANCHER_SERVICE_PROVIDER + "-" + CONFIG_ACCESSKEY_PATH;
-
-    public static final String PROJ_RANCHER_SECRETKEY_PATH = PROJECT_PREFIX + RANCHER_SERVICE_PROVIDER + "-" + CONFIG_SECRETKEY_PATH;
-    public static final String FMWK_RANCHER_SECRETKEY_PATH = FRAMEWORK_PREFIX + RANCHER_SERVICE_PROVIDER + "-" + CONFIG_SECRETKEY_PATH;
-
-    public static final String PROJ_RANCHER_ENVIRONMENT_IDS = PROJECT_PREFIX + RANCHER_SERVICE_PROVIDER + "-" + CONFIG_ENVIRONMENT_IDS;
 
     public static String ensureStringIsJsonObject(String string) {
         if (string == null) {
@@ -152,26 +105,5 @@ public class RancherShared {
 
     public static String mountPoint(String mountSpec) {
         return mountSpec.replaceFirst("[^:]+:", "").replaceFirst(":.*", "");
-    }
-
-    public enum ErrorCause implements FailureReason {
-        UNSUPPORTED_OPERATING_SYSTEM,
-        UNSUPPORTED_NODE_TYPE,
-        INVALID_CONFIGURATION,
-        INVALID_JSON,
-        IO_EXCEPTION,
-        ACTION_FAILED,
-        ACTION_NOT_SUPPORTED,
-        NO_SERVICE_OBJECT,
-        SERVICE_NOT_RUNNING,
-        MISSING_ACTION_URL,
-        MISSING_UPGRADE_URL,
-        NO_UPGRADE_DATA,
-        UPGRADE_FAILURE,
-        INTERRUPTED,
-        INVALID_STACK_NAME,
-        INVALID_ENVIRONMENT_NAME,
-        AUTHENTICATION_FAILURE,
-        CONNECTION_FAILURE
     }
 }

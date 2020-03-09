@@ -30,6 +30,7 @@ import java.util.Map;
 
 import static com.bioraft.rundeck.rancher.Constants.OPT_DATA_VOLUMES;
 import static com.bioraft.rundeck.rancher.Constants.OPT_SECRETS;
+import static com.bioraft.rundeck.rancher.Errors.ErrorCause.*;
 import static com.bioraft.rundeck.rancher.RancherShared.*;
 
 /**
@@ -54,11 +55,11 @@ public class RancherLaunchConfig {
 
 	private Map<String, String> secretMap;
 
-	private String nodeName;
+	private final String nodeName;
 
-	private PluginLogger logger;
+	private final PluginLogger logger;
 
-	ObjectNode launchConfigObject;
+	final ObjectNode launchConfigObject;
 
 	public RancherLaunchConfig(String nodeName, ObjectNode launchConfigObject, PluginLogger logger) {
 		this.nodeName = nodeName;
@@ -148,7 +149,7 @@ public class RancherLaunchConfig {
 				logger.log(Constants.INFO_LEVEL, "Setting " + field + ":" + key + " to " + value);
 			}
 		} catch (JsonProcessingException e) {
-			throw new NodeStepException("Invalid " + field + " JSON data", ErrorCause.INVALID_JSON, this.nodeName);
+			throw new NodeStepException("Invalid " + field + " JSON data", INVALID_JSON, this.nodeName);
 		}
 		if (originalNodeIsEmpty) {
 			launchConfigObject.replace(field, objectNode);
@@ -180,7 +181,7 @@ public class RancherLaunchConfig {
 				objectNode.remove(entry);
 			}
 		} catch (JsonProcessingException e) {
-			throw new NodeStepException("Invalid " + field + " array", ErrorCause.INVALID_JSON, this.nodeName);
+			throw new NodeStepException("Invalid " + field + " array", INVALID_JSON, this.nodeName);
 		}
 	}
 
@@ -249,7 +250,7 @@ public class RancherLaunchConfig {
 				mounts.forEachRemaining(spec -> hashMap.put(mountPoint(spec.asText()), spec.asText()));
 
 			} catch (JsonProcessingException e) {
-				throw new NodeStepException("Could not parse JSON for " + OPT_DATA_VOLUMES + "\n" + newData, e, ErrorCause.INVALID_CONFIGURATION, nodeName);
+				throw new NodeStepException("Could not parse JSON for " + OPT_DATA_VOLUMES + "\n" + newData, e, INVALID_CONFIGURATION, nodeName);
 			}
 
 			ArrayNode updatedArray = launchConfigObject.putArray(OPT_DATA_VOLUMES);

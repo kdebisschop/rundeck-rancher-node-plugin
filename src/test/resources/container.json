@@ -164,7 +164,7 @@
             "permission": "rw",
             "instanceId": "1i234",
             "volumeId": "1v356188"
-        },
+        }
     ],
     "nativeContainer": false,
     "netAlias": null,

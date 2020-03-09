@@ -17,15 +17,14 @@ import org.rundeck.storage.api.Resource;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.bioraft.rundeck.rancher.Constants.*;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -60,16 +59,14 @@ public class RancherFileCopierTest {
 
     Map<String, String> map;
 
-    Map<String, Object> cfg;
     @Before
     public void setUp() {
-        cfg = new HashMap<>();
         map = Stream
                 .of(new String[][]{{"services", "https://rancher.example.com/v2-beta/"},
                         {"self", "https://rancher.example.com/v2-beta/"},
                         {"type", "container"},
-                        {RancherShared.CONFIG_ACCESSKEY_PATH, "keys/rancher/access.key"},
-                        {RancherShared.CONFIG_SECRETKEY_PATH, "keys/rancher/secret.key"}})
+                        {CONFIG_ACCESSKEY_PATH, "keys/rancher/access.key"},
+                        {CONFIG_SECRETKEY_PATH, "keys/rancher/secret.key"}})
                 .collect(Collectors.toMap(data -> data[0], data -> data[1]));
         when(node.getAttributes()).thenReturn(map);
         when(treeResource.getContents()).thenReturn(contents);
@@ -127,8 +124,8 @@ public class RancherFileCopierTest {
         File file = new File(
                 Objects.requireNonNull(getClass().getClassLoader().getResource("stack.json")).getFile()
         );
-        map.put(RancherShared.CONFIG_ACCESSKEY_PATH, null);
-        map.put(RancherShared.CONFIG_SECRETKEY_PATH, null);
+        map.put(CONFIG_ACCESSKEY_PATH, null);
+        map.put(CONFIG_SECRETKEY_PATH, null);
         RancherFileCopier subject = new RancherFileCopier(listener);
         String destination = "/tmp/file.txt";
         subject.copyFile(executionContext, file, node, destination);
@@ -141,8 +138,8 @@ public class RancherFileCopierTest {
             Objects.requireNonNull(getClass().getClassLoader().getResource("stack.json")).getFile()
         );
         doThrow(new IOException()).when(listener).putFile(anyString(), anyString(), anyString(), eq(file), anyString());
-        map.put(RancherShared.CONFIG_ACCESSKEY_PATH, null);
-        map.put(RancherShared.CONFIG_SECRETKEY_PATH, null);
+        map.put(CONFIG_ACCESSKEY_PATH, null);
+        map.put(CONFIG_SECRETKEY_PATH, null);
         RancherFileCopier subject = new RancherFileCopier(listener);
         String destination = "/tmp/file.txt";
         subject.copyFile(executionContext, file, node, destination);

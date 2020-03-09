@@ -16,7 +16,6 @@
 package com.bioraft.rundeck.rancher;
 
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -27,8 +26,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 
 import static com.bioraft.rundeck.rancher.RancherShared.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Tests for Nexus3OptionProvider.
@@ -89,7 +87,8 @@ public class RancherSharedTest {
     public void testLoadStorageException() throws IOException {
         ExecutionContext ctx = null;
         String path = null;
-        RancherShared.loadStoragePathData(ctx, path);
+        String test = RancherShared.loadStoragePathData(ctx, path);
+        assertNull(test);
     }
 
     private String wrapArray(String string) {
