@@ -35,8 +35,9 @@ import com.dtolabs.rundeck.core.storage.ResourceMeta;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 
-import static com.bioraft.rundeck.rancher.RancherShared.*;
 import static com.dtolabs.rundeck.core.Constants.DEBUG_LEVEL;
+import static com.bioraft.rundeck.rancher.Constants.*;
+import static com.bioraft.rundeck.rancher.RancherShared.*;
 
 /**
  * RancherNodeExecutorPlugin is a {@link NodeExecutor} plugin implementation for
@@ -133,7 +134,7 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
      *
      * @param command    The command array to be executed for the job.
      * @param jobContext The job context map.
-     * @return A unique filename for the PID and stsus of this step.
+     * @return A unique filename for the PID and status of this step.
      */
     private String baseName(String[] command, Map<String, String> jobContext) {
         long time = System.currentTimeMillis();

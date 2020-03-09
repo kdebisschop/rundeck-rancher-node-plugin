@@ -244,6 +244,954 @@
                     "healthState": "healthy"
                 }
             ]
+        },
+        {
+            "id": "1i456",
+            "type": "container",
+            "links": {
+                "self": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i456",
+                "account": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i456/account",
+                "credentials": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i456/credentials",
+                "healthcheckInstanceHostMaps": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i456/healthcheckinstancehostmaps",
+                "hosts": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i456/hosts",
+                "instanceLabels": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i456/instancelabels",
+                "instanceLinks": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i456/instancelinks",
+                "instances": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i456/instances",
+                "mounts": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i456/mounts",
+                "ports": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i456/ports",
+                "registryCredential": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i456/registrycredential",
+                "serviceEvents": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i456/serviceevents",
+                "serviceExposeMaps": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i456/serviceexposemaps",
+                "serviceLogs": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i456/servicelogs",
+                "services": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i456/services",
+                "targetInstanceLinks": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i456/targetinstancelinks",
+                "volumes": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i456/volumes",
+                "stats": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i456/stats",
+                "containerStats": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i456/containerstats"
+            },
+            "actions": {
+                "restart": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i456/?action=restart",
+                "update": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i456/?action=update",
+                "stop": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i456/?action=stop",
+                "migrate": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i456/?action=migrate",
+                "logs": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i456/?action=logs",
+                "execute": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i456/?action=execute",
+                "proxy": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i456/?action=proxy"
+            },
+            "baseType": "instance",
+            "name": "mysite-dev-frontend-2",
+            "state": "running",
+            "accountId": "1a10",
+            "blkioDeviceOptions": null,
+            "blkioWeight": null,
+            "build": null,
+            "capAdd": null,
+            "capDrop": null,
+            "cgroupParent": null,
+            "command": null,
+            "cpuCount": null,
+            "cpuPercent": null,
+            "cpuPeriod": null,
+            "cpuQuota": null,
+            "cpuRealtimePeriod": null,
+            "cpuRealtimeRuntime": null,
+            "cpuSet": null,
+            "cpuSetMems": null,
+            "cpuShares": null,
+            "createIndex": 62,
+            "created": "2019-12-28T05:24:44Z",
+            "createdTS": 1577510684000,
+            "dataVolumeMounts": {
+                "/run/secrets": "1v356188"
+            },
+            "dataVolumes": [
+                "/clientdata/mysite_dev/files:/var/www/html/sites/mysite/files",
+                "/clientdata/shared:/var/shared:ro",
+                "abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef:/run/secrets"
+            ],
+            "dataVolumesFrom": null,
+            "deploymentUnitUuid": "00000000-0000-0000-0000-000000000000",
+            "description": null,
+            "devices": null,
+            "diskQuota": null,
+            "dns": [
+                "169.254.169.250"
+            ],
+            "dnsOpt": null,
+            "dnsSearch": [
+                "mysite-dev.rancher.internal",
+                "frontend.mysite-dev.rancher.internal",
+                "rancher.internal"
+            ],
+            "domainName": null,
+            "entryPoint": null,
+            "environment": {
+                "BASE_DOMAIN": "example.com",
+                "DOMAIN": "mysite.development.example.com",
+                "ENVIRONMENT": "development",
+                "SITE": "mysite"
+            },
+            "expose": null,
+            "externalId": "abc123abc123abc123abc123abc123abc123abc123",
+            "extraHosts": null,
+            "firstRunning": "2019-12-28T05:24:56Z",
+            "firstRunningTS": 1577510696000,
+            "groupAdd": null,
+            "healthCheck": {
+                "type": "instanceHealthCheck",
+                "healthyThreshold": 2,
+                "initializingTimeout": 900000,
+                "interval": 12000,
+                "port": 80,
+                "reinitializingTimeout": 900000,
+                "responseTimeout": 2000,
+                "strategy": "none",
+                "unhealthyThreshold": 3
+            },
+            "healthCmd": null,
+            "healthInterval": null,
+            "healthRetries": null,
+            "healthState": "healthy",
+            "healthTimeout": null,
+            "hostId": "1h70",
+            "hostname": null,
+            "imageUuid": "docker:nexus.example.com/frontend:v1.2.3_1",
+            "instanceTriggeredStop": "stop",
+            "ioMaximumBandwidth": null,
+            "ioMaximumIOps": null,
+            "ip": null,
+            "ip6": null,
+            "ipcMode": null,
+            "isolation": null,
+            "kernelMemory": null,
+            "kind": "container",
+            "labels": {
+                "io.rancher.service.deployment.unit": "00000000-0000-0000-0000-000000000000",
+                "io.rancher.stack_service.name": "mysite-dev/frontend",
+                "io.rancher.service.launch.config": "io.rancher.service.primary.launch.config",
+                "com.example.service": "frontend",
+                "io.rancher.project.name": "mysite-dev",
+                "io.rancher.project_service.name": "mysite-dev/frontend",
+                "com.example.description": "mysite.development.example.com",
+                "com.example.group": "dev",
+                "io.rancher.stack.name": "mysite-dev",
+                "io.rancher.service.hash": "0123456789012345678901234567890123456789",
+                "com.example.site": "mysite",
+                "io.rancher.container.ip": "10.0.0.11/16",
+                "io.rancher.container.uuid": "00000000-0000-0000-0000-000000000000",
+                "io.rancher.cni.network": "ipsec",
+                "io.rancher.cni.wait": "true",
+                "io.rancher.container.mac_address": "11:22:33:44:55:66",
+                "io.rancher.container.name": "mysite-dev-frontend-1"
+            },
+            "logConfig": {
+                "type": "logConfig"
+            },
+            "lxcConf": null,
+            "memory": null,
+            "memoryReservation": null,
+            "memorySwap": null,
+            "memorySwappiness": null,
+            "milliCpuReservation": null,
+            "mounts": [
+                {
+                    "type": "mountEntry",
+                    "volumeName": "/clientdata/shared",
+                    "instanceName": "mysite-dev-frontend-1",
+                    "path": "/var/shared",
+                    "permission": "ro",
+                    "instanceId": "1i456",
+                    "volumeId": "1v291605"
+                },
+                {
+                    "type": "mountEntry",
+                    "volumeName": "abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef",
+                    "instanceName": "mysite-dev-frontend-1",
+                    "path": "/run/secrets",
+                    "permission": "rw",
+                    "instanceId": "1i456",
+                    "volumeId": "1v356188"
+                }
+            ],
+            "nativeContainer": false,
+            "netAlias": null,
+            "networkContainerId": null,
+            "networkMode": "managed",
+            "oomKillDisable": null,
+            "oomScoreAdj": null,
+            "pidMode": null,
+            "pidsLimit": null,
+            "ports": [
+                "0.0.0.0:57372:80/tcp"
+            ],
+            "primaryIpAddress": "10.42.241.163",
+            "primaryNetworkId": "1n70",
+            "privileged": false,
+            "publishAllPorts": false,
+            "readOnly": false,
+            "registryCredentialId": "1c9620",
+            "removed": null,
+            "requestedHostId": null,
+            "restartPolicy": null,
+            "runInit": false,
+            "secrets": [
+                {
+                    "type": "secretReference",
+                    "gid": "0",
+                    "mode": "444",
+                    "name": "",
+                    "secretId": "1se1",
+                    "uid": "0"
+                }
+            ],
+            "securityOpt": null,
+            "serviceId": null,
+            "serviceIds": [
+                "1s56"
+            ],
+            "shmSize": null,
+            "stackId": null,
+            "startCount": 1,
+            "startOnCreate": true,
+            "stdinOpen": false,
+            "stopSignal": null,
+            "stopTimeout": null,
+            "storageOpt": null,
+            "sysctls": null,
+            "system": false,
+            "tmpfs": null,
+            "transitioning": "no",
+            "transitioningMessage": null,
+            "transitioningProgress": null,
+            "tty": false,
+            "ulimits": null,
+            "user": null,
+            "userPorts": [
+                "57372:80/tcp"
+            ],
+            "usernsMode": null,
+            "uts": null,
+            "uuid": "00000000-0000-0000-0000-000000000000",
+            "version": "00000000-0000-0000-0000-000000000000",
+            "volumeDriver": null,
+            "workingDir": null,
+            "healthcheckStates": [
+                {
+                    "hostId": "1h74",
+                    "healthState": "healthy"
+                },
+                {
+                    "hostId": "1h71",
+                    "healthState": "healthy"
+                },
+                {
+                    "hostId": "1h70",
+                    "healthState": "healthy"
+                }
+            ]
+        },
+        {
+            "id": "1i678",
+            "type": "container",
+            "links": {
+                "self": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i678",
+                "account": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i678/account",
+                "credentials": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i678/credentials",
+                "healthcheckInstanceHostMaps": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i678/healthcheckinstancehostmaps",
+                "hosts": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i678/hosts",
+                "instanceLabels": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i678/instancelabels",
+                "instanceLinks": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i678/instancelinks",
+                "instances": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i678/instances",
+                "mounts": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i678/mounts",
+                "ports": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i678/ports",
+                "registryCredential": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i678/registrycredential",
+                "serviceEvents": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i678/serviceevents",
+                "serviceExposeMaps": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i678/serviceexposemaps",
+                "serviceLogs": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i678/servicelogs",
+                "services": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i678/services",
+                "targetInstanceLinks": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i678/targetinstancelinks",
+                "volumes": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i678/volumes",
+                "stats": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i678/stats",
+                "containerStats": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i678/containerstats"
+            },
+            "actions": {
+                "restart": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i678/?action=restart",
+                "update": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i678/?action=update",
+                "stop": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i678/?action=stop",
+                "migrate": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i678/?action=migrate",
+                "logs": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i678/?action=logs",
+                "execute": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i678/?action=execute",
+                "proxy": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i678/?action=proxy"
+            },
+            "baseType": "instance",
+            "name": "mysite-dev-frontend-3",
+            "state": "stopped",
+            "accountId": "1a10",
+            "blkioDeviceOptions": null,
+            "blkioWeight": null,
+            "build": null,
+            "capAdd": null,
+            "capDrop": null,
+            "cgroupParent": null,
+            "command": null,
+            "cpuCount": null,
+            "cpuPercent": null,
+            "cpuPeriod": null,
+            "cpuQuota": null,
+            "cpuRealtimePeriod": null,
+            "cpuRealtimeRuntime": null,
+            "cpuSet": null,
+            "cpuSetMems": null,
+            "cpuShares": null,
+            "createIndex": 62,
+            "created": "2019-12-28T05:24:44Z",
+            "createdTS": 1577510684000,
+            "dataVolumeMounts": {
+                "/run/secrets": "1v356188"
+            },
+            "dataVolumes": [
+                "/clientdata/mysite_dev/files:/var/www/html/sites/mysite/files",
+                "/clientdata/shared:/var/shared:ro",
+                "abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef:/run/secrets"
+            ],
+            "dataVolumesFrom": null,
+            "deploymentUnitUuid": "00000000-0000-0000-0000-000000000000",
+            "description": null,
+            "devices": null,
+            "diskQuota": null,
+            "dns": [
+                "169.254.169.250"
+            ],
+            "dnsOpt": null,
+            "dnsSearch": [
+                "mysite-dev.rancher.internal",
+                "frontend.mysite-dev.rancher.internal",
+                "rancher.internal"
+            ],
+            "domainName": null,
+            "entryPoint": null,
+            "environment": {
+                "BASE_DOMAIN": "example.com",
+                "DOMAIN": "mysite.development.example.com",
+                "ENVIRONMENT": "development",
+                "SITE": "mysite"
+            },
+            "expose": null,
+            "externalId": "123456123456123456123456123456123456123456",
+            "extraHosts": null,
+            "firstRunning": "2019-12-28T05:24:56Z",
+            "firstRunningTS": 1577510696000,
+            "groupAdd": null,
+            "healthCheck": {
+                "type": "instanceHealthCheck",
+                "healthyThreshold": 2,
+                "initializingTimeout": 900000,
+                "interval": 12000,
+                "port": 80,
+                "reinitializingTimeout": 900000,
+                "responseTimeout": 2000,
+                "strategy": "none",
+                "unhealthyThreshold": 3
+            },
+            "healthCmd": null,
+            "healthInterval": null,
+            "healthRetries": null,
+            "healthState": "healthy",
+            "healthTimeout": null,
+            "hostId": "1h70",
+            "hostname": null,
+            "imageUuid": "docker:nexus.example.com/frontend:v1.2.3_1",
+            "instanceTriggeredStop": "stop",
+            "ioMaximumBandwidth": null,
+            "ioMaximumIOps": null,
+            "ip": null,
+            "ip6": null,
+            "ipcMode": null,
+            "isolation": null,
+            "kernelMemory": null,
+            "kind": "container",
+            "labels": {
+                "io.rancher.service.deployment.unit": "00000000-0000-0000-0000-000000000000",
+                "io.rancher.stack_service.name": "mysite-dev/frontend",
+                "io.rancher.service.launch.config": "io.rancher.service.primary.launch.config",
+                "com.example.service": "frontend",
+                "io.rancher.project.name": "mysite-dev",
+                "io.rancher.project_service.name": "mysite-dev/frontend",
+                "com.example.description": "mysite.development.example.com",
+                "com.example.group": "dev",
+                "io.rancher.stack.name": "mysite-dev",
+                "io.rancher.service.hash": "0123456789012345678901234567890123456789",
+                "com.example.site": "mysite",
+                "io.rancher.container.ip": "10.0.0.11/16",
+                "io.rancher.container.uuid": "00000000-0000-0000-0000-000000000000",
+                "io.rancher.cni.network": "ipsec",
+                "io.rancher.cni.wait": "true",
+                "io.rancher.container.mac_address": "11:22:33:44:55:66",
+                "io.rancher.container.name": "mysite-dev-frontend-1"
+            },
+            "logConfig": {
+                "type": "logConfig"
+            },
+            "lxcConf": null,
+            "memory": null,
+            "memoryReservation": null,
+            "memorySwap": null,
+            "memorySwappiness": null,
+            "milliCpuReservation": null,
+            "mounts": [
+                {
+                    "type": "mountEntry",
+                    "volumeName": "/clientdata/shared",
+                    "instanceName": "mysite-dev-frontend-1",
+                    "path": "/var/shared",
+                    "permission": "ro",
+                    "instanceId": "1i678",
+                    "volumeId": "1v291605"
+                },
+                {
+                    "type": "mountEntry",
+                    "volumeName": "abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef",
+                    "instanceName": "mysite-dev-frontend-1",
+                    "path": "/run/secrets",
+                    "permission": "rw",
+                    "instanceId": "1i678",
+                    "volumeId": "1v356188"
+                }
+            ],
+            "nativeContainer": false,
+            "netAlias": null,
+            "networkContainerId": null,
+            "networkMode": "managed",
+            "oomKillDisable": null,
+            "oomScoreAdj": null,
+            "pidMode": null,
+            "pidsLimit": null,
+            "ports": [
+                "0.0.0.0:57372:80/tcp"
+            ],
+            "primaryIpAddress": "10.42.241.163",
+            "primaryNetworkId": "1n70",
+            "privileged": false,
+            "publishAllPorts": false,
+            "readOnly": false,
+            "registryCredentialId": "1c9620",
+            "removed": null,
+            "requestedHostId": null,
+            "restartPolicy": null,
+            "runInit": false,
+            "secrets": [
+                {
+                    "type": "secretReference",
+                    "gid": "0",
+                    "mode": "444",
+                    "name": "",
+                    "secretId": "1se1",
+                    "uid": "0"
+                }
+            ],
+            "securityOpt": null,
+            "serviceId": null,
+            "serviceIds": [
+                "1s56"
+            ],
+            "shmSize": null,
+            "stackId": null,
+            "startCount": 1,
+            "startOnCreate": true,
+            "stdinOpen": false,
+            "stopSignal": null,
+            "stopTimeout": null,
+            "storageOpt": null,
+            "sysctls": null,
+            "system": false,
+            "tmpfs": null,
+            "transitioning": "no",
+            "transitioningMessage": null,
+            "transitioningProgress": null,
+            "tty": false,
+            "ulimits": null,
+            "user": null,
+            "userPorts": [
+                "57372:80/tcp"
+            ],
+            "usernsMode": null,
+            "uts": null,
+            "uuid": "00000000-0000-0000-0000-000000000000",
+            "version": "00000000-0000-0000-0000-000000000000",
+            "volumeDriver": null,
+            "workingDir": null,
+            "healthcheckStates": [
+                {
+                    "hostId": "1h74",
+                    "healthState": "healthy"
+                },
+                {
+                    "hostId": "1h71",
+                    "healthState": "healthy"
+                },
+                {
+                    "hostId": "1h70",
+                    "healthState": "healthy"
+                }
+            ]
+        },
+        {
+            "id": "1i001",
+            "type": "container",
+            "links": {
+                "self": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i001",
+                "account": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i001/account",
+                "credentials": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i001/credentials",
+                "healthcheckInstanceHostMaps": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i001/healthcheckinstancehostmaps",
+                "hosts": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i001/hosts",
+                "instanceLabels": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i001/instancelabels",
+                "instanceLinks": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i001/instancelinks",
+                "instances": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i001/instances",
+                "mounts": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i001/mounts",
+                "ports": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i001/ports",
+                "registryCredential": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i001/registrycredential",
+                "serviceEvents": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i001/serviceevents",
+                "serviceExposeMaps": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i001/serviceexposemaps",
+                "serviceLogs": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i001/servicelogs",
+                "services": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i001/services",
+                "targetInstanceLinks": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i001/targetinstancelinks",
+                "volumes": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i001/volumes",
+                "stats": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i001/stats",
+                "containerStats": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i001/containerstats"
+            },
+            "actions": {
+                "restart": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i001/?action=restart",
+                "update": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i001/?action=update",
+                "stop": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i001/?action=stop",
+                "migrate": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i001/?action=migrate",
+                "logs": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i001/?action=logs",
+                "execute": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i001/?action=execute",
+                "proxy": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i001/?action=proxy"
+            },
+            "baseType": "instance",
+            "name": "global-3",
+            "state": "running",
+            "accountId": "1a10",
+            "blkioDeviceOptions": null,
+            "blkioWeight": null,
+            "build": null,
+            "capAdd": null,
+            "capDrop": null,
+            "cgroupParent": null,
+            "command": null,
+            "cpuCount": null,
+            "cpuPercent": null,
+            "cpuPeriod": null,
+            "cpuQuota": null,
+            "cpuRealtimePeriod": null,
+            "cpuRealtimeRuntime": null,
+            "cpuSet": null,
+            "cpuSetMems": null,
+            "cpuShares": null,
+            "createIndex": 62,
+            "created": "2019-12-28T05:24:44Z",
+            "createdTS": 1577510684000,
+            "dataVolumeMounts": {
+                "/run/secrets": "1v356188"
+            },
+            "dataVolumes": [
+                "/clientdata/mysite_dev/files:/var/www/html/sites/mysite/files",
+                "/clientdata/shared:/var/shared:ro",
+                "abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef:/run/secrets"
+            ],
+            "dataVolumesFrom": null,
+            "deploymentUnitUuid": "00000000-0000-0000-0000-000000000000",
+            "description": null,
+            "devices": null,
+            "diskQuota": null,
+            "dns": [
+                "169.254.169.250"
+            ],
+            "dnsOpt": null,
+            "dnsSearch": [
+                "mysite-dev.rancher.internal",
+                "frontend.mysite-dev.rancher.internal",
+                "rancher.internal"
+            ],
+            "domainName": null,
+            "entryPoint": null,
+            "environment": {
+                "BASE_DOMAIN": "example.com",
+                "DOMAIN": "mysite.development.example.com",
+                "ENVIRONMENT": "development",
+                "SITE": "mysite"
+            },
+            "expose": null,
+            "externalId": "123456123456123456123456123456123456123456",
+            "extraHosts": null,
+            "firstRunning": "2019-12-28T05:24:56Z",
+            "firstRunningTS": 1577510696000,
+            "groupAdd": null,
+            "healthCheck": {
+                "type": "instanceHealthCheck",
+                "healthyThreshold": 2,
+                "initializingTimeout": 900000,
+                "interval": 12000,
+                "port": 80,
+                "reinitializingTimeout": 900000,
+                "responseTimeout": 2000,
+                "strategy": "none",
+                "unhealthyThreshold": 3
+            },
+            "healthCmd": null,
+            "healthInterval": null,
+            "healthRetries": null,
+            "healthState": "healthy",
+            "healthTimeout": null,
+            "hostId": "1h70",
+            "hostname": null,
+            "imageUuid": "docker:nexus.example.com/frontend:v1.2.3_1",
+            "instanceTriggeredStop": "stop",
+            "ioMaximumBandwidth": null,
+            "ioMaximumIOps": null,
+            "ip": null,
+            "ip6": null,
+            "ipcMode": null,
+            "isolation": null,
+            "kernelMemory": null,
+            "kind": "container",
+            "labels": {
+                "io.rancher.scheduler.global": "true"
+            },
+            "logConfig": {
+                "type": "logConfig"
+            },
+            "lxcConf": null,
+            "memory": null,
+            "memoryReservation": null,
+            "memorySwap": null,
+            "memorySwappiness": null,
+            "milliCpuReservation": null,
+            "mounts": [
+                {
+                    "type": "mountEntry",
+                    "volumeName": "/clientdata/shared",
+                    "instanceName": "mysite-dev-frontend-1",
+                    "path": "/var/shared",
+                    "permission": "ro",
+                    "instanceId": "1i001",
+                    "volumeId": "1v291605"
+                },
+                {
+                    "type": "mountEntry",
+                    "volumeName": "abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef",
+                    "instanceName": "mysite-dev-frontend-1",
+                    "path": "/run/secrets",
+                    "permission": "rw",
+                    "instanceId": "1i001",
+                    "volumeId": "1v356188"
+                }
+            ],
+            "nativeContainer": false,
+            "netAlias": null,
+            "networkContainerId": null,
+            "networkMode": "managed",
+            "oomKillDisable": null,
+            "oomScoreAdj": null,
+            "pidMode": null,
+            "pidsLimit": null,
+            "ports": [
+                "0.0.0.0:57372:80/tcp"
+            ],
+            "primaryIpAddress": "10.42.241.163",
+            "primaryNetworkId": "1n70",
+            "privileged": false,
+            "publishAllPorts": false,
+            "readOnly": false,
+            "registryCredentialId": "1c9620",
+            "removed": null,
+            "requestedHostId": null,
+            "restartPolicy": null,
+            "runInit": false,
+            "secrets": [
+                {
+                    "type": "secretReference",
+                    "gid": "0",
+                    "mode": "444",
+                    "name": "",
+                    "secretId": "1se1",
+                    "uid": "0"
+                }
+            ],
+            "securityOpt": null,
+            "serviceId": null,
+            "serviceIds": [
+                "1s56"
+            ],
+            "shmSize": null,
+            "stackId": null,
+            "startCount": 1,
+            "startOnCreate": true,
+            "stdinOpen": false,
+            "stopSignal": null,
+            "stopTimeout": null,
+            "storageOpt": null,
+            "sysctls": null,
+            "system": false,
+            "tmpfs": null,
+            "transitioning": "no",
+            "transitioningMessage": null,
+            "transitioningProgress": null,
+            "tty": false,
+            "ulimits": null,
+            "user": null,
+            "userPorts": [
+                "57372:80/tcp"
+            ],
+            "usernsMode": null,
+            "uts": null,
+            "uuid": "00000000-0000-0000-0000-000000000000",
+            "version": "00000000-0000-0000-0000-000000000000",
+            "volumeDriver": null,
+            "workingDir": null,
+            "healthcheckStates": [
+                {
+                    "hostId": "1h74",
+                    "healthState": "healthy"
+                },
+                {
+                    "hostId": "1h71",
+                    "healthState": "healthy"
+                },
+                {
+                    "hostId": "1h70",
+                    "healthState": "healthy"
+                }
+            ]
+        },
+        {
+            "id": "1i002",
+            "type": "container",
+            "links": {
+                "self": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i002",
+                "account": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i002/account",
+                "credentials": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i002/credentials",
+                "healthcheckInstanceHostMaps": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i002/healthcheckinstancehostmaps",
+                "hosts": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i002/hosts",
+                "instanceLabels": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i002/instancelabels",
+                "instanceLinks": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i002/instancelinks",
+                "instances": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i002/instances",
+                "mounts": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i002/mounts",
+                "ports": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i002/ports",
+                "registryCredential": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i002/registrycredential",
+                "serviceEvents": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i002/serviceevents",
+                "serviceExposeMaps": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i002/serviceexposemaps",
+                "serviceLogs": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i002/servicelogs",
+                "services": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i002/services",
+                "targetInstanceLinks": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i002/targetinstancelinks",
+                "volumes": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i002/volumes",
+                "stats": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i002/stats",
+                "containerStats": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i002/containerstats"
+            },
+            "actions": {
+                "restart": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i002/?action=restart",
+                "update": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i002/?action=update",
+                "stop": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i002/?action=stop",
+                "migrate": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i002/?action=migrate",
+                "logs": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i002/?action=logs",
+                "execute": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i002/?action=execute",
+                "proxy": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i002/?action=proxy"
+            },
+            "baseType": "instance",
+            "name": "system-3",
+            "state": "running",
+            "accountId": "1a10",
+            "blkioDeviceOptions": null,
+            "blkioWeight": null,
+            "build": null,
+            "capAdd": null,
+            "capDrop": null,
+            "cgroupParent": null,
+            "command": null,
+            "cpuCount": null,
+            "cpuPercent": null,
+            "cpuPeriod": null,
+            "cpuQuota": null,
+            "cpuRealtimePeriod": null,
+            "cpuRealtimeRuntime": null,
+            "cpuSet": null,
+            "cpuSetMems": null,
+            "cpuShares": null,
+            "createIndex": 62,
+            "created": "2019-12-28T05:24:44Z",
+            "createdTS": 1577510684000,
+            "dataVolumeMounts": {
+                "/run/secrets": "1v356188"
+            },
+            "dataVolumes": [
+                "/clientdata/mysite_dev/files:/var/www/html/sites/mysite/files",
+                "/clientdata/shared:/var/shared:ro",
+                "abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef:/run/secrets"
+            ],
+            "dataVolumesFrom": null,
+            "deploymentUnitUuid": "00000000-0000-0000-0000-000000000000",
+            "description": null,
+            "devices": null,
+            "diskQuota": null,
+            "dns": [
+                "169.254.169.250"
+            ],
+            "dnsOpt": null,
+            "dnsSearch": [
+                "mysite-dev.rancher.internal",
+                "frontend.mysite-dev.rancher.internal",
+                "rancher.internal"
+            ],
+            "domainName": null,
+            "entryPoint": null,
+            "environment": {
+                "BASE_DOMAIN": "example.com",
+                "DOMAIN": "mysite.development.example.com",
+                "ENVIRONMENT": "development",
+                "SITE": "mysite"
+            },
+            "expose": null,
+            "externalId": "123456123456123456123456123456123456123456",
+            "extraHosts": null,
+            "firstRunning": "2019-12-28T05:24:56Z",
+            "firstRunningTS": 1577510696000,
+            "groupAdd": null,
+            "healthCheck": {
+                "type": "instanceHealthCheck",
+                "healthyThreshold": 2,
+                "initializingTimeout": 900000,
+                "interval": 12000,
+                "port": 80,
+                "reinitializingTimeout": 900000,
+                "responseTimeout": 2000,
+                "strategy": "none",
+                "unhealthyThreshold": 3
+            },
+            "healthCmd": null,
+            "healthInterval": null,
+            "healthRetries": null,
+            "healthState": "healthy",
+            "healthTimeout": null,
+            "hostId": "1h70",
+            "hostname": null,
+            "imageUuid": "docker:nexus.example.com/frontend:v1.2.3_1",
+            "instanceTriggeredStop": "stop",
+            "ioMaximumBandwidth": null,
+            "ioMaximumIOps": null,
+            "ip": null,
+            "ip6": null,
+            "ipcMode": null,
+            "isolation": null,
+            "kernelMemory": null,
+            "kind": "container",
+            "labels": {
+                "io.rancher.container.system": "true"
+            },
+            "logConfig": {
+                "type": "logConfig"
+            },
+            "lxcConf": null,
+            "memory": null,
+            "memoryReservation": null,
+            "memorySwap": null,
+            "memorySwappiness": null,
+            "milliCpuReservation": null,
+            "mounts": [
+                {
+                    "type": "mountEntry",
+                    "volumeName": "/clientdata/shared",
+                    "instanceName": "mysite-dev-frontend-1",
+                    "path": "/var/shared",
+                    "permission": "ro",
+                    "instanceId": "1i002",
+                    "volumeId": "1v291605"
+                },
+                {
+                    "type": "mountEntry",
+                    "volumeName": "abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef",
+                    "instanceName": "mysite-dev-frontend-1",
+                    "path": "/run/secrets",
+                    "permission": "rw",
+                    "instanceId": "1i002",
+                    "volumeId": "1v356188"
+                }
+            ],
+            "nativeContainer": false,
+            "netAlias": null,
+            "networkContainerId": null,
+            "networkMode": "managed",
+            "oomKillDisable": null,
+            "oomScoreAdj": null,
+            "pidMode": null,
+            "pidsLimit": null,
+            "ports": [
+                "0.0.0.0:57372:80/tcp"
+            ],
+            "primaryIpAddress": "10.42.241.163",
+            "primaryNetworkId": "1n70",
+            "privileged": false,
+            "publishAllPorts": false,
+            "readOnly": false,
+            "registryCredentialId": "1c9620",
+            "removed": null,
+            "requestedHostId": null,
+            "restartPolicy": null,
+            "runInit": false,
+            "secrets": [
+                {
+                    "type": "secretReference",
+                    "gid": "0",
+                    "mode": "444",
+                    "name": "",
+                    "secretId": "1se1",
+                    "uid": "0"
+                }
+            ],
+            "securityOpt": null,
+            "serviceId": null,
+            "serviceIds": [
+                "1s56"
+            ],
+            "shmSize": null,
+            "stackId": null,
+            "startCount": 1,
+            "startOnCreate": true,
+            "stdinOpen": false,
+            "stopSignal": null,
+            "stopTimeout": null,
+            "storageOpt": null,
+            "sysctls": null,
+            "system": false,
+            "tmpfs": null,
+            "transitioning": "no",
+            "transitioningMessage": null,
+            "transitioningProgress": null,
+            "tty": false,
+            "ulimits": null,
+            "user": null,
+            "userPorts": [
+                "57372:80/tcp"
+            ],
+            "usernsMode": null,
+            "uts": null,
+            "uuid": "00000000-0000-0000-0000-000000000000",
+            "version": "00000000-0000-0000-0000-000000000000",
+            "volumeDriver": null,
+            "workingDir": null,
+            "healthcheckStates": [
+                {
+                    "hostId": "1h74",
+                    "healthState": "healthy"
+                },
+                {
+                    "hostId": "1h71",
+                    "healthState": "healthy"
+                },
+                {
+                    "hostId": "1h70",
+                    "healthState": "healthy"
+                }
+            ]
         }
     ]
 }

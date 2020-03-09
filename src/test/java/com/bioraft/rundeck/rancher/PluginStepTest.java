@@ -32,7 +32,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Map;
 
-import static com.bioraft.rundeck.rancher.RancherShared.*;
+import static com.bioraft.rundeck.rancher.Constants.*;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.when;
@@ -45,10 +45,10 @@ import static org.mockito.Mockito.when;
  */
 public abstract class PluginStepTest {
 
-    protected static String projectEndpoint = "https://rancher.example.com/v2-beta";
-    protected static String projectAccessKey = "keys/rancher/access.key";
-    protected static String projectSecretKey = "keys/rancher/secret.key";
-    protected static String projectName = "1a10";
+    protected static final String projectEndpoint = "https://rancher.example.com/v2-beta";
+    protected static final String projectAccessKey = "keys/rancher/access.key";
+    protected static final String projectSecretKey = "keys/rancher/secret.key";
+    protected static final String projectName = "1a10";
 
     @Mock
     HttpClient client;

@@ -32,8 +32,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import java.io.IOException;
 import java.util.Map;
 
-import static com.bioraft.rundeck.rancher.RancherShared.ErrorCause;
-import static com.bioraft.rundeck.rancher.RancherShared.ErrorCause.NO_SERVICE_OBJECT;
+import static com.bioraft.rundeck.rancher.Constants.*;
+import static com.bioraft.rundeck.rancher.Errors.ErrorCause.*;
 import static com.bioraft.rundeck.rancher.RancherShared.loadStoragePathData;
 
 /**
@@ -42,7 +42,7 @@ import static com.bioraft.rundeck.rancher.RancherShared.loadStoragePathData;
  * @author Karl DeBisschop <kdebisschop@gmail.com>
  * @since 2019-12-20
  */
-@Plugin(name = RancherShared.RANCHER_SERVICE_CONTROLLER, service = ServiceNameConstants.WorkflowNodeStep)
+@Plugin(name = RANCHER_SERVICE_CONTROLLER, service = ServiceNameConstants.WorkflowNodeStep)
 @PluginDescription(title = "Rancher - Manage Service", description = "Start/Stop/Restart the service associated with the selected node.")
 public class RancherManageService implements NodeStepPlugin {
 
@@ -50,7 +50,7 @@ public class RancherManageService implements NodeStepPlugin {
 	@SelectValues(values = {"activate", "deactivate", "restart"})
 	private String action;
 
-	HttpClient client;
+	final HttpClient client;
 
 	public RancherManageService() {
 		client = new HttpClient();
@@ -75,12 +75,12 @@ public class RancherManageService implements NodeStepPlugin {
 		String accessKey;
 		String secretKey;
 		try {
-			accessKey = loadStoragePathData(executionContext, attributes.get(RancherShared.CONFIG_ACCESSKEY_PATH));
-			secretKey = loadStoragePathData(executionContext, attributes.get(RancherShared.CONFIG_SECRETKEY_PATH));
+			accessKey = loadStoragePathData(executionContext, attributes.get(CONFIG_ACCESSKEY_PATH));
+			secretKey = loadStoragePathData(executionContext, attributes.get(CONFIG_SECRETKEY_PATH));
 			client.setAccessKey(accessKey);
 			client.setSecretKey(secretKey);
 		} catch (IOException e) {
-			throw new NodeStepException("Could not get secret storage path", e, ErrorCause.IO_EXCEPTION, nodeName);
+			throw new NodeStepException("Could not get secret storage path", e, IO_EXCEPTION, nodeName);
 		}
 
 		JsonNode service;
@@ -104,23 +104,23 @@ public class RancherManageService implements NodeStepPlugin {
 		} else if (action.equals("deactivate") || action.equals("restart")) {
 			if (!serviceState.equals("active")) {
 				String message = "Service state must be running, was " + serviceState;
-				throw new NodeStepException(message, ErrorCause.SERVICE_NOT_RUNNING, nodeName);
+				throw new NodeStepException(message, SERVICE_NOT_RUNNING, nodeName);
 			}
 		} else {
 			String message = "Invalid action: " + action;
-			throw new NodeStepException(message, ErrorCause.ACTION_NOT_SUPPORTED, nodeName);
+			throw new NodeStepException(message, ACTION_NOT_SUPPORTED, nodeName);
 		}
 
 		String url = service.path("actions").path(action).asText();
 		if (url.length() == 0) {
-			throw new NodeStepException("No " + action + " URL found", ErrorCause.MISSING_ACTION_URL, nodeName);
+			throw new NodeStepException("No " + action + " URL found", MISSING_ACTION_URL, nodeName);
 		}
 
 		String body = "";
 		try {
 			client.post(url, body);
 		} catch (IOException e) {
-			throw new NodeStepException("Step " + action + " failed", e, ErrorCause.ACTION_FAILED, nodeName);
+			throw new NodeStepException("Step " + action + " failed", e, ACTION_FAILED, nodeName);
 		}
 
 		logger.log(Constants.INFO_LEVEL, "Step " + action + " complete on " + nodeName);

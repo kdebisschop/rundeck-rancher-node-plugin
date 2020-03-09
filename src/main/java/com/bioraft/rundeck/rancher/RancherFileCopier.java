@@ -47,7 +47,8 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
-import static com.bioraft.rundeck.rancher.RancherShared.ErrorCause.*;
+import static com.bioraft.rundeck.rancher.Constants.*;
+import static com.bioraft.rundeck.rancher.Errors.ErrorCause.*;
 import static com.bioraft.rundeck.rancher.RancherShared.*;
 import static com.dtolabs.rundeck.core.Constants.DEBUG_LEVEL;
 
@@ -57,8 +58,8 @@ import static com.dtolabs.rundeck.core.Constants.DEBUG_LEVEL;
  * @author Karl DeBisschop <kdebisschop@gmail.com>
  * @since 2019-12-08
  */
-@Plugin(name = RancherShared.RANCHER_SERVICE_PROVIDER, service = ServiceNameConstants.FileCopier)
-@PluginDescription(title = "Rancher File Copier", description = "Copies a file to a Rancher-mananged Docker container.")
+@Plugin(name = RANCHER_SERVICE_PROVIDER, service = ServiceNameConstants.FileCopier)
+@PluginDescription(title = "Rancher File Copier", description = "Copies a file to a Rancher-managed Docker container.")
 public class RancherFileCopier implements FileCopier, Describable {
 
     static final Description DESC;
@@ -69,9 +70,9 @@ public class RancherFileCopier implements FileCopier, Describable {
         DescriptionBuilder builder = DescriptionBuilder.builder();
         builder.name(RANCHER_SERVICE_PROVIDER);
         builder.title("Rancher File Copier");
-        builder.description("Copies a file to a Rancher-mananged Docker container");
+        builder.description("Copies a file to a Rancher-managed Docker container");
 
-        builder.property(PropertyUtil.string(RancherShared.RANCHER_CONFIG_CLI_PATH, "Search path ",
+        builder.property(PropertyUtil.string(RANCHER_CONFIG_CLI_PATH, "Search path ",
                 "A search path on the Rundeck host that finds rancher, docker, sh, and base64 (e.g., /usr/local/bin:/usr/bin:/bin)",
                 false, ""));
 
@@ -115,8 +116,6 @@ public class RancherFileCopier implements FileCopier, Describable {
     private String copyFile(final ExecutionContext context, final File scriptfile, final InputStream input,
                             final String script, final INodeEntry node, final String destinationPath) throws FileCopierException {
 
-        String remotefile;
-
         Map<String, String> nodeAttributes = node.getAttributes();
 
         if (nodeAttributes.get("type").equals("service")) {
@@ -127,23 +126,14 @@ public class RancherFileCopier implements FileCopier, Describable {
         String accessKey;
         String secretKey;
         try {
-            accessKey = this.loadStoragePathData(context, nodeAttributes.get(RancherShared.CONFIG_ACCESSKEY_PATH));
-            secretKey = this.loadStoragePathData(context, nodeAttributes.get(RancherShared.CONFIG_SECRETKEY_PATH));
+            accessKey = this.loadStoragePathData(context, nodeAttributes.get(CONFIG_ACCESSKEY_PATH));
+            secretKey = this.loadStoragePathData(context, nodeAttributes.get(CONFIG_SECRETKEY_PATH));
         } catch (IOException e) {
             throw new FileCopierException(e.getMessage(), AUTHENTICATION_FAILURE);
         }
 
-        if (null == destinationPath) {
-            String identity = null != context.getDataContext() && null != context.getDataContext().get("job")
-                    ? context.getDataContext().get("job").get("execid")
-                    : null;
-            remotefile = BaseFileCopier.generateRemoteFilepathForNode(node,
-                    context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
-                    context.getFramework(), (null != scriptfile ? scriptfile.getName() : "dispatch-script"), null,
-                    identity);
-        } else {
-            remotefile = destinationPath;
-        }
+        String remotefile = getRemoteFile(destinationPath, context, node, scriptfile);
+
         // write to a local temp file or use the input file
         final File localTempfile = (null != scriptfile) ? scriptfile
                 : BaseFileCopier.writeTempFile(context, null, input, script);
@@ -175,6 +165,20 @@ public class RancherFileCopier implements FileCopier, Describable {
                 context.getExecutionListener().log(Constants.WARN_LEVEL,
                         "Unable to remove local temp file: " + localTempfile.getAbsolutePath());
             }
+        }
+    }
+
+    private String getRemoteFile(final String destinationPath, final ExecutionContext context, final INodeEntry node, final File scriptfile) {
+        if (null == destinationPath) {
+            String identity = null != context.getDataContext() && null != context.getDataContext().get("job")
+                    ? context.getDataContext().get("job").get("execid")
+                    : null;
+            return BaseFileCopier.generateRemoteFilepathForNode(node,
+                    context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
+                    context.getFramework(), (null != scriptfile ? scriptfile.getName() : "dispatch-script"), null,
+                    identity);
+        } else {
+            return destinationPath;
         }
     }
 
@@ -232,8 +236,8 @@ public class RancherFileCopier implements FileCopier, Describable {
     }
 
     private static class StreamGobbler implements Runnable {
-        private InputStream inputStream;
-        private Consumer<String> consumer;
+        private final InputStream inputStream;
+        private final Consumer<String> consumer;
 
         public StreamGobbler(InputStream inputStream, Consumer<String> consumer) {
             this.inputStream = inputStream;

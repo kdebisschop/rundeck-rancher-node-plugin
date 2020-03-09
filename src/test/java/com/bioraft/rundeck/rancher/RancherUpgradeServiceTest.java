@@ -42,7 +42,6 @@ import java.util.stream.Stream;
 import static com.bioraft.rundeck.rancher.Constants.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
 /**
@@ -94,8 +93,8 @@ public class RancherUpgradeServiceTest {
 				.of(new String[][]{{"services", "https://rancher.example.com/v2-beta/"},
 						{"self", "https://rancher.example.com/v2-beta/"},
 						{"type", "container"},
-						{RancherShared.CONFIG_ACCESSKEY_PATH, "keys/rancher/access.key"},
-						{RancherShared.CONFIG_SECRETKEY_PATH, "keys/rancher/secret.key"},})
+						{CONFIG_ACCESSKEY_PATH, "keys/rancher/access.key"},
+						{CONFIG_SECRETKEY_PATH, "keys/rancher/secret.key"},})
 				.collect(Collectors.toMap(data -> data[0], data -> data[1]));
 		when(node.getAttributes()).thenReturn(map);
 		when(ctx.getLogger()).thenReturn(logger);
@@ -118,7 +117,7 @@ public class RancherUpgradeServiceTest {
 	@Test(expected = NodeStepException.class)
 	public void throwExceptionForNullKey() throws NodeStepException {
 		RancherUpgradeService subject = new RancherUpgradeService(client);
-		map.remove(RancherShared.CONFIG_ACCESSKEY_PATH);
+		map.remove(CONFIG_ACCESSKEY_PATH);
 		when(node.getAttributes()).thenReturn(map);
 		subject.executeNodeStep(ctx, cfg, node);
 		assertNotNull(subject);
@@ -283,7 +282,7 @@ public class RancherUpgradeServiceTest {
 
 	/**
 	 * Response body can be null for cacheResponse and other, but we do not expect that or
-	 * have a way to respond to null body. So we fail because the service stata is unknown.
+	 * have a way to respond to null body. So we fail because the service state is unknown.
 	 *
 	 * @throws IOException because no service state can be inferred from empty body.
 	 */

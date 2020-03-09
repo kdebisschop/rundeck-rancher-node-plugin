@@ -27,8 +27,7 @@ import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 
-import static com.bioraft.rundeck.rancher.Constants.OPT_EXCLUDE;
-import static com.bioraft.rundeck.rancher.Constants.OPT_INCLUDE;
+import static com.bioraft.rundeck.rancher.Constants.*;
 import static com.bioraft.rundeck.rancher.RancherShared.*;
 
 /**
@@ -38,7 +37,7 @@ import static com.bioraft.rundeck.rancher.RancherShared.*;
  * @author Karl DeBisschop <kdebisschop@gmail.com>
  * @since 2019-12-08
  */
-@Plugin(name = RancherShared.RANCHER_SERVICE_PROVIDER, service = ServiceNameConstants.ResourceModelSource)
+@Plugin(name = RANCHER_SERVICE_PROVIDER, service = ServiceNameConstants.ResourceModelSource)
 public class RancherResourceModelSourceFactory implements ResourceModelSourceFactory, Describable {
 
     static final Description DESC;
