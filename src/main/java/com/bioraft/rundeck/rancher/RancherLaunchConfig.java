@@ -28,6 +28,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import static com.bioraft.rundeck.rancher.Constants.OPT_DATA_VOLUMES;
+import static com.bioraft.rundeck.rancher.Constants.OPT_SECRETS;
 import static com.bioraft.rundeck.rancher.RancherShared.*;
 
 /**
@@ -192,12 +194,12 @@ public class RancherLaunchConfig {
 			// Copy existing secrets, skipping any that we want to add or overwrite.
 			Iterator<JsonNode> elements = null;
 			boolean hasOldSecrets = false;
-			if (launchConfig.has("secrets") && !launchConfig.get("secrets").isNull()) {
-				elements = launchConfig.get("secrets").elements();
+			if (launchConfig.has(OPT_SECRETS) && !launchConfig.get(OPT_SECRETS).isNull()) {
+				elements = launchConfig.get(OPT_SECRETS).elements();
 				hasOldSecrets = elements.hasNext();
 			}
 
-			ArrayNode secretsArray = launchConfig.putArray("secrets");
+			ArrayNode secretsArray = launchConfig.putArray(OPT_SECRETS);
 
 			// Copy existing secrets, skipping any that we want to add or overwrite.
 			if (hasOldSecrets) {
@@ -231,8 +233,8 @@ public class RancherLaunchConfig {
 			HashMap<String, String> hashMap = new HashMap<>();
 
 			// Copy existing mounts into hash keyed by mount point.
-			if (launchConfigObject.has("dataVolumes") && !launchConfigObject.get("dataVolumes").isNull()) {
-				Iterator<JsonNode> elements = launchConfigObject.get("dataVolumes").elements();
+			if (launchConfigObject.has(OPT_DATA_VOLUMES) && !launchConfigObject.get(OPT_DATA_VOLUMES).isNull()) {
+				Iterator<JsonNode> elements = launchConfigObject.get(OPT_DATA_VOLUMES).elements();
 				while (elements.hasNext()) {
 					String element = elements.next().asText();
 					hashMap.put(mountPoint(element), element);
@@ -247,10 +249,10 @@ public class RancherLaunchConfig {
 				mounts.forEachRemaining(spec -> hashMap.put(mountPoint(spec.asText()), spec.asText()));
 
 			} catch (JsonProcessingException e) {
-				throw new NodeStepException("Could not parse JSON for " + "dataVolumes" + "\n" + newData, e, ErrorCause.INVALID_CONFIGURATION, nodeName);
+				throw new NodeStepException("Could not parse JSON for " + OPT_DATA_VOLUMES + "\n" + newData, e, ErrorCause.INVALID_CONFIGURATION, nodeName);
 			}
 
-			ArrayNode updatedArray = launchConfigObject.putArray("dataVolumes");
+			ArrayNode updatedArray = launchConfigObject.putArray(OPT_DATA_VOLUMES);
 
 			// Copy the merged array.
 			hashMap.forEach((k, v) -> updatedArray.add(v));
