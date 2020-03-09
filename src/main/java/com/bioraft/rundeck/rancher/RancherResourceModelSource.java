@@ -184,7 +184,7 @@ public class RancherResourceModelSource implements ResourceModelSource {
 			if (count != 0) {
 				nodeEntry.setAttribute("seen", Integer.toString(count));
 			}
-			addNode(nodeEntry, node, logger);
+			iNodeEntries.putNode(nodeEntry);
 		} catch (IllegalArgumentException | NullPointerException e) {
 			logger.log(Level.WARN, e.getMessage());
 		}
@@ -194,19 +194,9 @@ public class RancherResourceModelSource implements ResourceModelSource {
 		RancherServiceNode rancherNode = new RancherServiceNode();
 		try {
 			NodeEntryImpl nodeEntry = rancherNode.getNodeEntry(environmentName, node);
-			addNode(nodeEntry, node, logger);
+			iNodeEntries.putNode(nodeEntry);
 		} catch (IllegalArgumentException | NullPointerException e) {
 			logger.log(Level.WARN, e.getMessage());
-		}
-	}
-
-	private void addNode(NodeEntryImpl nodeEntry, JsonNode node, Logger logger) {
-		if (nodeEntry.getNodename() == null) {
-			String name = node.get(NODE_NAME).asText() + "(" + node.get(NODE_ID).asText() + ")";
-			String self = node.get(NODE_ATT_LINKS).get(NODE_ATT_SELF).asText();
-			logger.log(Level.WARN, name + " " + node.get(NODE_ACCOUNT_ID).asText() + " " + self);
-		} else {
-			iNodeEntries.putNode(nodeEntry);
 		}
 	}
 
