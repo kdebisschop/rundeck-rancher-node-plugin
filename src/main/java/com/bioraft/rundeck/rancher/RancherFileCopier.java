@@ -259,7 +259,7 @@ public class RancherFileCopier implements FileCopier, Describable {
     private String loadStoragePathData(final ExecutionContext context, final String passwordStoragePath)
             throws IOException {
         if (null == passwordStoragePath) {
-            return null;
+            throw new IOException("Rancher access key and secret key must not be null");
         }
         ResourceMeta contents = context.getStorageTree().getResource(passwordStoragePath).getContents();
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
