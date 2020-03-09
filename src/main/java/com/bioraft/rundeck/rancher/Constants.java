@@ -24,16 +24,28 @@ public class Constants {
     public static final String NODE_ATT_ACCOUNT = "account";
     public static final String NODE_ATT_ENVIRONMENT = "environment";
     public static final String NODE_ATT_IMAGE = "image";
+    public static final String NODE_ATT_LINKS = "links";
+    public static final String NODE_ATT_ACTIONS = "actions";
+    public static final String NODE_ATT_SELF = "self";
+
+    public static final String NODE_LINK_SERVICES = "services";
 
     public static final String STATE_ACTIVE = "active";
     public static final String STATE_UPGRADED = "upgraded";
 
+    public static final String NODE_ACTION_EXECUTE = "execute";
+
     public static final String LAUNCH_CONFIG = "launchConfig";
     public static final String START_FIRST = "startFirst";
-    public static final String LINKS = "links";
+
+    public static final String NODE_LABEL_STACK_NAME = "io.rancher.stack.name";
+    public static final String NODE_LABEL_STACK_SERVICE_NAME = "io.rancher.stack_service.name";
 
     public static final String DISPLAY_CODE = "CODE";
     public static final String SYNTAX_MODE_JSON = "json";
+
+    public static final String PATH_PROJECTS = "/projects/";
+    public static final String JSON_PAGINATION = "pagination";
 
     public static final String OPT_DATA_VOLUMES = "dataVolumes";
     public static final String OPT_ENV_VARS = "environment";

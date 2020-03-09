@@ -215,11 +215,11 @@ public class RancherUpgradeService implements NodeStepPlugin {
 		}
 
 		JsonNode service = apiPost(accessKey, secretKey, upgradeUrl, upgrade);
-		if (!service.has(NODE_STATE) || !service.path(LINKS).has("self")) {
+		if (!service.has(NODE_STATE) || !service.path(NODE_ATT_LINKS).has("self")) {
 			throw new NodeStepException("API POST returned incomplete data", ErrorCause.NO_UPGRADE_DATA, nodeName);
 		}
 		String state = service.get(NODE_STATE).asText();
-		String link = service.get(LINKS).get("self").asText();
+		String link = service.get(NODE_ATT_LINKS).get("self").asText();
 
 		// Poll until upgraded.
 		logger.log(Constants.INFO_LEVEL, "Upgrading " + service.path("name"));
@@ -232,7 +232,7 @@ public class RancherUpgradeService implements NodeStepPlugin {
 			}
 			service = apiGet(accessKey, secretKey, link);
 			state = service.get(NODE_STATE).asText();
-			link = service.get(LINKS).get("self").asText();
+			link = service.get(NODE_ATT_LINKS).get("self").asText();
 		}
 
 		// Finish the upgrade.
@@ -240,11 +240,11 @@ public class RancherUpgradeService implements NodeStepPlugin {
 		link = service.get("actions").get("finishupgrade").asText();
 		service = apiPost(accessKey, secretKey, link, "");
 		state = service.get(NODE_STATE).asText();
-		link = service.get(LINKS).get("self").asText();
+		link = service.get(NODE_ATT_LINKS).get("self").asText();
 		while (!state.equals(STATE_ACTIVE)) {
 			service = apiGet(accessKey, secretKey, link);
 			state = service.get(NODE_STATE).asText();
-			link = service.get(LINKS).get("self").asText();
+			link = service.get(NODE_ATT_LINKS).get("self").asText();
 			if (!state.equals(STATE_ACTIVE)) {
 				try {
 					Thread.sleep(sleepInterval);
