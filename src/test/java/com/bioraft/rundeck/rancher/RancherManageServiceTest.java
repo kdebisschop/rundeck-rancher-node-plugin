@@ -10,7 +10,6 @@ import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import okhttp3.Call;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -149,7 +148,6 @@ public class RancherManageServiceTest {
 
         String text = readFromInputStream(getResourceStream("service.json"));
         ObjectNode json1 = (ObjectNode) mapper.readTree(text);
-        ObjectNode json2 = (ObjectNode) mapper.readTree(text);
 
         when(client.get(any())).thenReturn(json1);
         when(client.post(any(), eq(""))).thenThrow(new IOException());

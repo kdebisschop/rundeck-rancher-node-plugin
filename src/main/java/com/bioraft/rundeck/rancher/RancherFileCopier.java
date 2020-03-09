@@ -63,6 +63,8 @@ public class RancherFileCopier implements FileCopier, Describable {
 
     static final Description DESC;
 
+    RancherWebSocketListener listener;
+
     static {
         DescriptionBuilder builder = DescriptionBuilder.builder();
         builder.name(RANCHER_SERVICE_PROVIDER);
@@ -77,6 +79,14 @@ public class RancherFileCopier implements FileCopier, Describable {
         builder.frameworkMapping(RANCHER_CONFIG_CLI_PATH, FMWK_RANCHER_CLI_PATH);
 
         DESC = builder.build();
+    }
+
+    public RancherFileCopier(RancherWebSocketListener listener) {
+        this.listener = listener;
+    }
+
+    public RancherFileCopier() {
+        this.listener = new RancherWebSocketListener();
     }
 
     @Override
@@ -213,7 +223,7 @@ public class RancherFileCopier implements FileCopier, Describable {
                               String destination) throws FileCopierException {
         try {
             String url = nodeAttributes.get("execute");
-            RancherWebSocketListener.putFile(url, accessKey, secretKey, file, destination);
+            listener.putFile(url, accessKey, secretKey, file, destination);
             context.getExecutionLogger().log(DEBUG_LEVEL, "PUT: '" + file + "'");
         } catch (IOException | InterruptedException e) {
             throw new FileCopierException(e.getMessage(), CONNECTION_FAILURE);

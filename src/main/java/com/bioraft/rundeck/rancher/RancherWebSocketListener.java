@@ -55,7 +55,7 @@ import okio.ByteString;
  * @author Karl DeBisschop <kdebisschop@gmail.com>
  * @since 2019-12-11
  */
-public final class RancherWebSocketListener extends WebSocketListener {
+public class RancherWebSocketListener extends WebSocketListener {
 
 	// Try to use a single HTTP client across methods.
 	private OkHttpClient client;
@@ -165,7 +165,7 @@ public final class RancherWebSocketListener extends WebSocketListener {
 	 * @throws IOException When job fails.
 	 * @throws InterruptedException When job is interrupted.
 	 */
-	public static void putFile(String url, String accessKey, String secretKey, File file, String destination)
+	public void putFile(String url, String accessKey, String secretKey, File file, String destination)
 			throws IOException, InterruptedException {
 		new RancherWebSocketListener().put(url, accessKey, secretKey, file, destination);
 	}
