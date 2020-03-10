@@ -15,15 +15,11 @@
  */
 package com.bioraft.rundeck.rancher;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Modifier;
-
-import static com.bioraft.rundeck.rancher.RancherShared.*;
 import static org.junit.Assert.*;
 
 /**
@@ -33,42 +29,41 @@ import static org.junit.Assert.*;
  * @since 2019-12-11
  */
 @RunWith(MockitoJUnitRunner.class)
-public class RancherSharedTest {
+public class StringsTest {
 
-    @Test(expected = InvocationTargetException.class)
-    public void testConstructorIsPrivate() throws NoSuchMethodException, IllegalAccessException, InstantiationException, InvocationTargetException {
-        Constructor<RancherShared> constructor = RancherShared.class.getDeclaredConstructor();
-        assertTrue(Modifier.isPrivate(constructor.getModifiers()));
-        constructor.setAccessible(true);
-        constructor.newInstance();
+    private Strings strings;
+
+    @Before
+    public void setup() {
+        this.strings = new Strings();
     }
 
     @Test
     public void testObjectWrapping() {
         String string = "\"a\": 1";
-        assertEquals(wrapObject(string), ensureStringIsJsonObject(string));
+        assertEquals(wrapObject(string), strings.ensureStringIsJsonObject(string));
 
-        assertEquals(wrapObject(string), ensureStringIsJsonObject("{" + string + "}"));
+        assertEquals(wrapObject(string), strings.ensureStringIsJsonObject("{" + string + "}"));
 
-        assertEquals(wrapObject(string), ensureStringIsJsonObject(" \n \t\r{" + string + "} \n\t"));
+        assertEquals(wrapObject(string), strings.ensureStringIsJsonObject(" \n \t\r{" + string + "} \n\t"));
 
-        assertEquals("", ensureStringIsJsonObject("  "));
+        assertEquals("", strings.ensureStringIsJsonObject("  "));
 
-        assertEquals("", ensureStringIsJsonObject(null));
+        assertEquals("", strings.ensureStringIsJsonObject(null));
     }
 
     @Test
     public void testArrayWrapping() {
         String string = "\"a\": 1";
-        assertEquals(wrapArray(string), ensureStringIsJsonArray(string));
+        assertEquals(wrapArray(string), strings.ensureStringIsJsonArray(string));
 
-        assertEquals(wrapArray(string), ensureStringIsJsonArray("[" + string + "]"));
+        assertEquals(wrapArray(string), strings.ensureStringIsJsonArray("[" + string + "]"));
 
-        assertEquals(wrapArray(string), ensureStringIsJsonArray("\r\n\t[" + string + "] \n "));
+        assertEquals(wrapArray(string), strings.ensureStringIsJsonArray("\r\n\t[" + string + "] \n "));
 
-        assertEquals("", ensureStringIsJsonArray("  "));
+        assertEquals("", strings.ensureStringIsJsonArray("  "));
 
-        assertEquals("", ensureStringIsJsonArray(null));
+        assertEquals("", strings.ensureStringIsJsonArray(null));
     }
 
     @Test
@@ -78,7 +73,7 @@ public class RancherSharedTest {
     }
 
     private void testOneMount(String mountPoint, String local, String options) {
-        assertEquals(mountPoint, mountPoint(local + ":" + mountPoint + options));
+        assertEquals(mountPoint, strings.mountPoint(local + ":" + mountPoint + options));
     }
 
     private String wrapArray(String string) {
