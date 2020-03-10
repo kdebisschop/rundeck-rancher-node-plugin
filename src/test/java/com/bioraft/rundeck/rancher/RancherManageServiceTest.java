@@ -104,6 +104,8 @@ public class RancherManageServiceTest {
         subject.executeNodeStep(ctx, cfg, node);
         verify(client, times(1)).get(any());
         verify(client, times(1)).post(any(), eq(""));
+        verify(logger, times(1)).
+                log(eq(com.dtolabs.rundeck.core.Constants.INFO_LEVEL), matches("Step activate complete on .*"));
     }
 
     @Test
@@ -121,6 +123,8 @@ public class RancherManageServiceTest {
         subject.executeNodeStep(ctx, cfg, node);
         verify(client, times(1)).get(any());
         verify(client, times(1)).post(any(), eq(""));
+        verify(logger, times(1)).
+                log(eq(com.dtolabs.rundeck.core.Constants.INFO_LEVEL), matches("Step deactivate complete on .*"));
     }
 
     @Test
@@ -138,6 +142,8 @@ public class RancherManageServiceTest {
         subject.executeNodeStep(ctx, cfg, node);
         verify(client, times(1)).get(any());
         verify(client, times(1)).post(any(), eq(""));
+        verify(logger, times(1)).
+                log(eq(com.dtolabs.rundeck.core.Constants.INFO_LEVEL), matches("Step restart complete on .*"));
     }
 
     @Test(expected = NodeStepException.class)

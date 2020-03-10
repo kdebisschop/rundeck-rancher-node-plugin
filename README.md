@@ -34,6 +34,23 @@ Configuration:
  - Users will need to add those keys to storage in addition to entering them as password
    on the configuration page.
 
+Note:
+
+Note that Rancher uses container ID to to construct the URL used to make API requests.
+When services are upgraded, new containers are created so the API urls used in the
+node operations cannot work anymore. The container does not exist, so the URL will
+fail. As long nodes are defined by containers, there is probably no way to avoid this.
+
+The result is that file copies and node executions will not work when performed in the
+same execution context after an upgrade because the node set is defined in that job
+context. The Rundeck solution to this issue is to do the upgrade then:
+
+ 1. Run a "Refresh Nodes" workflow step
+ 2. Run the node execute or file copy step as a job reference
+ 
+Note that refreshing nodes, Rundeck changes the nodes in the global context, but not
+the running job. So it is essential that the execution is in a job reference and not
+in the same job context.
 
 ### Rancher Node Executor
 

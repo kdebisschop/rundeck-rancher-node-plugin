@@ -351,8 +351,7 @@ public class RancherWebSocketListener extends WebSocketListener {
 	 * @throws JsonMappingException When JSON is invalid.
 	 * @throws JsonProcessingException When JSON is invalid.
 	 */
-	private String apiData(boolean attachStdout)
-			throws JsonMappingException, JsonProcessingException {
+	private String apiData(boolean attachStdout) throws JsonProcessingException {
 		ObjectMapper mapper = new ObjectMapper();
 		JsonNode root = mapper.readTree("{}");
 		((ObjectNode) root).put("tty", false);
