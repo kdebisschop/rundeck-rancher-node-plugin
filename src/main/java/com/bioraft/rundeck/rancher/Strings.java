@@ -16,13 +16,9 @@
 
 package com.bioraft.rundeck.rancher;
 
-import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.storage.ResourceMeta;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,13 +28,9 @@ import java.util.Map;
  * @author Karl DeBisschop <kdebisschop@gmail.com>
  * @since 2019-12-11
  */
-public class RancherShared {
+public class Strings {
 
-    private RancherShared() {
-        throw new IllegalStateException("Utility class");
-    }
-
-    public static String ensureStringIsJsonObject(String string) {
+    public String ensureStringIsJsonObject(String string) {
         if (string == null) {
             return "";
         }
@@ -49,7 +41,7 @@ public class RancherShared {
         return (string.startsWith("{") ? "" : "{") + string + (string.endsWith("}") ? "" : "}");
     }
 
-    public static String ensureStringIsJsonArray(String string) {
+    public String ensureStringIsJsonArray(String string) {
         if (string == null) {
             return "";
         }
@@ -60,26 +52,8 @@ public class RancherShared {
         return (string.startsWith("[") ? "" : "[") + string + (string.endsWith("]") ? "" : "]");
     }
 
-    public static String apiPath(String environmentId, String target) {
+    public String apiPath(String environmentId, String target) {
         return "/projects/" + environmentId + target;
-    }
-
-    /**
-     * Get a (secret) value from password storage.
-     *
-     * @param context             The current plugin execution context.
-     * @param passwordStoragePath The path to look up in storage.
-     * @return The requested secret or password.
-     * @throws IOException When there is an IO Exception writing to stream.
-     */
-    public static String loadStoragePathData(final ExecutionContext context, final String passwordStoragePath) throws IOException {
-        if (null == passwordStoragePath) {
-            throw new IOException("Storage path is not defined.");
-        }
-        ResourceMeta contents = context.getStorageTree().getResource(passwordStoragePath).getContents();
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        contents.writeContent(byteArrayOutputStream);
-        return new String(byteArrayOutputStream.toByteArray());
     }
 
     /**
@@ -88,11 +62,11 @@ public class RancherShared {
      * @param secretId A secret ID from Rancher (like "1se1")
      * @return JSON expression for secret reference.
      */
-    public static JsonNode buildSecret(String secretId) {
+    public JsonNode buildSecret(String secretId) {
         return (new ObjectMapper()).valueToTree(secretJsonMap(secretId));
     }
 
-    public static Map<String, String> secretJsonMap(String secretId) {
+    public Map<String, String> secretJsonMap(String secretId) {
         HashMap<String, String> map = new HashMap<>();
         map.put("type", "secretReference");
         map.put("uid", "0");
@@ -103,7 +77,7 @@ public class RancherShared {
         return map;
     }
 
-    public static String mountPoint(String mountSpec) {
+    public String mountPoint(String mountSpec) {
         return mountSpec.replaceFirst("[^:]+:", "").replaceFirst(":.*", "");
     }
 }

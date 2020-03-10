@@ -14,7 +14,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.rundeck.storage.api.Resource;
 
@@ -33,7 +32,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.powermock.api.mockito.PowerMockito.when;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class RancherManageServiceTest {
@@ -75,12 +74,12 @@ public class RancherManageServiceTest {
                         {CONFIG_ACCESSKEY_PATH, "keys/rancher/access.key"},
                         {CONFIG_SECRETKEY_PATH, "keys/rancher/secret.key"},})
                 .collect(Collectors.toMap(data -> data[0], data -> data[1]));
-        Mockito.when(node.getAttributes()).thenReturn(map);
-        Mockito.when(ctx.getLogger()).thenReturn(logger);
-        Mockito.when(ctx.getExecutionContext()).thenReturn(executionContext);
-        Mockito.when(executionContext.getStorageTree()).thenReturn(storageTree);
-        Mockito.when(storageTree.getResource(anyString())).thenReturn(treeResource);
-        Mockito.when(treeResource.getContents()).thenReturn(contents);
+        when(node.getAttributes()).thenReturn(map);
+        when(ctx.getLogger()).thenReturn(logger);
+        when(ctx.getExecutionContext()).thenReturn(executionContext);
+        when(executionContext.getStorageTree()).thenReturn(storageTree);
+        when(storageTree.getResource(anyString())).thenReturn(treeResource);
+        when(treeResource.getContents()).thenReturn(contents);
     }
 
     @Test

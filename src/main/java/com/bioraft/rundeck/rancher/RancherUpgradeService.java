@@ -40,7 +40,6 @@ import java.util.Map;
 
 import static com.bioraft.rundeck.rancher.Constants.*;
 import static com.bioraft.rundeck.rancher.Errors.ErrorCause.*;
-import static com.bioraft.rundeck.rancher.RancherShared.*;
 import static com.dtolabs.rundeck.core.Constants.DEBUG_LEVEL;
 import static com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants.CODE_SYNTAX_MODE;
 import static com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants.DISPLAY_TYPE_KEY;
@@ -123,8 +122,9 @@ public class RancherUpgradeService implements NodeStepPlugin {
 		String accessKey;
 		String secretKey;
 		try {
-			accessKey = loadStoragePathData(executionContext, attributes.get(CONFIG_ACCESSKEY_PATH));
-			secretKey = loadStoragePathData(executionContext, attributes.get(CONFIG_SECRETKEY_PATH));
+			Storage storage = new Storage(executionContext);
+			accessKey = storage.loadStoragePathData(attributes.get(CONFIG_ACCESSKEY_PATH));
+			secretKey = storage.loadStoragePathData(attributes.get(CONFIG_SECRETKEY_PATH));
 		} catch (IOException e) {
 			throw new NodeStepException("Could not get secret storage path", e, IO_EXCEPTION, this.nodeName);
 		}

@@ -32,7 +32,6 @@ import java.util.Map;
 
 import static com.bioraft.rundeck.rancher.Constants.*;
 import static com.bioraft.rundeck.rancher.Errors.ErrorCause.*;
-import static com.bioraft.rundeck.rancher.RancherShared.*;
 import static com.dtolabs.rundeck.core.Constants.ERR_LEVEL;
 import static com.dtolabs.rundeck.core.Constants.INFO_LEVEL;
 import static org.apache.commons.lang.StringUtils.defaultString;
@@ -90,9 +89,10 @@ public class RancherNewStack implements StepPlugin {
 
         String spec = endpoint + "/projects/" + environmentId + "/stacks/";
         try {
-            String accessKey = loadStoragePathData(context.getExecutionContext(), accessKeyPath);
+            Storage storage = new Storage(context.getExecutionContext());
+            String accessKey = storage.loadStoragePathData(accessKeyPath);
             client.setAccessKey(accessKey);
-            String secretKey = loadStoragePathData(context.getExecutionContext(), secretKeyPath);
+            String secretKey = storage.loadStoragePathData(secretKeyPath);
             client.setSecretKey(secretKey);
         } catch (IOException e) {
             throw new StepException("Could not get secret storage path", e, IO_EXCEPTION);

@@ -33,7 +33,6 @@ import java.io.IOException;
 import java.util.Map;
 
 import static com.bioraft.rundeck.rancher.Constants.*;
-import static com.bioraft.rundeck.rancher.RancherShared.*;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 

@@ -37,7 +37,6 @@ import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyUtil;
-import com.dtolabs.rundeck.core.storage.ResourceMeta;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
@@ -49,7 +48,6 @@ import java.util.function.Consumer;
 
 import static com.bioraft.rundeck.rancher.Constants.*;
 import static com.bioraft.rundeck.rancher.Errors.ErrorCause.*;
-import static com.bioraft.rundeck.rancher.RancherShared.*;
 import static com.dtolabs.rundeck.core.Constants.DEBUG_LEVEL;
 
 /**
@@ -126,8 +124,9 @@ public class RancherFileCopier implements FileCopier, Describable {
         String accessKey;
         String secretKey;
         try {
-            accessKey = this.loadStoragePathData(context, nodeAttributes.get(CONFIG_ACCESSKEY_PATH));
-            secretKey = this.loadStoragePathData(context, nodeAttributes.get(CONFIG_SECRETKEY_PATH));
+            Storage storage = new Storage(context);
+            accessKey = storage.loadStoragePathData(nodeAttributes.get(CONFIG_ACCESSKEY_PATH));
+            secretKey = storage.loadStoragePathData(nodeAttributes.get(CONFIG_SECRETKEY_PATH));
         } catch (IOException e) {
             throw new FileCopierException(e.getMessage(), AUTHENTICATION_FAILURE);
         }
@@ -249,26 +248,4 @@ public class RancherFileCopier implements FileCopier, Describable {
             new BufferedReader(new InputStreamReader(inputStream)).lines().forEach(consumer);
         }
     }
-
-    /**
-     * Get a (secret) value from password storage.
-     *
-	 * @param context             The execution object that contains a reference to Storage.
-	 * @param passwordStoragePath A path in Rundeck stage where value is stored.
-	 *
-	 * @return The specified password.
-	 *
-	 * @throws IOException When connection to Rundeck storage fails.
-     */
-    private String loadStoragePathData(final ExecutionContext context, final String passwordStoragePath)
-            throws IOException {
-        if (null == passwordStoragePath) {
-            throw new IOException("Rancher access key and secret key must not be null");
-        }
-        ResourceMeta contents = context.getStorageTree().getResource(passwordStoragePath).getContents();
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        contents.writeContent(byteArrayOutputStream);
-        return new String(byteArrayOutputStream.toByteArray());
-    }
-
 }

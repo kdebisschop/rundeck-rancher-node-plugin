@@ -31,7 +31,6 @@ import java.util.Map;
 import static com.bioraft.rundeck.rancher.Constants.OPT_DATA_VOLUMES;
 import static com.bioraft.rundeck.rancher.Constants.OPT_SECRETS;
 import static com.bioraft.rundeck.rancher.Errors.ErrorCause.*;
-import static com.bioraft.rundeck.rancher.RancherShared.*;
 
 /**
  * Workflow Node Step Plug-in to upgrade a service associated with a node.
@@ -139,7 +138,7 @@ public class RancherLaunchConfig {
 			} else {
 				objectNode = (ObjectNode) jsonNode;
 			}
-			JsonNode map = objectMapper.readTree(ensureStringIsJsonObject(newData));
+			JsonNode map = objectMapper.readTree((new Strings()).ensureStringIsJsonObject(newData));
 			Iterator<Map.Entry<String, JsonNode>> iterator = map.fields();
 			while (iterator.hasNext()) {
 				Map.Entry<String, JsonNode> entry = iterator.next();
@@ -173,7 +172,7 @@ public class RancherLaunchConfig {
 		ObjectNode objectNode = (ObjectNode) launchConfigObject.get(field);
 		ObjectMapper objectMapper = new ObjectMapper();
 		try {
-			JsonNode map = objectMapper.readTree(ensureStringIsJsonArray(remove));
+			JsonNode map = objectMapper.readTree((new Strings()).ensureStringIsJsonArray(remove));
 			Iterator<JsonNode> iterator = map.elements();
 			while (iterator.hasNext()) {
 				String entry = iterator.next().asText();
@@ -209,7 +208,7 @@ public class RancherLaunchConfig {
 
 			// Add in the new or replacement secrets specified in the step.
 			for (String secretId : secrets.split("[,; ]+")) {
-				secretsArray.add(buildSecret(secretId));
+				secretsArray.add((new Strings()).buildSecret(secretId));
 				logger.log(Constants.INFO_LEVEL, "Adding secret map to " + secretId);
 			}
 		}
@@ -238,16 +237,16 @@ public class RancherLaunchConfig {
 				Iterator<JsonNode> elements = launchConfigObject.get(OPT_DATA_VOLUMES).elements();
 				while (elements.hasNext()) {
 					String element = elements.next().asText();
-					hashMap.put(mountPoint(element), element);
+					hashMap.put((new Strings()).mountPoint(element), element);
 				}
 			}
 
 			// Copy new mounts into hash, possibly overwriting some vales.
 			ObjectMapper objectMapper = new ObjectMapper();
 			try {
-				JsonNode map = objectMapper.readTree(ensureStringIsJsonArray(newData));
+				JsonNode map = objectMapper.readTree((new Strings()).ensureStringIsJsonArray(newData));
 				Iterator<JsonNode> mounts = map.elements();
-				mounts.forEachRemaining(spec -> hashMap.put(mountPoint(spec.asText()), spec.asText()));
+				mounts.forEachRemaining(spec -> hashMap.put((new Strings()).mountPoint(spec.asText()), spec.asText()));
 
 			} catch (JsonProcessingException e) {
 				throw new NodeStepException("Could not parse JSON for " + OPT_DATA_VOLUMES + "\n" + newData, e, INVALID_CONFIGURATION, nodeName);
