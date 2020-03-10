@@ -38,15 +38,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.ByteSource;
 import com.google.common.primitives.Bytes;
 
-import okhttp3.Credentials;
-import okhttp3.HttpUrl;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
-import okhttp3.WebSocket;
-import okhttp3.WebSocketListener;
+import okhttp3.*;
 import okio.ByteString;
 
 /**
@@ -90,6 +82,14 @@ public class RancherWebSocketListener extends WebSocketListener {
 	private static final int STDERR_TOKLEN = STDERR_TOK.length() + 1;
 	private int currentOutputChannel = -1;
 
+	public RancherWebSocketListener() {
+		client = new OkHttpClient.Builder().pingInterval(50, TimeUnit.SECONDS).callTimeout(0, TimeUnit.HOURS).build();
+	}
+
+	public RancherWebSocketListener(OkHttpClient client) {
+		this.client = client;
+	}
+
 	@Override
 	public void onMessage(WebSocket webSocket, String text) {
 		logDockerStream(Bytes.concat(nextHeader, Base64.getDecoder().decode(text)));
@@ -128,13 +128,23 @@ public class RancherWebSocketListener extends WebSocketListener {
 	public static void runJob(String url, String accessKey, String secretKey, String[] command,
 			ExecutionListener listener, String temp, int timeout) throws IOException, InterruptedException {
 		String file = " >>" + temp + ".pid; ";
+		new RancherWebSocketListener().runJob(url, accessKey, secretKey, listener, command(command, file), timeout);
+	}
+
+	public static void runJob(OkHttpClient client, String url, String accessKey, String secretKey, String[] command,
+							  ExecutionListener listener, String temp, int timeout) throws IOException, InterruptedException {
+		String file = " >>" + temp + ".pid; ";
+		new RancherWebSocketListener(client).runJob(url, accessKey, secretKey, listener, command(command, file), timeout);
+	}
+
+	private static String[] command(String[] command, String temp) {
+		String file = " >>" + temp + ".pid; ";
 		// Prefix STDERR lines with STDERR_TOK to decode in logging step.
 		String job = "( " + String.join(" ", command) + ") 2> >(while read line;do echo \"" + STDERR_TOK
 				+ " $line\";done) ;";
 		String remote = "printf $$" + file + job + "printf ' %s' $?" + file;
 		// Note that bash is required to support adding a prefix token to STDERR.
-		String[] cmd = { "bash", "-c", remote };
-		new RancherWebSocketListener().runJob(url, accessKey, secretKey, listener, cmd, timeout);
+		return new String[]{ "bash", "-c", remote };
 	}
 
 	/**
@@ -185,7 +195,6 @@ public class RancherWebSocketListener extends WebSocketListener {
 	 */
 	private void runJob(String url, String accessKey, String secretKey, ExecutionListener listener, String[] command,
 			int timeout) throws IOException, InterruptedException {
-		client = new OkHttpClient.Builder().pingInterval(50, TimeUnit.SECONDS).callTimeout(0, TimeUnit.HOURS).build();
 
 		this.url = url;
 		this.accessKey = accessKey;
@@ -330,7 +339,8 @@ public class RancherWebSocketListener extends WebSocketListener {
 			RequestBody body = RequestBody.create(MediaType.parse("application/json"), content);
 			Request request = new Request.Builder().url(path).post(body)
 					.addHeader("Authorization", Credentials.basic(accessKey, secretKey)).build();
-			Response response = client.newCall(request).execute();
+			Call call = client.newCall(request);
+			Response response = call.execute();
 			ObjectMapper mapper = new ObjectMapper();
 			if (response.body() != null) {
 				return mapper.readTree(response.body().string());
@@ -380,10 +390,10 @@ public class RancherWebSocketListener extends WebSocketListener {
 				// To do that, we make a BufferedReader and process it line-by-line in log
 				// function.
 				if (listener != null) {
-					stringReader = new BufferedReader(new StringReader(new String(message.content.array())));
+					stringReader = new BufferedReader(new StringReader(new String(message.content().array())));
 					log(stringReader);
 				} else {
-					output.append(new String(message.content.array()));
+					output.append(new String(message.content().array()));
 				}
 				nextHeader = reader.nextHeader();
 			}

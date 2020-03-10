@@ -24,10 +24,10 @@ import java.nio.ByteBuffer;
 
 public class LogMessage {
 
-	final Stream stream;
-	final ByteBuffer content;
+	private final Stream stream;
+	private final ByteBuffer content;
 
-	public LogMessage(final int streamId, final ByteBuffer content) {
+	public LogMessage(final int streamId, final ByteBuffer content) throws IllegalArgumentException {
 		this(Stream.of(streamId), content);
 	}
 
@@ -57,7 +57,7 @@ public class LogMessage {
 			return id;
 		}
 
-		public static Stream of(final int id) {
+		public static Stream of(final int id) throws IllegalArgumentException {
 			switch (id) {
 			case 0:
 				return STDIN;
