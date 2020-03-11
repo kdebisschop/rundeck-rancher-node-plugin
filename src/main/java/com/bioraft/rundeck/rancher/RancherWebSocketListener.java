@@ -90,6 +90,11 @@ public class RancherWebSocketListener extends WebSocketListener {
 		this.client = client;
 	}
 
+	public RancherWebSocketListener(ExecutionListener listener, StringBuilder output) {
+		this.listener = listener;
+		this.output = output;
+	}
+
 	@Override
 	public void onMessage(WebSocket webSocket, String text) {
 		logDockerStream(Bytes.concat(nextHeader, Base64.getDecoder().decode(text)));
@@ -342,13 +347,13 @@ public class RancherWebSocketListener extends WebSocketListener {
 			Call call = client.newCall(request);
 			Response response = call.execute();
 			ObjectMapper mapper = new ObjectMapper();
-			if (response.body() != null) {
+			if (response.body() != null && response.body().contentLength() > 0) {
 				return mapper.readTree(response.body().string());
 			} else {
 				throw new IOException("WebSocket response was null");
 			}
 		} catch (IOException e) {
-			System.out.println(e.getMessage());
+			log(0, e.getMessage());
 			throw e;
 		}
 	}

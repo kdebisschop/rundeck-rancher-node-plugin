@@ -2,18 +2,22 @@ package com.bioraft.rundeck.rancher;
 
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
 import okhttp3.*;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Matchers;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 import java.io.IOException;
-import java.util.concurrent.ExecutorService;
 
 import static org.junit.Assert.assertNotNull;
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
 public class RancherWebSocketListenerTest {
+
+    MockWebServer mockWebServer;
 
     @Mock
     ExecutionListener listener;
@@ -21,20 +25,17 @@ public class RancherWebSocketListenerTest {
     @Mock
     OkHttpClient client;
 
-    @Mock
-    Call call;
+    @Before
+    public void setup() throws IOException {
+        MockitoAnnotations.initMocks(this);
+        mockWebServer = new MockWebServer();
+        mockWebServer.start();
+    }
 
-    @Mock
-    Response response;
-
-    @Mock
-    ResponseBody responseBody;
-
-    @Mock
-    Dispatcher dispatcher;
-
-    @Mock
-    ExecutorService executorService;
+    @After
+    public void teardown() throws IOException {
+        mockWebServer.shutdown();
+    }
 
     @Test
     public void testConstructor() {
@@ -48,25 +49,76 @@ public class RancherWebSocketListenerTest {
         assertNotNull(listener);
     }
 
+    @Test
     public void testRunJob() throws InterruptedException, IOException {
-        String url = "https://rancher.example.com/v2-beta/";
+        String url = mockWebServer.url("/v2-beta/").toString();
         String accessKey = "access";
         String secretKey = "secret";
         String[] command = {"ls"};
         String temp = "";
         int timeout = 1;
+        MockResponse mockedResponse = new MockResponse();
+        mockedResponse.setResponseCode(200);
+        mockedResponse.setBody("{\"url\":\"" + url + "\", \"token\":\"abcdef\"}");
+        mockWebServer.enqueue(mockedResponse);
+        MockResponse upgrade = new MockResponse()
+                .setStatus("HTTP/1.1 101 Switching Protocols")
+                .setHeader("Connection", "Upgrade")
+                .setHeader("Upgrade", "websocket")
+                .setHeader("Sec-WebSocket-Accept", "null");
+        mockWebServer.enqueue(upgrade);
+        doNothing().when(listener).log(anyInt(), anyString());
+        RancherWebSocketListener.runJob(url, accessKey, secretKey, command, listener, temp, timeout);
+        verify(listener, times(0)).log(anyInt(), anyString());
+    }
 
-        doNothing().when(client.newWebSocket(any(), any()));
-        when(client.newCall(Matchers.anyObject())).thenReturn(call);
-        when(call.execute()).thenReturn(response);
-        when(response.body()).thenReturn(responseBody);
-        when(responseBody.string()).thenReturn("{}");
-        when(client.dispatcher()).thenReturn(dispatcher);
-        when(dispatcher.executorService()).thenReturn(executorService);
-        doNothing().when(executorService).shutdown();
-        doNothing().when(executorService).awaitTermination(any(), any());
-        RancherWebSocketListener.runJob(client, url, accessKey, secretKey, command, listener, temp, timeout);
-        verify(client, times(1)).newWebSocket(any(), any());
-        verify(client, times(2)).dispatcher();
+    @Test(expected = IOException.class)
+    public void throwExceptionWhenTokenFails() throws InterruptedException, IOException {
+        String url = mockWebServer.url("/v2-beta/").toString();
+        String accessKey = "access";
+        String secretKey = "secret";
+        String[] command = {"ls"};
+        String temp = "";
+        int timeout = 1;
+        MockResponse mockedResponse = new MockResponse();
+        mockedResponse.setResponseCode(200);
+        mockedResponse.setBody("");
+        mockWebServer.enqueue(mockedResponse);
+        MockResponse upgrade = new MockResponse()
+                .setStatus("HTTP/1.1 101 Switching Protocols")
+                .setHeader("Connection", "Upgrade")
+                .setHeader("Upgrade", "websocket")
+                .setHeader("Sec-WebSocket-Accept", "null");
+        mockWebServer.enqueue(upgrade);
+        RancherWebSocketListener.runJob(url, accessKey, secretKey, command, listener, temp, timeout);
+    }
+
+    @Test(expected = IOException.class)
+    public void throwExceptionWhenTokenInvalid() throws InterruptedException, IOException {
+        String url = mockWebServer.url("/v2-beta/").toString();
+        String accessKey = "access";
+        String secretKey = "secret";
+        String[] command = {"ls"};
+        String temp = "";
+        int timeout = 1;
+        MockResponse mockedResponse = new MockResponse();
+        mockedResponse.setResponseCode(200);
+        mockedResponse.setBody("{");
+        mockWebServer.enqueue(mockedResponse);
+        MockResponse upgrade = new MockResponse()
+                .setStatus("HTTP/1.1 101 Switching Protocols")
+                .setHeader("Connection", "Upgrade")
+                .setHeader("Upgrade", "websocket")
+                .setHeader("Sec-WebSocket-Accept", "null");
+        mockWebServer.enqueue(upgrade);
+        RancherWebSocketListener.runJob(url, accessKey, secretKey, command, listener, temp, timeout);
+    }
+
+    //    @Test
+    public void testLogDockerStream() {
+        RancherWebSocketListener subject = new RancherWebSocketListener(listener, new StringBuilder());
+        byte[] bytes = "aaa".getBytes();
+        subject.logDockerStream(bytes);
+        verify(listener, times(1)).log(1, "aaa");
     }
 }
