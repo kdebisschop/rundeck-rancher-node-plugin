@@ -114,11 +114,66 @@ public class RancherWebSocketListenerTest {
         RancherWebSocketListener.runJob(url, accessKey, secretKey, command, listener, temp, timeout);
     }
 
-    //    @Test
+    @Test
     public void testLogDockerStream() {
         RancherWebSocketListener subject = new RancherWebSocketListener(listener, new StringBuilder());
+        byte[] bytes = "abcdef".getBytes();
+        doNothing().when(listener).log(anyInt(), anyString());
+        subject.logDockerStream(bytes);
+        // Buffer is designed to add a line feed at end of message.
+        verify(listener, times(1)).log(2, "abcdef\n");
+    }
+
+    @Test
+    public void testLogDockerStreamStderr() {
+        RancherWebSocketListener subject = new RancherWebSocketListener(listener, new StringBuilder());
+        byte[] bytes = ("STDERR_6v9ZvwThpU1FtyrlIBf4UIC8" + "abcde\n").getBytes();
+        doNothing().when(listener).log(anyInt(), anyString());
+        subject.logDockerStream(bytes);
+        // Buffer is designed to add a line feed at end of message.
+        verify(listener, times(1)).log(1, "abcde\n");
+    }
+
+    @Test
+    public void testLogDockerStreamMixed() {
+        RancherWebSocketListener subject = new RancherWebSocketListener(listener, new StringBuilder());
+        byte[] bytes = ("STDERR_6v9ZvwThpU1FtyrlIBf4UIC8" + "abcde\nabcde\n").getBytes();
+        doNothing().when(listener).log(anyInt(), anyString());
+        subject.logDockerStream(bytes);
+        // Buffer is designed to add a line feed at end of message.
+        verify(listener, times(1)).log(1, "abcde\n");
+        verify(listener, times(1)).log(2, "abcde\n");
+    }
+
+    @Test
+    public void testLogDockerStreamMixed2() {
+        RancherWebSocketListener subject = new RancherWebSocketListener(listener, new StringBuilder());
+        byte[] bytes = ("abcde\n" + "STDERR_6v9ZvwThpU1FtyrlIBf4UIC8" + "abcde\n").getBytes();
+        doNothing().when(listener).log(anyInt(), anyString());
+        subject.logDockerStream(bytes);
+        // Buffer is designed to add a line feed at end of message.
+        verify(listener, times(1)).log(1, "abcde\n");
+        verify(listener, times(1)).log(2, "abcde\n");
+    }
+
+    @Test
+    public void testLogDockerStreamWithNoListener() {
+        RancherWebSocketListener subject = new RancherWebSocketListener(null, new StringBuilder());
         byte[] bytes = "aaa".getBytes();
         subject.logDockerStream(bytes);
-        verify(listener, times(1)).log(1, "aaa");
+    }
+
+    @Test
+    public void testLogDockerStreamEmptyWithNoListener() {
+        RancherWebSocketListener subject = new RancherWebSocketListener(null, new StringBuilder());
+        byte[] bytes = "".getBytes();
+        subject.logDockerStream(bytes);
+    }
+
+    @Test
+    public void testLogDockerStreamStderrWithNoListener() {
+        RancherWebSocketListener subject = new RancherWebSocketListener(null, new StringBuilder());
+        byte[] bytes = ("STDERR_6v9ZvwThpU1FtyrlIBf4UIC8" + "aaa").getBytes();
+        subject.logDockerStream(bytes);
     }
 }

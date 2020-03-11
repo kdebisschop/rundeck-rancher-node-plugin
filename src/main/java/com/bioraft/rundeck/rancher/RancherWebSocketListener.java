@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.util.Base64;
 import java.util.Objects;
@@ -134,12 +135,6 @@ public class RancherWebSocketListener extends WebSocketListener {
 			ExecutionListener listener, String temp, int timeout) throws IOException, InterruptedException {
 		String file = " >>" + temp + ".pid; ";
 		new RancherWebSocketListener().runJob(url, accessKey, secretKey, listener, command(command, file), timeout);
-	}
-
-	public static void runJob(OkHttpClient client, String url, String accessKey, String secretKey, String[] command,
-							  ExecutionListener listener, String temp, int timeout) throws IOException, InterruptedException {
-		String file = " >>" + temp + ".pid; ";
-		new RancherWebSocketListener(client).runJob(url, accessKey, secretKey, listener, command(command, file), timeout);
 	}
 
 	private static String[] command(String[] command, String temp) {
@@ -395,7 +390,9 @@ public class RancherWebSocketListener extends WebSocketListener {
 				// To do that, we make a BufferedReader and process it line-by-line in log
 				// function.
 				if (listener != null) {
-					stringReader = new BufferedReader(new StringReader(new String(message.content().array())));
+					ByteBuffer buffer = message.content();
+					String string = new String(buffer.array());
+					stringReader = new BufferedReader(new StringReader(string));
 					log(stringReader);
 				} else {
 					output.append(new String(message.content().array()));
@@ -420,7 +417,7 @@ public class RancherWebSocketListener extends WebSocketListener {
 		String line;
 		while ((line = stringReader.readLine()) != null) {
 			if (line.startsWith(STDERR_TOK)) {
-				this.log(Constants.WARN_LEVEL, line.substring(STDERR_TOKLEN) + "\n");
+				this.log(Constants.WARN_LEVEL, line.substring(STDERR_TOKLEN -1) + "\n");
 			} else {
 				this.log(Constants.INFO_LEVEL, line + "\n");
 			}

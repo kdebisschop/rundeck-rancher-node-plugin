@@ -28,7 +28,8 @@ public class LogMessage {
 	private final ByteBuffer content;
 
 	public LogMessage(final int streamId, final ByteBuffer content) throws IllegalArgumentException {
-		this(Stream.of(streamId), content);
+		this.stream = Stream.of(streamId);
+		this.content = content;
 	}
 
 	public LogMessage(final Stream stream, final ByteBuffer content) {
@@ -41,7 +42,7 @@ public class LogMessage {
 	}
 
 	public ByteBuffer content() {
-		return content.asReadOnlyBuffer();
+		return content;
 	}
 
 	public enum Stream {
