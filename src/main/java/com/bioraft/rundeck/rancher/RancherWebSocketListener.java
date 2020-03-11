@@ -82,7 +82,7 @@ public class RancherWebSocketListener extends WebSocketListener {
 	private byte[] nextHeader;
 
 	// Log listener from Rundeck.
-	private ExecutionListener listener;
+	private ExecutionListener executionListener;
 
 	// These are used to reconstruct STDERR since it is lost in the stream from
 	// Rancher.
@@ -191,7 +191,7 @@ public class RancherWebSocketListener extends WebSocketListener {
 		this.accessKey = accessKey;
 		this.secretKey = secretKey;
 		this.commandList = command;
-		this.listener = listener;
+		this.executionListener = listener;
 		this.nextHeader = new byte[0];
 
 		// Even though we are passing data back to an external listener, we need to
@@ -379,7 +379,7 @@ public class RancherWebSocketListener extends WebSocketListener {
 				// If logging to RunDeck, we send lines beginning with STRDERR_TOK to ERR_LEVEL.
 				// To do that, we make a BufferedReader and process it line-by-line in log
 				// function.
-				if (listener != null) {
+				if (executionListener != null) {
 					stringReader = new BufferedReader(new StringReader(new String(message.content.array())));
 					log(stringReader);
 				} else {
@@ -411,7 +411,7 @@ public class RancherWebSocketListener extends WebSocketListener {
 			}
 		}
 		if (output.length() > 0) {
-			listener.log(currentOutputChannel, output.toString());
+			executionListener.log(currentOutputChannel, output.toString());
 		}
 		output = new StringBuilder();
 	}
@@ -424,12 +424,12 @@ public class RancherWebSocketListener extends WebSocketListener {
 	 * @param message The message to log.
 	 */
 	private void log(int level, String message) {
-		if (listener != null) {
+		if (executionListener != null) {
 			if (currentOutputChannel == -1) {
 				currentOutputChannel = level;
 			} else if (currentOutputChannel != level) {
 				if (output.length() > 0) {
-					listener.log(currentOutputChannel, output.toString());
+					executionListener.log(currentOutputChannel, output.toString());
 				}
 				currentOutputChannel = level;
 				output = new StringBuilder();
