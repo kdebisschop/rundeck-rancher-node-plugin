@@ -100,7 +100,6 @@ public class Constants {
     public static final String CONFIG_NODE_TYPE_INCLUDE_SERVICE = "node-type-include-service";
     public static final String CONFIG_NODE_TYPE_INCLUDE_CONTAINER = "node-type-include-container";
     public static final String CONFIG_LIMIT_ONE_CONTAINER = "limit-to-one";
-    public static final String CONFIG_HANDLE_STOPPED = "exclude-include-restrict-stopped";
     public static final String CONFIG_HANDLE_SYSTEM = "io-rancher-container-system";
     public static final String CONFIG_HANDLE_GLOBAL = "io-rancher-scheduler-global";
     public static final String CONFIG_TAGS = "tags";
