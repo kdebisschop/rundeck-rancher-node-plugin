@@ -70,7 +70,7 @@ public class RancherWebSocketListener extends WebSocketListener {
 	private byte[] nextHeader;
 
 	// Log listener from Rundeck.
-	private ExecutionListener listener;
+	private ExecutionListener executionListener;
 
 	// These are used to reconstruct STDERR since it is lost in the stream from
 	// Rancher.
@@ -86,8 +86,8 @@ public class RancherWebSocketListener extends WebSocketListener {
 		this.client = client;
 	}
 
-	public RancherWebSocketListener(ExecutionListener listener, StringBuilder output) {
-		this.listener = listener;
+	public RancherWebSocketListener(ExecutionListener executionListener, StringBuilder output) {
+		this.executionListener = executionListener;
 		this.output = output;
 	}
 
@@ -195,7 +195,7 @@ public class RancherWebSocketListener extends WebSocketListener {
 		this.accessKey = accessKey;
 		this.secretKey = secretKey;
 		this.commandList = command;
-		this.listener = listener;
+		this.executionListener = listener;
 		this.nextHeader = new byte[0];
 
 		// Even though we are passing data back to an external listener, we need to
@@ -377,14 +377,12 @@ public class RancherWebSocketListener extends WebSocketListener {
 	public void logDockerStream(byte[] bytes) {
 		LogMessage message;
 		BufferedReader stringReader;
-		try {
-			InputStream stream = ByteSource.wrap(bytes).openStream();
-			MessageReader reader = new MessageReader(stream);
+		try (MessageReader reader = new MessageReader(ByteSource.wrap(bytes).openStream())) {
 			while ((message = reader.nextMessage()) != null) {
 				// If logging to RunDeck, we send lines beginning with STRDERR_TOK to ERR_LEVEL.
 				// To do that, we make a BufferedReader and process it line-by-line in log
 				// function.
-				if (listener != null) {
+				if (executionListener != null) {
 					ByteBuffer buffer = message.content();
 					String string = new String(buffer.array());
 					stringReader = new BufferedReader(new StringReader(string));
@@ -418,7 +416,7 @@ public class RancherWebSocketListener extends WebSocketListener {
 			}
 		}
 		if (output.length() > 0) {
-			listener.log(currentOutputChannel, output.toString());
+			executionListener.log(currentOutputChannel, output.toString());
 		}
 		output = new StringBuilder();
 	}
@@ -431,12 +429,12 @@ public class RancherWebSocketListener extends WebSocketListener {
 	 * @param message The message to log.
 	 */
 	private void log(int level, String message) {
-		if (listener != null) {
+		if (executionListener != null) {
 			if (currentOutputChannel == -1) {
 				currentOutputChannel = level;
 			} else if (currentOutputChannel != level) {
 				if (output.length() > 0) {
-					listener.log(currentOutputChannel, output.toString());
+					executionListener.log(currentOutputChannel, output.toString());
 				}
 				currentOutputChannel = level;
 				output = new StringBuilder();
