@@ -26,7 +26,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -70,7 +70,6 @@ public class RancherResourceModelSourceTest {
 		configuration.setProperty(CONFIG_SECRETKEY_PATH, "keys/rancher/secret.key");
 		configuration.setProperty(CONFIG_STACK_FILTER, "mysite-dev");
 		configuration.setProperty(CONFIG_LIMIT_ONE_CONTAINER, "true");
-		configuration.setProperty(CONFIG_HANDLE_STOPPED, "Exclude");
 		configuration.setProperty(CONFIG_HANDLE_SYSTEM, "Exclude");
 		configuration.setProperty(CONFIG_HANDLE_GLOBAL, "Exclude");
 		configuration.setProperty(CONFIG_TAGS, "rancher");
@@ -159,37 +158,12 @@ public class RancherResourceModelSourceTest {
 	}
 
 	@Test
-	public void processStopppedContainers() throws ResourceModelSourceException, IOException, ConfigurationException {
-		configuration.setProperty(CONFIG_ENVIRONMENT_IDS, "1a10");
-		configuration.setProperty(CONFIG_STACK_FILTER, "");
-		configuration.setProperty(CONFIG_NODE_TYPE_INCLUDE_SERVICE, "false");
-		configuration.setProperty(CONFIG_NODE_TYPE_INCLUDE_CONTAINER, "true");
-		configuration.setProperty(CONFIG_LIMIT_ONE_CONTAINER, "false");
-		configuration.setProperty(CONFIG_HANDLE_STOPPED, "true");
-		configuration.setProperty(CONFIG_LABELS_INCLUDE_ATTRIBUTES, "com.example.(description|group)");
-		configuration.setProperty(CONFIG_LABELS_INCLUDE_TAGS, "com.example.(group|site)");
-
-		JsonNode jsonNode = resourceToJson("containers.json");
-		assert jsonNode != null;
-		when(client.get(anyString())).thenReturn(env(), jsonNode);
-
-		source = new RancherResourceModelSource(configuration, client);
-		INodeSet nodeList = source.getNodes();
-
-		verify(client, times(1)).get(matches(".*/projects/1a10$"));
-		verify(client, times(1)).get(matches(".*/projects/1a10/containers$"));
-
-		assertEquals(3, nodeList.getNodes().size());
-	}
-
-	@Test
 	public void processSystemContainers() throws ResourceModelSourceException, IOException, ConfigurationException {
 		configuration.setProperty(CONFIG_ENVIRONMENT_IDS, "1a10");
 		configuration.setProperty(CONFIG_STACK_FILTER, "");
 		configuration.setProperty(CONFIG_NODE_TYPE_INCLUDE_SERVICE, "false");
 		configuration.setProperty(CONFIG_NODE_TYPE_INCLUDE_CONTAINER, "true");
 		configuration.setProperty(CONFIG_LIMIT_ONE_CONTAINER, "false");
-		configuration.setProperty(CONFIG_HANDLE_STOPPED, "true");
 		configuration.setProperty(CONFIG_HANDLE_GLOBAL, "true");
 		configuration.setProperty(CONFIG_HANDLE_SYSTEM, "true");
 		configuration.setProperty(CONFIG_LABELS_INCLUDE_ATTRIBUTES, "com.example.(description|group)");
@@ -205,7 +179,7 @@ public class RancherResourceModelSourceTest {
 		verify(client, times(1)).get(matches(".*/projects/1a10$"));
 		verify(client, times(1)).get(matches(".*/projects/1a10/containers$"));
 
-		assertEquals(5, nodeList.getNodes().size());
+		assertEquals(4, nodeList.getNodes().size());
 	}
 
 	@Test

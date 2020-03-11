@@ -69,8 +69,8 @@ public class MessageReader implements Closeable {
 	 * Looks for frame headers in stream and sends a message on each successive call
 	 * until the buffer is exhausted.
 	 * 
-	 * @return
-	 * @throws IOException
+	 * @return Tne next message from the reader.
+	 * @throws IOException if streams are not readable.
 	 */
 	public LogMessage nextMessage() throws IOException {
 		stream.mark(HEADER_SIZE);
@@ -119,9 +119,9 @@ public class MessageReader implements Closeable {
 	 * Build a header for the rest of the Docker frame, which should arrive in the next
 	 * message from Rancher.
 	 * 
-	 * @param idZ
-	 * @param frameSize
-	 * @throws IOException
+	 * @param idZ The stream ID from the frame we are working on.
+	 * @param frameSize The size of the Docker frame we are creating.
+	 * @throws IOException if streams are not readable.
 	 */
 	private void calculateNextHeader(int idZ, int frameSize) throws IOException {
 		// Calculate the number of bytes expected before next Docker frame.
@@ -135,7 +135,6 @@ public class MessageReader implements Closeable {
 	 * message from Rancher.
 	 * 
 	 * @return An 8-byte header.
-	 * @throws IOException
 	 */
 	public byte[] nextHeader() {
 		return expected;

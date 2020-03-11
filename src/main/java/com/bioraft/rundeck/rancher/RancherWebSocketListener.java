@@ -16,17 +16,6 @@
 
 package com.bioraft.rundeck.rancher;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringReader;
-import java.nio.file.Files;
-import java.util.Base64;
-import java.util.Objects;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -37,17 +26,18 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.ByteSource;
 import com.google.common.primitives.Bytes;
-
-import okhttp3.Credentials;
-import okhttp3.HttpUrl;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
-import okhttp3.WebSocket;
-import okhttp3.WebSocketListener;
+import okhttp3.*;
 import okio.ByteString;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.StringReader;
+import java.nio.file.Files;
+import java.util.Base64;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * RancherWebSocketListener connects to Rancher containers.
@@ -89,6 +79,19 @@ public class RancherWebSocketListener extends WebSocketListener {
 	private static final String STDERR_TOK = "STDERR_6v9ZvwThpU1FtyrlIBf4UIC8";
 	private static final int STDERR_TOKLEN = STDERR_TOK.length() + 1;
 	private int currentOutputChannel = -1;
+
+	public RancherWebSocketListener() {
+
+	}
+
+	public RancherWebSocketListener(OkHttpClient client) {
+		this.client = client;
+	}
+
+	public RancherWebSocketListener(ExecutionListener listener, StringBuilder output) {
+		this.listener = listener;
+		this.output = output;
+	}
 
 	@Override
 	public void onMessage(WebSocket webSocket, String text) {
@@ -134,7 +137,7 @@ public class RancherWebSocketListener extends WebSocketListener {
 		String remote = "printf $$" + file + job + "printf ' %s' $?" + file;
 		// Note that bash is required to support adding a prefix token to STDERR.
 		String[] cmd = { "bash", "-c", remote };
-		new RancherWebSocketListener().runJob(url, accessKey, secretKey, listener, cmd, timeout);
+		(new RancherWebSocketListener()).runJob(url, accessKey, secretKey, listener, cmd, timeout);
 	}
 
 	/**
@@ -151,7 +154,7 @@ public class RancherWebSocketListener extends WebSocketListener {
 	public static void getFile(String url, String accessKey, String secretKey, StringBuilder logger, String file)
 			throws IOException, InterruptedException {
 		String[] command = { "cat", file };
-		new RancherWebSocketListener().run(url, accessKey, secretKey, logger, command);
+		(new RancherWebSocketListener()).run(url, accessKey, secretKey, logger, command);
 	}
 
 	/**
@@ -167,7 +170,7 @@ public class RancherWebSocketListener extends WebSocketListener {
 	 */
 	public void putFile(String url, String accessKey, String secretKey, File file, String destination)
 			throws IOException, InterruptedException {
-		new RancherWebSocketListener().put(url, accessKey, secretKey, file, destination);
+		(new RancherWebSocketListener()).put(url, accessKey, secretKey, file, destination);
 	}
 
 	/**
@@ -372,9 +375,7 @@ public class RancherWebSocketListener extends WebSocketListener {
 	public void logDockerStream(byte[] bytes) {
 		LogMessage message;
 		BufferedReader stringReader;
-		try {
-			InputStream stream = ByteSource.wrap(bytes).openStream();
-			MessageReader reader = new MessageReader(stream);
+		try (MessageReader reader = new MessageReader(ByteSource.wrap(bytes).openStream())) {
 			while ((message = reader.nextMessage()) != null) {
 				// If logging to RunDeck, we send lines beginning with STRDERR_TOK to ERR_LEVEL.
 				// To do that, we make a BufferedReader and process it line-by-line in log
@@ -387,7 +388,6 @@ public class RancherWebSocketListener extends WebSocketListener {
 				}
 				nextHeader = reader.nextHeader();
 			}
-			reader.close();
 		} catch (IOException e) {
 			log(Constants.ERR_LEVEL, e.getMessage());
 			e.printStackTrace();
@@ -405,7 +405,7 @@ public class RancherWebSocketListener extends WebSocketListener {
 		String line;
 		while ((line = stringReader.readLine()) != null) {
 			if (line.startsWith(STDERR_TOK)) {
-				this.log(Constants.WARN_LEVEL, line.substring(STDERR_TOKLEN) + "\n");
+				this.log(Constants.WARN_LEVEL, line.substring(STDERR_TOKLEN - 1) + "\n");
 			} else {
 				this.log(Constants.INFO_LEVEL, line + "\n");
 			}

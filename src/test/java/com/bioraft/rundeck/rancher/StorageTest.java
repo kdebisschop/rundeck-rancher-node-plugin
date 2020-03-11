@@ -15,10 +15,9 @@
  */
 package com.bioraft.rundeck.rancher;
 
-import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.io.IOException;
 
@@ -35,10 +34,8 @@ public class StorageTest {
 
     @Test(expected = IOException.class)
     public void testLoadStorageException() throws IOException {
-        ExecutionContext ctx = null;
-        String path = null;
-        Storage storage = new Storage(ctx);
-        String test = storage.loadStoragePathData(path);
+        Storage storage = new Storage(null);
+        String test = storage.loadStoragePathData(null);
         assertNull(test);
     }
 }
