@@ -20,7 +20,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.io.IOException;
 
@@ -63,16 +63,16 @@ public class RancherNewStackTest extends PluginStepTest {
 		when(cfg.getOrDefault(eq(OPT_ENV_IDS), any())).thenReturn("1a10");
 
 		JsonNode stacks = readFromInputStream(getResourceStream("no-stacks.json"));
-		when(client.get(anyString(), anyMapOf(String.class, String.class))).thenReturn(stacks);
+		when(client.get(anyString(), anyMap())).thenReturn(stacks);
 
 		JsonNode stack = readFromInputStream(getResourceStream("stack.json"));
-		when(client.post(anyString(), anyMapOf(String.class, Object.class))).thenReturn(stack);
+		when(client.post(anyString(), anyMap())).thenReturn(stack);
 
 		upgrade = new RancherNewStack(client);
 		upgrade.executeStep(ctx, cfg);
 
-		verify(client, times(1)).get(anyString(), anyMapOf(String.class, String.class));
-		verify(client, times(1)).post(anyString(), anyMapOf(String.class, Object.class));
+		verify(client, times(1)).get(anyString(), anyMap());
+		verify(client, times(1)).post(anyString(), anyMap());
 	}
 
 	/**
@@ -84,13 +84,13 @@ public class RancherNewStackTest extends PluginStepTest {
 		when(cfg.getOrDefault(eq(OPT_ENV_IDS), any())).thenReturn("1a10");
 
 		JsonNode stacks = readFromInputStream(getResourceStream("stacks.json"));
-		when(client.get(anyString(), anyMapOf(String.class, String.class))).thenReturn(stacks);
+		when(client.get(anyString(), anyMap())).thenReturn(stacks);
 
 		upgrade = new RancherNewStack(client);
 		upgrade.executeStep(ctx, cfg);
 
-		verify(client, times(1)).get(anyString(), anyMapOf(String.class, String.class));
-		verify(client, times(0)).post(anyString(), anyMapOf(String.class, Object.class));
+		verify(client, times(1)).get(anyString(), anyMap());
+		verify(client, times(0)).post(anyString(), anyMap());
 	}
 
 	/**
@@ -99,13 +99,12 @@ public class RancherNewStackTest extends PluginStepTest {
 	@Test(expected = StepException.class)
 	public void whenStackNameIsEmpty() throws StepException, IOException {
 		when(cfg.getOrDefault(eq(OPT_STACK_NAME), any())).thenReturn("");
-		when(cfg.getOrDefault(eq(OPT_ENV_IDS), any())).thenReturn("1a10");
 
 		upgrade = new RancherNewStack(client);
 		upgrade.executeStep(ctx, cfg);
 
-		verify(client, times(0)).get(anyString(), anyMapOf(String.class, String.class));
-		verify(client, times(0)).post(anyString(), anyMapOf(String.class, Object.class));
+		verify(client, times(0)).get(anyString(), anyMap());
+		verify(client, times(0)).post(anyString(), anyMap());
 	}
 
 	/**
@@ -119,8 +118,8 @@ public class RancherNewStackTest extends PluginStepTest {
 		upgrade = new RancherNewStack(client);
 		upgrade.executeStep(ctx, cfg);
 
-		verify(client, times(0)).get(anyString(), anyMapOf(String.class, String.class));
-		verify(client, times(0)).post(anyString(), anyMapOf(String.class, Object.class));
+		verify(client, times(0)).get(anyString(), anyMap());
+		verify(client, times(0)).post(anyString(), anyMap());
 	}
 
 	/**
@@ -132,15 +131,15 @@ public class RancherNewStackTest extends PluginStepTest {
 		when(cfg.getOrDefault(eq(OPT_ENV_IDS), any())).thenReturn("1a10");
 
 		JsonNode stacks = readFromInputStream(getResourceStream("no-stacks.json"));
-		when(client.get(anyString(), anyMapOf(String.class, String.class))).thenReturn(stacks);
+		when(client.get(anyString(), anyMap())).thenReturn(stacks);
 
 		JsonNode stack = readFromInputStream(getResourceStream("stack.json"));
-		when(client.post(anyString(), anyMapOf(String.class, Object.class))).thenReturn(stack);
+		when(client.post(anyString(), anyMap())).thenReturn(stack);
 
 		upgrade = new RancherNewStack(client);
 		upgrade.executeStep(ctx, cfg);
 
-		verify(client, times(1)).get(anyString(), anyMapOf(String.class, String.class));
-		verify(client, times(1)).post(anyString(), anyMapOf(String.class, Object.class));
+		verify(client, times(1)).get(anyString(), anyMap());
+		verify(client, times(1)).post(anyString(), anyMap());
 	}
 }

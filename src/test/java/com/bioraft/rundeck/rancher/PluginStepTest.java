@@ -33,7 +33,7 @@ import java.io.InputStreamReader;
 import java.util.Map;
 
 import static com.bioraft.rundeck.rancher.Constants.*;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.when;
 
@@ -90,7 +90,6 @@ public abstract class PluginStepTest {
         when(executionContext.getStorageTree()).thenReturn(storageTree);
         when(storageTree.getResource(anyString())).thenReturn(treeResource);
         when(treeResource.getContents()).thenReturn(contents);
-        when(cfg.get("stack")).thenReturn("testStack");
     }
 
     protected InputStream getResourceStream(String resource) {

@@ -42,7 +42,7 @@ ext.pluginName = 'Rancher Node Plugins'
 ext.pluginDescription = 'Interface with Rancher environments'
 
 scmVersion {
-    ignoreUncommittedChanges = true
+//    ignoreUncommittedChanges = true
     tag {
         // Ignore tags that begin with <prefix><versionSeparator>, include all tags
         // if prefix is empty.
@@ -86,7 +86,8 @@ dependencies {
     testImplementation group: 'junit', name: 'junit', version:'4.12'
 
     testImplementation (
-            'org.mockito:mockito-all:1.10.19'
+            'org.mockito:mockito-core:3.+',
+            'com.squareup.okhttp3:mockwebserver:3.13.1'
     )
 }
 

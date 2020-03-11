@@ -27,7 +27,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.io.IOException;
 import java.util.Map;
@@ -85,7 +85,6 @@ public class RancherAddServiceTest extends PluginStepTest {
 
 		when(framework.getProperty(eq(FMWK_RANCHER_ENDPOINT))).thenReturn("https://rancher.example.com/v1");
 		when(framework.getProperty(eq(FMWK_RANCHER_ACCESSKEY_PATH))).thenReturn(null);
-		when(framework.getProperty(eq(FMWK_RANCHER_SECRETKEY_PATH))).thenReturn(null);
 
 		when(pluginStepContext.getFramework()).thenReturn(framework);
 		when(pluginStepContext.getFrameworkProject()).thenReturn(projectName);
@@ -115,13 +114,13 @@ public class RancherAddServiceTest extends PluginStepTest {
 		when(client.get(eq(stackIdRequest))).thenReturn(stack);
 
 		JsonNode service = readFromInputStream(getResourceStream("service.json"));
-		when(client.post(anyString(), anyMapOf(String.class, Object.class))).thenReturn(service);
+		when(client.post(anyString(), anyMap())).thenReturn(service);
 
 		upgrade = new RancherAddService(client);
 		upgrade.executeStep(ctx, cfg);
 
 		verify(client, times(1)).get(eq(stackIdRequest));
-		verify(client, times(0)).get(anyString(), anyMapOf(String.class, String.class));
+		verify(client, times(0)).get(anyString(), anyMap());
 		verify(client, times(1)).post(eq(upgradePostUrl), captor.capture());
 		Map<String, Object> postMap = captor.getValue();
 		assertEquals(serviceName, postMap.get("name").toString());
@@ -140,14 +139,14 @@ public class RancherAddServiceTest extends PluginStepTest {
 		JsonNode stack = readFromInputStream(getResourceStream("stack.json"));
 		when(client.get(anyString())).thenReturn(stack);
 
-		when(client.post(anyString(), anyMapOf(String.class, Object.class))).thenThrow(new IOException());
+		when(client.post(anyString(), anyMap())).thenThrow(new IOException());
 
 		upgrade = new RancherAddService(client);
 		upgrade.executeStep(ctx, cfg);
 
 		verify(client, times(1)).get(anyString());
-		verify(client, times(0)).get(anyString(), anyMapOf(String.class, String.class));
-		verify(client, times(1)).post(anyString(), anyMapOf(String.class, Object.class));
+		verify(client, times(0)).get(anyString(), anyMap());
+		verify(client, times(1)).post(anyString(), anyMap());
 	}
 
 	@Test
@@ -172,15 +171,12 @@ public class RancherAddServiceTest extends PluginStepTest {
 		JsonNode notFound = readFromInputStream(getResourceStream("not-found.json"));
 		when(client.get(anyString())).thenReturn(notFound);
 
-		JsonNode noStacks = readFromInputStream(getResourceStream("no-stacks.json"));
-		when(client.get(anyString(), anyMapOf(String.class, String.class))).thenReturn(noStacks);
-
 		upgrade = new RancherAddService(client);
 		upgrade.executeStep(ctx, cfg);
 
 		verify(client, times(1)).get(anyString());
-		verify(client, times(1)).get(anyString(), anyMapOf(String.class, String.class));
-		verify(client, times(0)).post(anyString(), anyMapOf(String.class, Object.class));
+		verify(client, times(1)).get(anyString(), anyMap());
+		verify(client, times(0)).post(anyString(), anyMap());
 	}
 
 	@Test(expected = StepException.class)
@@ -197,14 +193,13 @@ public class RancherAddServiceTest extends PluginStepTest {
 		JsonNode data = noStacks.get("data");
 		ObjectNode stack = (ObjectNode) data.elements().next();
 		stack.remove("id");
-		when(client.get(anyString(), anyMapOf(String.class, String.class))).thenReturn(noStacks);
 
 		upgrade = new RancherAddService(client);
 		upgrade.executeStep(ctx, cfg);
 
 		verify(client, times(1)).get(anyString());
-		verify(client, times(1)).get(anyString(), anyMapOf(String.class, String.class));
-		verify(client, times(0)).post(anyString(), anyMapOf(String.class, Object.class));
+		verify(client, times(1)).get(anyString(), anyMap());
+		verify(client, times(0)).post(anyString(), anyMap());
 	}
 
 	@Test(expected = StepException.class)
@@ -218,23 +213,17 @@ public class RancherAddServiceTest extends PluginStepTest {
 		notFound.put("type", "error");
 		when(client.get(anyString())).thenThrow(new IOException());
 
-		JsonNode noStacks = readFromInputStream(getResourceStream("no-stacks.json"));
-		when(client.get(anyString(), anyMapOf(String.class, String.class))).thenReturn(noStacks);
-
 		upgrade = new RancherAddService(client);
 		upgrade.executeStep(ctx, cfg);
 
 		verify(client, times(1)).get(anyString());
-		verify(client, times(1)).get(anyString(), anyMapOf(String.class, String.class));
-		verify(client, times(0)).post(anyString(), anyMapOf(String.class, Object.class));
+		verify(client, times(1)).get(anyString(), anyMap());
+		verify(client, times(0)).post(anyString(), anyMap());
 	}
 
 	@Test(expected = StepException.class)
 	public void throwExceptionWhenStackIsNotSet() throws StepException, IOException {
 		when(cfg.getOrDefault(eq(OPT_STACK_NAME), any())).thenReturn("");
-		when(cfg.getOrDefault(eq(OPT_ENV_IDS), any())).thenReturn(envIds);
-		when(cfg.getOrDefault(eq(OPT_SERVICE_NAME), any())).thenReturn(serviceName);
-		when(cfg.getOrDefault(eq(OPT_IMAGE_UUID), any())).thenReturn(imageUuid);
 		runSuccess();
 	}
 
@@ -242,8 +231,6 @@ public class RancherAddServiceTest extends PluginStepTest {
 	public void throwExceptionWhenEnvironmentIdIsNotSet() throws StepException, IOException {
 		when(cfg.getOrDefault(eq(OPT_STACK_NAME), any())).thenReturn(stackName);
 		when(cfg.getOrDefault(eq(OPT_ENV_IDS), any())).thenReturn("");
-		when(cfg.getOrDefault(eq(OPT_SERVICE_NAME), any())).thenReturn(serviceName);
-		when(cfg.getOrDefault(eq(OPT_IMAGE_UUID), any())).thenReturn(imageUuid);
 		runSuccess();
 	}
 
@@ -252,7 +239,6 @@ public class RancherAddServiceTest extends PluginStepTest {
 		when(cfg.getOrDefault(eq(OPT_STACK_NAME), any())).thenReturn(stackName);
 		when(cfg.getOrDefault(eq(OPT_ENV_IDS), any())).thenReturn(envIds);
 		when(cfg.getOrDefault(eq(OPT_SERVICE_NAME), any())).thenReturn("");
-		when(cfg.getOrDefault(eq(OPT_IMAGE_UUID), any())).thenReturn(imageUuid);
 		runSuccess();
 	}
 
@@ -360,7 +346,7 @@ public class RancherAddServiceTest extends PluginStepTest {
 		when(client.get(eq(stackNameRequest))).thenReturn(stacks);
 
 		JsonNode service = readFromInputStream(getResourceStream("service.json"));
-		when(client.post(anyString(), anyMapOf(String.class, Object.class))).thenReturn(service);
+		when(client.post(anyString(), anyMap())).thenReturn(service);
 
 		upgrade = new RancherAddService(client);
 		upgrade.executeStep(ctx, cfg);

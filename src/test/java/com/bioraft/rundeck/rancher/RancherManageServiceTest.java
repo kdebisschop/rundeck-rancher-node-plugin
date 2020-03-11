@@ -14,7 +14,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.rundeck.storage.api.Resource;
 
 import java.io.BufferedReader;
@@ -29,7 +29,7 @@ import java.util.stream.Stream;
 import static com.bioraft.rundeck.rancher.Constants.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.mockito.Matchers.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -166,12 +166,6 @@ public class RancherManageServiceTest {
     public void testNoKey() throws IOException, NodeStepException {
         cfg.put("action", "restart");
         map.remove(CONFIG_ACCESSKEY_PATH);
-        ObjectMapper mapper = new ObjectMapper();
-
-        String text = readFromInputStream(getResourceStream("service.json"));
-        ObjectNode json1 = (ObjectNode) mapper.readTree(text);
-
-        when(client.get(any())).thenReturn(json1);
 
         try {
             RancherManageService subject = new RancherManageService(client);
