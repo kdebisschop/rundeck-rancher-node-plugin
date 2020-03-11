@@ -35,10 +35,8 @@ public class StorageTest {
 
     @Test(expected = IOException.class)
     public void testLoadStorageException() throws IOException {
-        ExecutionContext ctx = null;
-        String path = null;
-        Storage storage = new Storage(ctx);
-        String test = storage.loadStoragePathData(path);
+        Storage storage = new Storage(null);
+        String test = storage.loadStoragePathData(null);
         assertNull(test);
     }
 }
