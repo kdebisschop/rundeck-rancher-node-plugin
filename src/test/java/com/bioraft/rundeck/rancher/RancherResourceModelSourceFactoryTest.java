@@ -5,7 +5,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Properties;
 
@@ -25,7 +25,6 @@ public class RancherResourceModelSourceFactoryTest {
         String description = subject.getDescription().getDescription();
         assertTrue(description, description.endsWith("remote rancher node."));
     }
-
 
     @Test(expected = ConfigurationException.class)
     public void testConfigurationException() throws ConfigurationException {

@@ -16,10 +16,6 @@
 
 package com.bioraft.rundeck.rancher;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Map;
-
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
@@ -29,12 +25,18 @@ import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
 import com.dtolabs.rundeck.core.execution.utils.ResolverUtil;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.plugins.Plugin;
-import com.dtolabs.rundeck.core.plugins.configuration.*;
+import com.dtolabs.rundeck.core.plugins.configuration.Describable;
+import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyUtil;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 
-import static com.dtolabs.rundeck.core.Constants.DEBUG_LEVEL;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Map;
+
 import static com.bioraft.rundeck.rancher.Constants.*;
+import static com.dtolabs.rundeck.core.Constants.DEBUG_LEVEL;
 
 /**
  * RancherNodeExecutorPlugin is a {@link NodeExecutor} plugin implementation for
@@ -146,12 +148,10 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
      * @param file The full path to the file.
      * @param url  The URL for executing jobs on the desired container.
      * @return The contents of the file as a string.
-     * @throws InterruptedException When listener is interrupted.
-     * @throws IOException          When connection to Rancher fails.
      */
     private String readLogFile(String file, String url) throws IOException, InterruptedException {
         StringBuilder output = new StringBuilder();
-        RancherWebSocketListener.getFile(url, accessKey, secretKey, output, file);
+        (new RancherWebSocketListener()).getFile(url, accessKey, secretKey, output, file);
         return output.toString();
     }
 }

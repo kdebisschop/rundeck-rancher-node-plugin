@@ -16,17 +16,6 @@
 
 package com.bioraft.rundeck.rancher;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringReader;
-import java.nio.file.Files;
-import java.util.Base64;
-import java.util.Objects;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -37,17 +26,16 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.ByteSource;
 import com.google.common.primitives.Bytes;
-
-import okhttp3.Credentials;
-import okhttp3.HttpUrl;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
-import okhttp3.WebSocket;
-import okhttp3.WebSocketListener;
+import okhttp3.*;
 import okio.ByteString;
+
+import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.util.Base64;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * RancherWebSocketListener connects to Rancher containers.
@@ -90,6 +78,19 @@ public class RancherWebSocketListener extends WebSocketListener {
 	private static final int STDERR_TOKLEN = STDERR_TOK.length() + 1;
 	private int currentOutputChannel = -1;
 
+	public RancherWebSocketListener() {
+		client = new OkHttpClient.Builder().pingInterval(50, TimeUnit.SECONDS).callTimeout(0, TimeUnit.HOURS).build();
+	}
+
+	public RancherWebSocketListener(OkHttpClient client) {
+		this.client = client;
+	}
+
+	public RancherWebSocketListener(ExecutionListener listener, StringBuilder output) {
+		this.listener = listener;
+		this.output = output;
+	}
+
 	@Override
 	public void onMessage(WebSocket webSocket, String text) {
 		logDockerStream(Bytes.concat(nextHeader, Base64.getDecoder().decode(text)));
@@ -128,13 +129,17 @@ public class RancherWebSocketListener extends WebSocketListener {
 	public static void runJob(String url, String accessKey, String secretKey, String[] command,
 			ExecutionListener listener, String temp, int timeout) throws IOException, InterruptedException {
 		String file = " >>" + temp + ".pid; ";
+		(new RancherWebSocketListener()).runJobInstance(url, accessKey, secretKey, listener, command(command, file), timeout);
+	}
+
+	private static String[] command(String[] command, String temp) {
+		String file = " >>" + temp + ".pid; ";
 		// Prefix STDERR lines with STDERR_TOK to decode in logging step.
 		String job = "( " + String.join(" ", command) + ") 2> >(while read line;do echo \"" + STDERR_TOK
 				+ " $line\";done) ;";
 		String remote = "printf $$" + file + job + "printf ' %s' $?" + file;
 		// Note that bash is required to support adding a prefix token to STDERR.
-		String[] cmd = { "bash", "-c", remote };
-		new RancherWebSocketListener().runJob(url, accessKey, secretKey, listener, cmd, timeout);
+		return new String[]{ "bash", "-c", remote };
 	}
 
 	/**
@@ -148,10 +153,10 @@ public class RancherWebSocketListener extends WebSocketListener {
 	 * @throws IOException When job fails.
 	 * @throws InterruptedException When job is interrupted.
 	 */
-	public static void getFile(String url, String accessKey, String secretKey, StringBuilder logger, String file)
+	public void getFile(String url, String accessKey, String secretKey, StringBuilder logger, String file)
 			throws IOException, InterruptedException {
 		String[] command = { "cat", file };
-		new RancherWebSocketListener().run(url, accessKey, secretKey, logger, command);
+		(new RancherWebSocketListener()).runJobInstance(url, accessKey, secretKey, logger, command);
 	}
 
 	/**
@@ -167,7 +172,7 @@ public class RancherWebSocketListener extends WebSocketListener {
 	 */
 	public void putFile(String url, String accessKey, String secretKey, File file, String destination)
 			throws IOException, InterruptedException {
-		new RancherWebSocketListener().put(url, accessKey, secretKey, file, destination);
+		(new RancherWebSocketListener()).put(url, accessKey, secretKey, file, destination);
 	}
 
 	/**
@@ -183,9 +188,8 @@ public class RancherWebSocketListener extends WebSocketListener {
 	 * @throws IOException When job fails.
 	 * @throws InterruptedException When job is interrupted.
 	 */
-	private void runJob(String url, String accessKey, String secretKey, ExecutionListener listener, String[] command,
-			int timeout) throws IOException, InterruptedException {
-		client = new OkHttpClient.Builder().pingInterval(50, TimeUnit.SECONDS).callTimeout(0, TimeUnit.HOURS).build();
+	public void runJobInstance(String url, String accessKey, String secretKey, ExecutionListener listener, String[] command,
+								int timeout) throws IOException, InterruptedException {
 
 		this.url = url;
 		this.accessKey = accessKey;
@@ -221,7 +225,7 @@ public class RancherWebSocketListener extends WebSocketListener {
 	 * @throws IOException When job fails.
 	 * @throws InterruptedException When job is interrupted.
 	 */
-	private void run(String url, String accessKey, String secretKey, StringBuilder output, String[] command)
+	public void runJobInstance(String url, String accessKey, String secretKey, StringBuilder output, String[] command)
 			throws IOException, InterruptedException {
 		client = new OkHttpClient.Builder().build();
 
@@ -330,15 +334,16 @@ public class RancherWebSocketListener extends WebSocketListener {
 			RequestBody body = RequestBody.create(MediaType.parse("application/json"), content);
 			Request request = new Request.Builder().url(path).post(body)
 					.addHeader("Authorization", Credentials.basic(accessKey, secretKey)).build();
-			Response response = client.newCall(request).execute();
+			Call call = client.newCall(request);
+			Response response = call.execute();
 			ObjectMapper mapper = new ObjectMapper();
-			if (response.body() != null) {
+			if (response.body() != null && response.body().contentLength() > 0) {
 				return mapper.readTree(response.body().string());
 			} else {
 				throw new IOException("WebSocket response was null");
 			}
 		} catch (IOException e) {
-			System.out.println(e.getMessage());
+			log(0, e.getMessage());
 			throw e;
 		}
 	}
@@ -380,10 +385,12 @@ public class RancherWebSocketListener extends WebSocketListener {
 				// To do that, we make a BufferedReader and process it line-by-line in log
 				// function.
 				if (listener != null) {
-					stringReader = new BufferedReader(new StringReader(new String(message.content.array())));
+					ByteBuffer buffer = message.content();
+					String string = new String(buffer.array());
+					stringReader = new BufferedReader(new StringReader(string));
 					log(stringReader);
 				} else {
-					output.append(new String(message.content.array()));
+					output.append(new String(message.content().array()));
 				}
 				nextHeader = reader.nextHeader();
 			}
@@ -405,7 +412,7 @@ public class RancherWebSocketListener extends WebSocketListener {
 		String line;
 		while ((line = stringReader.readLine()) != null) {
 			if (line.startsWith(STDERR_TOK)) {
-				this.log(Constants.WARN_LEVEL, line.substring(STDERR_TOKLEN) + "\n");
+				this.log(Constants.WARN_LEVEL, line.substring(STDERR_TOKLEN -1) + "\n");
 			} else {
 				this.log(Constants.INFO_LEVEL, line + "\n");
 			}
@@ -434,6 +441,9 @@ public class RancherWebSocketListener extends WebSocketListener {
 				currentOutputChannel = level;
 				output = new StringBuilder();
 			}
+		}
+		if (output == null) {
+			output = new StringBuilder();
 		}
 		output.append(message);
 	}
