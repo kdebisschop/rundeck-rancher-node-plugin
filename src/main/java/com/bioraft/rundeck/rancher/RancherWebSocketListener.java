@@ -80,6 +80,19 @@ public class RancherWebSocketListener extends WebSocketListener {
 	private static final int STDERR_TOKLEN = STDERR_TOK.length() + 1;
 	private int currentOutputChannel = -1;
 
+	public RancherWebSocketListener() {
+
+	}
+
+	public RancherWebSocketListener(OkHttpClient client) {
+		this.client = client;
+	}
+
+	public RancherWebSocketListener(ExecutionListener listener, StringBuilder output) {
+		this.listener = listener;
+		this.output = output;
+	}
+
 	@Override
 	public void onMessage(WebSocket webSocket, String text) {
 		logDockerStream(Bytes.concat(nextHeader, Base64.getDecoder().decode(text)));
@@ -392,7 +405,7 @@ public class RancherWebSocketListener extends WebSocketListener {
 		String line;
 		while ((line = stringReader.readLine()) != null) {
 			if (line.startsWith(STDERR_TOK)) {
-				this.log(Constants.WARN_LEVEL, line.substring(STDERR_TOKLEN) + "\n");
+				this.log(Constants.WARN_LEVEL, line.substring(STDERR_TOKLEN - 1) + "\n");
 			} else {
 				this.log(Constants.INFO_LEVEL, line + "\n");
 			}
