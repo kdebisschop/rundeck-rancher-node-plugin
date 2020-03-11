@@ -372,9 +372,7 @@ public class RancherWebSocketListener extends WebSocketListener {
 	public void logDockerStream(byte[] bytes) {
 		LogMessage message;
 		BufferedReader stringReader;
-		try {
-			InputStream stream = ByteSource.wrap(bytes).openStream();
-			MessageReader reader = new MessageReader(stream);
+		try (MessageReader reader = new MessageReader(ByteSource.wrap(bytes).openStream())) {
 			while ((message = reader.nextMessage()) != null) {
 				// If logging to RunDeck, we send lines beginning with STRDERR_TOK to ERR_LEVEL.
 				// To do that, we make a BufferedReader and process it line-by-line in log
@@ -387,7 +385,6 @@ public class RancherWebSocketListener extends WebSocketListener {
 				}
 				nextHeader = reader.nextHeader();
 			}
-			reader.close();
 		} catch (IOException e) {
 			log(Constants.ERR_LEVEL, e.getMessage());
 			e.printStackTrace();
