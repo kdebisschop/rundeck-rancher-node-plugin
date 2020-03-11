@@ -137,7 +137,7 @@ public class RancherWebSocketListener extends WebSocketListener {
 		String remote = "printf $$" + file + job + "printf ' %s' $?" + file;
 		// Note that bash is required to support adding a prefix token to STDERR.
 		String[] cmd = { "bash", "-c", remote };
-		new RancherWebSocketListener().runJob(url, accessKey, secretKey, listener, cmd, timeout);
+		(new RancherWebSocketListener()).runJob(url, accessKey, secretKey, listener, cmd, timeout);
 	}
 
 	/**
@@ -154,7 +154,7 @@ public class RancherWebSocketListener extends WebSocketListener {
 	public static void getFile(String url, String accessKey, String secretKey, StringBuilder logger, String file)
 			throws IOException, InterruptedException {
 		String[] command = { "cat", file };
-		new RancherWebSocketListener().run(url, accessKey, secretKey, logger, command);
+		(new RancherWebSocketListener()).run(url, accessKey, secretKey, logger, command);
 	}
 
 	/**
@@ -170,7 +170,7 @@ public class RancherWebSocketListener extends WebSocketListener {
 	 */
 	public void putFile(String url, String accessKey, String secretKey, File file, String destination)
 			throws IOException, InterruptedException {
-		new RancherWebSocketListener().put(url, accessKey, secretKey, file, destination);
+		(new RancherWebSocketListener()).put(url, accessKey, secretKey, file, destination);
 	}
 
 	/**
