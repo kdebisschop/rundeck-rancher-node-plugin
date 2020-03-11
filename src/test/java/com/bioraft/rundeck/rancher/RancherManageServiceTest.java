@@ -163,7 +163,7 @@ public class RancherManageServiceTest {
     }
 
     @Test(expected = NodeStepException.class)
-    public void testNoKey() throws IOException, NodeStepException {
+    public void testNoKey() throws NodeStepException {
         cfg.put("action", "restart");
         map.remove(CONFIG_ACCESSKEY_PATH);
 

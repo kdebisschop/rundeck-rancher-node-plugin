@@ -126,16 +126,14 @@ public class RancherFileCopierTest {
     }
 
     @Test(expected = FileCopierException.class)
-    public void throwListenerException() throws FileCopierException, IOException, InterruptedException {
+    public void throwListenerException() throws FileCopierException {
         File file = new File(
             Objects.requireNonNull(getClass().getClassLoader().getResource("stack.json")).getFile()
         );
-//        doThrow(new IOException()).when(listener).putFile(anyString(), anyString(), anyString(), eq(file), anyString());
         map.put(CONFIG_ACCESSKEY_PATH, null);
         map.put(CONFIG_SECRETKEY_PATH, null);
         RancherFileCopier subject = new RancherFileCopier(listener);
         String destination = "/tmp/file.txt";
         subject.copyFile(executionContext, file, node, destination);
-
     }
 }

@@ -26,7 +26,6 @@ public class RancherResourceModelSourceFactoryTest {
         assertTrue(description, description.endsWith("remote rancher node."));
     }
 
-
     @Test(expected = ConfigurationException.class)
     public void testConfigurationException() throws ConfigurationException {
         RancherResourceModelSourceFactory subject = new RancherResourceModelSourceFactory();
