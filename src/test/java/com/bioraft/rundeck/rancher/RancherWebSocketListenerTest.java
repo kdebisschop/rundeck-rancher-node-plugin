@@ -12,6 +12,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.io.IOException;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.*;
 
@@ -158,22 +159,28 @@ public class RancherWebSocketListenerTest {
 
     @Test
     public void testLogDockerStreamWithNoListener() {
-        RancherWebSocketListener subject = new RancherWebSocketListener(null, new StringBuilder());
+        StringBuilder stringBuilder = new StringBuilder();
+        RancherWebSocketListener subject = new RancherWebSocketListener(null, stringBuilder);
         byte[] bytes = "aaa".getBytes();
         subject.logDockerStream(bytes);
+        assertEquals("aaa", stringBuilder.toString());
     }
 
     @Test
     public void testLogDockerStreamEmptyWithNoListener() {
-        RancherWebSocketListener subject = new RancherWebSocketListener(null, new StringBuilder());
+        StringBuilder stringBuilder = new StringBuilder();
+        RancherWebSocketListener subject = new RancherWebSocketListener(null, stringBuilder);
         byte[] bytes = "".getBytes();
         subject.logDockerStream(bytes);
+        assertEquals("", stringBuilder.toString());
     }
 
     @Test
     public void testLogDockerStreamStderrWithNoListener() {
-        RancherWebSocketListener subject = new RancherWebSocketListener(null, new StringBuilder());
+        StringBuilder stringBuilder = new StringBuilder();
+        RancherWebSocketListener subject = new RancherWebSocketListener(null, stringBuilder);
         byte[] bytes = ("STDERR_6v9ZvwThpU1FtyrlIBf4UIC8" + "aaa").getBytes();
         subject.logDockerStream(bytes);
+        assertEquals("STDERR_6v9ZvwThpU1FtyrlIBf4UIC8aaa", stringBuilder.toString());
     }
 }

@@ -27,7 +27,7 @@ public class LogMessage {
 	private final Stream stream;
 	private final ByteBuffer content;
 
-	public LogMessage(final int streamId, final ByteBuffer content) throws IllegalArgumentException {
+	public LogMessage(final int streamId, final ByteBuffer content) {
 		this.stream = Stream.of(streamId);
 		this.content = content;
 	}
@@ -58,7 +58,7 @@ public class LogMessage {
 			return id;
 		}
 
-		public static Stream of(final int id) throws IllegalArgumentException {
+		public static Stream of(final int id) {
 			switch (id) {
 			case 0:
 				return STDIN;
