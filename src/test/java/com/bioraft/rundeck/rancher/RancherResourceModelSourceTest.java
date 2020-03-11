@@ -70,7 +70,6 @@ public class RancherResourceModelSourceTest {
 		configuration.setProperty(CONFIG_SECRETKEY_PATH, "keys/rancher/secret.key");
 		configuration.setProperty(CONFIG_STACK_FILTER, "mysite-dev");
 		configuration.setProperty(CONFIG_LIMIT_ONE_CONTAINER, "true");
-		configuration.setProperty(CONFIG_HANDLE_STOPPED, "Exclude");
 		configuration.setProperty(CONFIG_HANDLE_SYSTEM, "Exclude");
 		configuration.setProperty(CONFIG_HANDLE_GLOBAL, "Exclude");
 		configuration.setProperty(CONFIG_TAGS, "rancher");
@@ -165,7 +164,6 @@ public class RancherResourceModelSourceTest {
 		configuration.setProperty(CONFIG_NODE_TYPE_INCLUDE_SERVICE, "false");
 		configuration.setProperty(CONFIG_NODE_TYPE_INCLUDE_CONTAINER, "true");
 		configuration.setProperty(CONFIG_LIMIT_ONE_CONTAINER, "false");
-		configuration.setProperty(CONFIG_HANDLE_STOPPED, "true");
 		configuration.setProperty(CONFIG_LABELS_INCLUDE_ATTRIBUTES, "com.example.(description|group)");
 		configuration.setProperty(CONFIG_LABELS_INCLUDE_TAGS, "com.example.(group|site)");
 
@@ -189,7 +187,6 @@ public class RancherResourceModelSourceTest {
 		configuration.setProperty(CONFIG_NODE_TYPE_INCLUDE_SERVICE, "false");
 		configuration.setProperty(CONFIG_NODE_TYPE_INCLUDE_CONTAINER, "true");
 		configuration.setProperty(CONFIG_LIMIT_ONE_CONTAINER, "false");
-		configuration.setProperty(CONFIG_HANDLE_STOPPED, "true");
 		configuration.setProperty(CONFIG_HANDLE_GLOBAL, "true");
 		configuration.setProperty(CONFIG_HANDLE_SYSTEM, "true");
 		configuration.setProperty(CONFIG_LABELS_INCLUDE_ATTRIBUTES, "com.example.(description|group)");

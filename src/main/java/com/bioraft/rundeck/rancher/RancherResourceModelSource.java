@@ -166,7 +166,7 @@ public class RancherResourceModelSource implements ResourceModelSource {
 	}
 
 	private void addContainerNode(JsonNode node, String environmentName, Logger logger) {
-		if (isExclude(CONFIG_HANDLE_STOPPED) && !node.get(NODE_STATE).asText().equals("running")) {
+		if (!node.get(NODE_STATE).asText().equals("running")) {
 			return;
 		}
 

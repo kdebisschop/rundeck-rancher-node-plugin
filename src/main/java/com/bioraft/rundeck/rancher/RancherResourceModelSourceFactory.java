@@ -81,9 +81,6 @@ public class RancherResourceModelSourceFactory implements ResourceModelSourceFac
         builder.property(PropertyUtil.bool(CONFIG_LIMIT_ONE_CONTAINER, "Limit to One Container",
                 "Only run on one container for each service", true, "true"));
 
-        builder.property(PropertyUtil.select(CONFIG_HANDLE_STOPPED, "Handle Stopped Containers",
-                "Exclude stopped containers", true, OPT_EXCLUDE, Arrays.asList(OPT_EXCLUDE, OPT_INCLUDE)));
-
         builder.property(PropertyUtil.select(CONFIG_HANDLE_SYSTEM, "Handle System Containers",
                 "Exclude system containers", true, OPT_EXCLUDE, Arrays.asList(OPT_EXCLUDE, OPT_INCLUDE)));
 
