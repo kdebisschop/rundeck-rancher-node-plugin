@@ -126,7 +126,7 @@ public class RancherFileCopierTest {
     }
 
     @Test(expected = FileCopierException.class)
-    public void throwListenerException() throws FileCopierException, IOException, InterruptedException {
+    public void throwListenerException() throws FileCopierException {
         File file = new File(
             Objects.requireNonNull(getClass().getClassLoader().getResource("stack.json")).getFile()
         );
