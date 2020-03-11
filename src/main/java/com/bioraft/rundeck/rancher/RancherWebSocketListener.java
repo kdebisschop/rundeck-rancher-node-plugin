@@ -16,18 +16,6 @@
 
 package com.bioraft.rundeck.rancher;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringReader;
-import java.nio.ByteBuffer;
-import java.nio.file.Files;
-import java.util.Base64;
-import java.util.Objects;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -38,9 +26,16 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.ByteSource;
 import com.google.common.primitives.Bytes;
-
 import okhttp3.*;
 import okio.ByteString;
+
+import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.util.Base64;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * RancherWebSocketListener connects to Rancher containers.
@@ -134,7 +129,7 @@ public class RancherWebSocketListener extends WebSocketListener {
 	public static void runJob(String url, String accessKey, String secretKey, String[] command,
 			ExecutionListener listener, String temp, int timeout) throws IOException, InterruptedException {
 		String file = " >>" + temp + ".pid; ";
-		new RancherWebSocketListener().runJob(url, accessKey, secretKey, listener, command(command, file), timeout);
+		(new RancherWebSocketListener()).runJobInstance(url, accessKey, secretKey, listener, command(command, file), timeout);
 	}
 
 	private static String[] command(String[] command, String temp) {
@@ -158,10 +153,10 @@ public class RancherWebSocketListener extends WebSocketListener {
 	 * @throws IOException When job fails.
 	 * @throws InterruptedException When job is interrupted.
 	 */
-	public static void getFile(String url, String accessKey, String secretKey, StringBuilder logger, String file)
+	public void getFile(String url, String accessKey, String secretKey, StringBuilder logger, String file)
 			throws IOException, InterruptedException {
 		String[] command = { "cat", file };
-		new RancherWebSocketListener().run(url, accessKey, secretKey, logger, command);
+		(new RancherWebSocketListener()).runJobInstance(url, accessKey, secretKey, logger, command);
 	}
 
 	/**
@@ -177,7 +172,7 @@ public class RancherWebSocketListener extends WebSocketListener {
 	 */
 	public void putFile(String url, String accessKey, String secretKey, File file, String destination)
 			throws IOException, InterruptedException {
-		new RancherWebSocketListener().put(url, accessKey, secretKey, file, destination);
+		(new RancherWebSocketListener()).put(url, accessKey, secretKey, file, destination);
 	}
 
 	/**
@@ -193,8 +188,8 @@ public class RancherWebSocketListener extends WebSocketListener {
 	 * @throws IOException When job fails.
 	 * @throws InterruptedException When job is interrupted.
 	 */
-	private void runJob(String url, String accessKey, String secretKey, ExecutionListener listener, String[] command,
-			int timeout) throws IOException, InterruptedException {
+	public void runJobInstance(String url, String accessKey, String secretKey, ExecutionListener listener, String[] command,
+								int timeout) throws IOException, InterruptedException {
 
 		this.url = url;
 		this.accessKey = accessKey;
@@ -230,7 +225,7 @@ public class RancherWebSocketListener extends WebSocketListener {
 	 * @throws IOException When job fails.
 	 * @throws InterruptedException When job is interrupted.
 	 */
-	private void run(String url, String accessKey, String secretKey, StringBuilder output, String[] command)
+	public void runJobInstance(String url, String accessKey, String secretKey, StringBuilder output, String[] command)
 			throws IOException, InterruptedException {
 		client = new OkHttpClient.Builder().build();
 
@@ -446,6 +441,9 @@ public class RancherWebSocketListener extends WebSocketListener {
 				currentOutputChannel = level;
 				output = new StringBuilder();
 			}
+		}
+		if (output == null) {
+			output = new StringBuilder();
 		}
 		output.append(message);
 	}

@@ -10,7 +10,7 @@ import static org.junit.Assert.assertEquals;
 
 public class LogMessageTest {
 
-    private String string = "strimg";
+    private final String string = "strimg";
     private byte[] bytes;
 
     @Before
