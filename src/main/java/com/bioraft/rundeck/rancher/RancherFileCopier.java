@@ -62,7 +62,7 @@ public class RancherFileCopier implements FileCopier, Describable {
 
     static final Description DESC;
 
-    RancherWebSocketListener listener;
+    RancherWebSocketListener rancherWebSocketListener;
 
     static {
         DescriptionBuilder builder = DescriptionBuilder.builder();
@@ -80,12 +80,12 @@ public class RancherFileCopier implements FileCopier, Describable {
         DESC = builder.build();
     }
 
-    public RancherFileCopier(RancherWebSocketListener listener) {
-        this.listener = listener;
+    public RancherFileCopier(RancherWebSocketListener rancherWebSocketListener) {
+        this.rancherWebSocketListener = rancherWebSocketListener;
     }
 
     public RancherFileCopier() {
-        this.listener = new RancherWebSocketListener();
+        this.rancherWebSocketListener = new RancherWebSocketListener();
     }
 
     @Override
@@ -226,7 +226,7 @@ public class RancherFileCopier implements FileCopier, Describable {
                               String destination) throws FileCopierException {
         try {
             String url = nodeAttributes.get("execute");
-            listener.putFile(url, accessKey, secretKey, file, destination);
+            rancherWebSocketListener.putFile(url, accessKey, secretKey, file, destination);
             context.getExecutionLogger().log(DEBUG_LEVEL, "PUT: '" + file + "'");
         } catch (IOException | InterruptedException e) {
             throw new FileCopierException(e.getMessage(), CONNECTION_FAILURE);
