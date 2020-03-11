@@ -392,7 +392,6 @@ public class RancherWebSocketListener extends WebSocketListener {
 				}
 				nextHeader = reader.nextHeader();
 			}
-			reader.close();
 		} catch (IOException e) {
 			log(Constants.ERR_LEVEL, e.getMessage());
 			e.printStackTrace();
