@@ -10,7 +10,7 @@ import static org.junit.Assert.assertEquals;
 
 public class LogMessageTest {
 
-    private final String string = "strimg";
+    private final String string = "string";
     private byte[] bytes;
 
     @Before
@@ -25,7 +25,7 @@ public class LogMessageTest {
     }
 
     @Test
-    public void streanIsConstructor() {
+    public void streamIsConstructor() {
         ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
         LogMessage message = new LogMessage(0, byteBuffer);
         assertEquals(0, message.stream().id());
