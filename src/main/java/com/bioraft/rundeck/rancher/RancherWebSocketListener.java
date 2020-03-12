@@ -39,6 +39,8 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import static com.dtolabs.rundeck.core.Constants.ERR_LEVEL;
+
 /**
  * RancherWebSocketListener connects to Rancher containers.
  *
@@ -112,7 +114,6 @@ public class RancherWebSocketListener extends WebSocketListener {
 	@Override
 	public void onFailure(WebSocket webSocket, Throwable t, Response response) {
 		this.log(Constants.ERR_LEVEL, t.getMessage());
-		t.printStackTrace();
 	}
 
 	/**
@@ -341,7 +342,7 @@ public class RancherWebSocketListener extends WebSocketListener {
 				throw new IOException("WebSocket response was null");
 			}
 		} catch (IOException e) {
-			System.out.println(e.getMessage());
+			log(ERR_LEVEL, e.getMessage());
 			throw e;
 		}
 	}
@@ -389,8 +390,7 @@ public class RancherWebSocketListener extends WebSocketListener {
 				nextHeader = reader.nextHeader();
 			}
 		} catch (IOException e) {
-			log(Constants.ERR_LEVEL, e.getMessage());
-			e.printStackTrace();
+			log(ERR_LEVEL, e.getMessage());
 		}
 	}
 
