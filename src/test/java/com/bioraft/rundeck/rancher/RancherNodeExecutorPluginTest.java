@@ -1,7 +1,10 @@
 package com.bioraft.rundeck.rancher;
 
+import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.common.ProjectManager;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
+import com.dtolabs.rundeck.core.execution.ExecutionLogger;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.storage.ResourceMeta;
@@ -17,19 +20,26 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.bioraft.rundeck.rancher.Constants.CONFIG_ACCESSKEY_PATH;
-import static com.bioraft.rundeck.rancher.Constants.CONFIG_SECRETKEY_PATH;
+import static com.bioraft.rundeck.rancher.Constants.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class RancherNodeExecutorPluginTest {
 
     @Mock
     ExecutionContext executionContext;
+
+    @Mock
+    ExecutionLogger executionLogger;
+
+    @Mock
+    Framework framework;
+
+    @Mock
+    ProjectManager projectManager;
 
     @Mock
     StorageTree storageTree;
@@ -43,11 +53,26 @@ public class RancherNodeExecutorPluginTest {
     @Mock
     INodeEntry node;
 
+    @Mock
+    Storage storage;
+
+    @Mock
+    RancherWebSocketListener rancherWebSocketListener;
+
     Map<String, String> nodeAttributes;
+
+    Map<String, Map<String, String>> dataContext;
+
+    Map<String, String> jobContext;
 
     @Before
     public void setUp() {
         nodeAttributes = new HashMap<>();
+        dataContext = new HashMap<>();
+        jobContext = new HashMap<>();
+        jobContext.put("project", "project");
+        jobContext.put("execid", "execid");
+        dataContext.put("job", jobContext);
     }
 
     @Test
@@ -99,5 +124,75 @@ public class RancherNodeExecutorPluginTest {
         assertEquals(message, result.getFailureMessage());
         assertEquals(StepFailureReason.IOFailure, result.getFailureReason());
         assertEquals(-1, result.getResultCode());
+    }
+
+    @Test
+    public void testExecutorEmpty() throws IOException, InterruptedException {
+        when(rancherWebSocketListener.thisGetFile(anyString(), anyString(), anyString(), anyString()))
+                .thenReturn("");
+
+        String[] command = { "ls" };
+        nodeAttributes.put("type", "container");
+        nodeAttributes.put(CONFIG_ACCESSKEY_PATH, "access_key");
+        nodeAttributes.put(CONFIG_SECRETKEY_PATH, "secret_key");
+        nodeAttributes.put("execute", "execute");
+        nodeAttributes.put(RANCHER_CONFIG_EXECUTOR_TIMEOUT, "30");
+        when(node.getAttributes()).thenReturn(nodeAttributes);
+
+        when(storage.loadStoragePathData(nodeAttributes.get(CONFIG_ACCESSKEY_PATH))).thenReturn("access");
+        when(storage.loadStoragePathData(nodeAttributes.get(CONFIG_SECRETKEY_PATH))).thenReturn("secret");
+
+        when(executionContext.getFramework()).thenReturn(framework);
+        when(framework.getFrameworkProjectMgr()).thenReturn(projectManager);
+
+        when(executionContext.getExecutionLogger()).thenReturn(executionLogger);
+        when(executionContext.getDataContext()).thenReturn(dataContext);
+
+        RancherNodeExecutorPlugin subject = new RancherNodeExecutorPlugin(rancherWebSocketListener, storage);
+        NodeExecutorResult result = subject.executeCommand(executionContext, command, node);
+        String message = "Process  did not return a status.";
+        assertEquals(message, result.getFailureMessage());
+        assertEquals(StepFailureReason.PluginFailed, result.getFailureReason());
+        assertEquals(-1, result.getResultCode());
+    }
+
+    @Test
+    public void testExecutorSuccess() throws IOException, InterruptedException {
+        int exitStatus = 0;
+        String fileContents = "123 " + exitStatus;
+        testExecutor(fileContents);
+    }
+
+    @Test
+    public void testExecutorError() throws IOException, InterruptedException {
+        int exitStatus = 1;
+        String fileContents = "123 " + exitStatus;
+        testExecutor(fileContents);
+    }
+
+    public void testExecutor(String fileContents) throws IOException, InterruptedException {
+        when(rancherWebSocketListener.thisGetFile(anyString(), anyString(), anyString(), anyString()))
+                .thenReturn(fileContents);
+
+        String[] command = { "ls" };
+        nodeAttributes.put("type", "container");
+        nodeAttributes.put(CONFIG_ACCESSKEY_PATH, "access_key");
+        nodeAttributes.put(CONFIG_SECRETKEY_PATH, "secret_key");
+        nodeAttributes.put("execute", "execute");
+        nodeAttributes.put(RANCHER_CONFIG_EXECUTOR_TIMEOUT, "30");
+        when(node.getAttributes()).thenReturn(nodeAttributes);
+
+        when(storage.loadStoragePathData(nodeAttributes.get(CONFIG_ACCESSKEY_PATH))).thenReturn("access");
+        when(storage.loadStoragePathData(nodeAttributes.get(CONFIG_SECRETKEY_PATH))).thenReturn("secret");
+
+        when(executionContext.getFramework()).thenReturn(framework);
+        when(framework.getFrameworkProjectMgr()).thenReturn(projectManager);
+
+        when(executionContext.getExecutionLogger()).thenReturn(executionLogger);
+        when(executionContext.getDataContext()).thenReturn(dataContext);
+
+        RancherNodeExecutorPlugin subject = new RancherNodeExecutorPlugin(rancherWebSocketListener, storage);
+        subject.executeCommand(executionContext, command, node);
+        verify(executionLogger, times(3)).log(anyInt(), anyString());
     }
 }
