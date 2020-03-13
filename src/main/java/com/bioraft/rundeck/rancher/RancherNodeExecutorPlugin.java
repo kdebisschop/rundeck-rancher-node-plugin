@@ -131,7 +131,6 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
         logger.log(DEBUG_LEVEL, "Reading '" + file + "' on " + url);
         try {
             output = socketListener.thisGetFile(url, accessKey, secretKey, file);
-            pidFile = output.split(" +");
         } catch (IOException e) {
             return NodeExecutorResultImpl.createFailure(StepFailureReason.IOFailure, e.getMessage(), node);
         } catch (InterruptedException e) {
@@ -139,6 +138,7 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
             return NodeExecutorResultImpl.createFailure(StepFailureReason.Interrupted, e.getMessage(), node);
         }
 
+        pidFile = output.split(" +");
         if (pidFile.length < 2) {
             String message = "Process " + output + " did not return a status.";
             return NodeExecutorResultImpl.createFailure(StepFailureReason.PluginFailed, message, node);
