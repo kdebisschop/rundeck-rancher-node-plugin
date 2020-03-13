@@ -131,14 +131,31 @@ public class RancherWebSocketListener extends WebSocketListener {
 	 */
 	public static void runJob(String url, String accessKey, String secretKey, String[] command,
 			ExecutionListener listener, String temp, int timeout) throws IOException, InterruptedException {
+		String[] cmd = remoteCommand(command, temp);
+		(new RancherWebSocketListener()).runJob(url, accessKey, secretKey, listener, cmd, timeout);
+	}
+
+	public void thisRunJob(String url, String accessKey, String secretKey, String[] command,
+						   ExecutionListener listener, String temp, int timeout) throws IOException, InterruptedException {
+		String[] cmd = remoteCommand(command, temp);
+		this.runJob(url, accessKey, secretKey, listener, cmd, timeout);
+	}
+
+	/**
+	 * Constructs the command that will actually be invoked on the remote server to execute the submitted job.
+	 *
+	 * @param command The command to run.
+	 * @param temp A unique temporary file for this job (".pid" will be appended to the file name)
+	 * @return The command vector to be sent to the remote server.
+	 */
+	private static String[] remoteCommand(String[] command, String temp) {
 		String file = " >>" + temp + ".pid; ";
 		// Prefix STDERR lines with STDERR_TOK to decode in logging step.
 		String job = "( " + String.join(" ", command) + ") 2> >(while read line;do echo \"" + STDERR_TOK
 				+ " $line\";done) ;";
 		String remote = "printf $$" + file + job + "printf ' %s' $?" + file;
 		// Note that bash is required to support adding a prefix token to STDERR.
-		String[] cmd = { "bash", "-c", remote };
-		(new RancherWebSocketListener()).runJob(url, accessKey, secretKey, listener, cmd, timeout);
+		return new String[]{ "bash", "-c", remote };
 	}
 
 	/**
@@ -154,8 +171,24 @@ public class RancherWebSocketListener extends WebSocketListener {
 	 */
 	public static void getFile(String url, String accessKey, String secretKey, StringBuilder logger, String file)
 			throws IOException, InterruptedException {
+		(new RancherWebSocketListener()).thisGetFile(url, accessKey, secretKey, logger, file);
+	}
+
+	/**
+	 * Get contents of a file from server.
+	 *
+	 * @param url The URL the listener should use to launch the job.
+	 * @param accessKey Rancher credentials AccessKey.
+	 * @param secretKey Rancher credentials SecretKey.
+	 * @param logger A StringBuilder to which status is appended.
+	 * @param file The file to fetch/cat from the remote container.
+	 * @throws IOException When job fails.
+	 * @throws InterruptedException When job is interrupted.
+	 */
+	public void thisGetFile(String url, String accessKey, String secretKey, StringBuilder logger, String file)
+			throws IOException, InterruptedException {
 		String[] command = { "cat", file };
-		(new RancherWebSocketListener()).run(url, accessKey, secretKey, logger, command);
+		this.run(url, accessKey, secretKey, logger, command);
 	}
 
 	/**

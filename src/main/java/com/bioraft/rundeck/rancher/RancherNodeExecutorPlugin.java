@@ -101,7 +101,7 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
                 context.getFramework());
         try {
             context.getExecutionLogger().log(DEBUG_LEVEL, "Running " + String.join(" ", command));
-            RancherWebSocketListener.runJob(url, accessKey, secretKey, command, listener, temp, timeout);
+            (new RancherWebSocketListener()).thisRunJob(url, accessKey, secretKey, command, listener, temp, timeout);
             context.getExecutionLogger().log(DEBUG_LEVEL, "Ran " + String.join(" ", command));
         } catch (IOException e) {
             return NodeExecutorResultImpl.createFailure(StepFailureReason.IOFailure, e.getMessage(), node);
@@ -151,7 +151,7 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
      */
     private String readLogFile(String file, String url) throws IOException, InterruptedException {
         StringBuilder output = new StringBuilder();
-        RancherWebSocketListener.getFile(url, accessKey, secretKey, output, file);
+        (new RancherWebSocketListener()).thisGetFile(url, accessKey, secretKey, output, file);
         return output.toString();
     }
 }
