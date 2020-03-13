@@ -121,6 +121,7 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
         } catch (IOException e) {
             return NodeExecutorResultImpl.createFailure(StepFailureReason.IOFailure, e.getMessage(), node);
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             return NodeExecutorResultImpl.createFailure(StepFailureReason.Interrupted, e.getMessage(), node);
         }
 
@@ -134,10 +135,11 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
         } catch (IOException e) {
             return NodeExecutorResultImpl.createFailure(StepFailureReason.IOFailure, e.getMessage(), node);
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             return NodeExecutorResultImpl.createFailure(StepFailureReason.Interrupted, e.getMessage(), node);
         }
 
-        if (pidFile.length <= 1) {
+        if (pidFile.length < 2) {
             String message = "Process " + output + " did not return a status.";
             return NodeExecutorResultImpl.createFailure(StepFailureReason.PluginFailed, message, node);
         } else if (Integer.parseInt(pidFile[1]) == 0) {
