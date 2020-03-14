@@ -216,6 +216,7 @@ public class RancherFileCopier implements FileCopier, Describable {
         } catch (IOException e) {
             throw new FileCopierException("Child process IO Exception", IO_EXCEPTION, e);
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new FileCopierException("Child process interrupted", INTERRUPTED, e);
         }
 
@@ -228,7 +229,10 @@ public class RancherFileCopier implements FileCopier, Describable {
             String url = nodeAttributes.get("execute");
             webSocketListener.putFile(url, accessKey, secretKey, file, destination);
             context.getExecutionLogger().log(DEBUG_LEVEL, "PUT: '" + file + "'");
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException e) {
+            throw new FileCopierException(e.getMessage(), CONNECTION_FAILURE);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new FileCopierException(e.getMessage(), CONNECTION_FAILURE);
         }
         return destination;
