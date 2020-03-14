@@ -23,6 +23,7 @@ import java.util.Map;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
+import com.dtolabs.rundeck.core.execution.ExecutionLogger;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
@@ -48,9 +49,6 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
 
     static final Description DESC;
 
-    private String accessKey;
-    private String secretKey;
-
     static {
         DescriptionBuilder builder = DescriptionBuilder.builder();
         builder.name(RANCHER_SERVICE_PROVIDER);
@@ -64,6 +62,22 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
 		builder.frameworkMapping(RANCHER_CONFIG_EXECUTOR_TIMEOUT, FMWK_RANCHER_EXECUTOR_TIMEOUT);
 
         DESC = builder.build();
+    }
+
+    private RancherWebSocketListener socketListener;
+    private RancherWebSocketListener fileCopier;
+    private Storage storage;
+
+    public RancherNodeExecutorPlugin() {
+        socketListener = new RancherWebSocketListener();
+        fileCopier = new RancherWebSocketListener();
+        this.storage = new Storage();
+    }
+
+    public RancherNodeExecutorPlugin(RancherWebSocketListener rancherWebSocketListener, RancherWebSocketListener webSocketFileCopier, Storage storage) {
+        socketListener = rancherWebSocketListener;
+        fileCopier = webSocketFileCopier;
+        this.storage = storage;
     }
 
     @Override
@@ -81,8 +95,10 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
             return NodeExecutorResultImpl.createFailure(StepFailureReason.PluginFailed, message, node);
         }
 
+        String accessKey;
+        String secretKey;
         try {
-            Storage storage = new Storage(context);
+            storage.setExecutionContext(context);
             accessKey = storage.loadStoragePathData(nodeAttributes.get(CONFIG_ACCESSKEY_PATH));
             secretKey = storage.loadStoragePathData(nodeAttributes.get(CONFIG_SECRETKEY_PATH));
         } catch (IOException e) {
@@ -90,6 +106,8 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
         }
 
         ExecutionListener listener = context.getExecutionListener();
+
+        ExecutionLogger logger = context.getExecutionLogger();
 
         String url = nodeAttributes.get("execute");
 
@@ -100,30 +118,37 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
                 context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
                 context.getFramework());
         try {
-            context.getExecutionLogger().log(DEBUG_LEVEL, "Running " + String.join(" ", command));
-            RancherWebSocketListener.runJob(url, accessKey, secretKey, command, listener, temp, timeout);
-            context.getExecutionLogger().log(DEBUG_LEVEL, "Ran " + String.join(" ", command));
+            logger.log(DEBUG_LEVEL, "Running " + String.join(" ", command));
+            socketListener.thisRunJob(url, accessKey, secretKey, command, listener, temp, timeout);
+            logger.log(DEBUG_LEVEL, "Ran " + String.join(" ", command));
         } catch (IOException e) {
             return NodeExecutorResultImpl.createFailure(StepFailureReason.IOFailure, e.getMessage(), node);
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             return NodeExecutorResultImpl.createFailure(StepFailureReason.Interrupted, e.getMessage(), node);
         }
 
-        String[] pidFile;
+        String statusFileContents;
+        String file = temp + ".pid";
+        logger.log(DEBUG_LEVEL, "Reading '" + file + "' on " + url);
         try {
-            String file = temp + ".pid";
-            context.getExecutionLogger().log(DEBUG_LEVEL, "Reading '" + file + "' on " + url);
-            pidFile = this.readLogFile(file, url).split(" +");
+            statusFileContents = fileCopier.thisGetFile(url, accessKey, secretKey, file);
         } catch (IOException e) {
             return NodeExecutorResultImpl.createFailure(StepFailureReason.IOFailure, e.getMessage(), node);
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             return NodeExecutorResultImpl.createFailure(StepFailureReason.Interrupted, e.getMessage(), node);
         }
-        if (pidFile.length > 1 && Integer.parseInt(pidFile[1]) == 0) {
+
+        String[] pidFile = statusFileContents.split(" ");
+        if (pidFile.length < 2) {
+            String message = "Process " + statusFileContents + " did not return a status.";
+            return NodeExecutorResultImpl.createFailure(StepFailureReason.PluginFailed, message, node);
+        } else if (Integer.parseInt(pidFile[1]) == 0) {
             return NodeExecutorResultImpl.createSuccess(node);
         } else {
-            return NodeExecutorResultImpl.createFailure(StepFailureReason.PluginFailed,
-                    "Process " + pidFile[0] + " status " + pidFile[1], node);
+            String message = "Process " + pidFile[0] + " status " + pidFile[1];
+            return NodeExecutorResultImpl.createFailure(StepFailureReason.PluginFailed, message, node);
         }
     }
 
@@ -138,20 +163,5 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
         long time = System.currentTimeMillis();
         int hash = Arrays.hashCode(command);
         return "/tmp/" + jobContext.get("project") + "_" + jobContext.get("execid") + time + "_" + hash;
-    }
-
-    /**
-     * Read a file on the Docker container.
-     *
-     * @param file The full path to the file.
-     * @param url  The URL for executing jobs on the desired container.
-     * @return The contents of the file as a string.
-     * @throws InterruptedException When listener is interrupted.
-     * @throws IOException          When connection to Rancher fails.
-     */
-    private String readLogFile(String file, String url) throws IOException, InterruptedException {
-        StringBuilder output = new StringBuilder();
-        RancherWebSocketListener.getFile(url, accessKey, secretKey, output, file);
-        return output.toString();
     }
 }

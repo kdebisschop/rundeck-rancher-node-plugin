@@ -62,7 +62,7 @@ public class RancherFileCopier implements FileCopier, Describable {
 
     static final Description DESC;
 
-    RancherWebSocketListener rancherWebSocketListener;
+    RancherWebSocketListener webSocketListener;
 
     static {
         DescriptionBuilder builder = DescriptionBuilder.builder();
@@ -81,11 +81,11 @@ public class RancherFileCopier implements FileCopier, Describable {
     }
 
     public RancherFileCopier(RancherWebSocketListener rancherWebSocketListener) {
-        this.rancherWebSocketListener = rancherWebSocketListener;
+        webSocketListener = rancherWebSocketListener;
     }
 
     public RancherFileCopier() {
-        this.rancherWebSocketListener = new RancherWebSocketListener();
+        webSocketListener = new RancherWebSocketListener();
     }
 
     @Override
@@ -216,6 +216,7 @@ public class RancherFileCopier implements FileCopier, Describable {
         } catch (IOException e) {
             throw new FileCopierException("Child process IO Exception", IO_EXCEPTION, e);
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new FileCopierException("Child process interrupted", INTERRUPTED, e);
         }
 
@@ -226,9 +227,12 @@ public class RancherFileCopier implements FileCopier, Describable {
                               String destination) throws FileCopierException {
         try {
             String url = nodeAttributes.get("execute");
-            rancherWebSocketListener.putFile(url, accessKey, secretKey, file, destination);
+            webSocketListener.putFile(url, accessKey, secretKey, file, destination);
             context.getExecutionLogger().log(DEBUG_LEVEL, "PUT: '" + file + "'");
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException e) {
+            throw new FileCopierException(e.getMessage(), CONNECTION_FAILURE);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new FileCopierException(e.getMessage(), CONNECTION_FAILURE);
         }
         return destination;

@@ -49,6 +49,14 @@ import static com.dtolabs.rundeck.core.Constants.ERR_LEVEL;
  */
 public class RancherWebSocketListener extends WebSocketListener {
 
+	// These are used to reconstruct STDERR since it is lost in the stream from
+	// Rancher.
+	private static final String STDERR_TOK = "STDERR_6v9ZvwThpU1FtyrlIBf4UIC8";
+	private static final int STDERR_TOKLEN = STDERR_TOK.length() + 1;
+	// Log listener from Rundeck.
+	private ExecutionListener listener;
+	// A buffer used to accumulate output from the Rancher message stream.
+	private StringBuilder output;
 	// Try to use a single HTTP client across methods.
 	private OkHttpClient client;
 
@@ -64,26 +72,15 @@ public class RancherWebSocketListener extends WebSocketListener {
 	// The command for the job being run.
 	private String[] commandList;
 
-	// A buffer used to accumulate output from the Rancher message stream.
-	private StringBuilder output;
-
 	// Docker message frames do not necessarily coincide with Rancher. When a Docker
 	// frame is continued in the next Rancher message, this header allows us to
 	// decode
 	// the rest of the Docker frame.
 	private byte[] nextHeader;
 
-	// Log listener from Rundeck.
-	private ExecutionListener listener;
-
-	// These are used to reconstruct STDERR since it is lost in the stream from
-	// Rancher.
-	private static final String STDERR_TOK = "STDERR_6v9ZvwThpU1FtyrlIBf4UIC8";
-	private static final int STDERR_TOKLEN = STDERR_TOK.length() + 1;
 	private int currentOutputChannel = -1;
 
 	public RancherWebSocketListener() {
-
 	}
 
 	public RancherWebSocketListener(OkHttpClient client) {
@@ -93,6 +90,41 @@ public class RancherWebSocketListener extends WebSocketListener {
 	public RancherWebSocketListener(ExecutionListener listener, StringBuilder output) {
 		this.listener = listener;
 		this.output = output;
+	}
+
+	/**
+	 * Runs the overall job step: sends output to a listener; saves PID and exit
+	 * status to a temporary file.
+	 *
+	 * @param url The URL the listener should use to launch the job.
+	 * @param accessKey Rancher credentials AccessKey.
+	 * @param secretKey Rancher credentials SecretKey.
+	 * @param command The command to run.
+	 * @param listener Log listener from Rundeck.
+	 * @param temp A unique temporary file for this job (".pid" will be appended to the file name)
+	 * @throws IOException When job fails.
+	 * @throws InterruptedException When job is interrupted.
+	 */
+	public static void runJob(String url, String accessKey, String secretKey, String[] command,
+			ExecutionListener listener, String temp, int timeout) throws IOException, InterruptedException {
+		String[] cmd = remoteCommand(command, temp);
+		(new RancherWebSocketListener()).runJob(url, accessKey, secretKey, listener, cmd, timeout);
+	}
+
+	/**
+	 * Constructs the command that will actually be invoked on the remote server to execute the submitted job.
+	 *
+	 * @param command The command to run.
+	 * @param temp A unique temporary file for this job (".pid" will be appended to the file name)
+	 * @return The command vector to be sent to the remote server.
+	 */
+	private static String[] remoteCommand(String[] command, String temp) {
+		String file = " >>" + temp + ".pid; ";
+		// Prefix STDERR lines with STDERR_TOK to decode in logging step.
+		String job = "( " + String.join(" ", command) + ") 2> >(while read line;do echo \"" + STDERR_TOK
+				+ " $line\";done) ;";
+		// Note that bash is required to support adding a prefix token to STDERR.
+		return new String[]{ "bash", "-c", "printf $$" + file + job + "printf ' %s' $?" + file };
 	}
 
 	@Override
@@ -116,29 +148,10 @@ public class RancherWebSocketListener extends WebSocketListener {
 		this.log(Constants.ERR_LEVEL, t.getMessage());
 	}
 
-	/**
-	 * Runs the overall job step: sends output to a listener; saves PID and exit
-	 * status to a temporary file.
-	 *
-	 * @param url The URL the listener should use to launch the job.
-	 * @param accessKey Rancher credentials AccessKey.
-	 * @param secretKey Rancher credentials SecretKey.
-	 * @param command The command to run.
-	 * @param listener Log listener from Rundeck.
-	 * @param temp A unique temporary file for this job (".pid" will be appended to the file name)
-	 * @throws IOException When job fails.
-	 * @throws InterruptedException When job is interrupted.
-	 */
-	public static void runJob(String url, String accessKey, String secretKey, String[] command,
-			ExecutionListener listener, String temp, int timeout) throws IOException, InterruptedException {
-		String file = " >>" + temp + ".pid; ";
-		// Prefix STDERR lines with STDERR_TOK to decode in logging step.
-		String job = "( " + String.join(" ", command) + ") 2> >(while read line;do echo \"" + STDERR_TOK
-				+ " $line\";done) ;";
-		String remote = "printf $$" + file + job + "printf ' %s' $?" + file;
-		// Note that bash is required to support adding a prefix token to STDERR.
-		String[] cmd = { "bash", "-c", remote };
-		(new RancherWebSocketListener()).runJob(url, accessKey, secretKey, listener, cmd, timeout);
+	public void thisRunJob(String url, String accessKey, String secretKey, String[] command,
+						   ExecutionListener listener, String temp, int timeout) throws IOException, InterruptedException {
+		String[] cmd = remoteCommand(command, temp);
+		this.runJob(url, accessKey, secretKey, listener, cmd, timeout);
 	}
 
 	/**
@@ -147,15 +160,16 @@ public class RancherWebSocketListener extends WebSocketListener {
 	 * @param url The URL the listener should use to launch the job.
 	 * @param accessKey Rancher credentials AccessKey.
 	 * @param secretKey Rancher credentials SecretKey.
-	 * @param logger A StringBuilder to which status is appended.
 	 * @param file The file to fetch/cat from the remote container.
 	 * @throws IOException When job fails.
 	 * @throws InterruptedException When job is interrupted.
 	 */
-	public static void getFile(String url, String accessKey, String secretKey, StringBuilder logger, String file)
+	public String thisGetFile(String url, String accessKey, String secretKey, String file)
 			throws IOException, InterruptedException {
 		String[] command = { "cat", file };
-		(new RancherWebSocketListener()).run(url, accessKey, secretKey, logger, command);
+		StringBuilder stringBuilder = new StringBuilder();
+		this.run(url, accessKey, secretKey, stringBuilder, command);
+		return stringBuilder.toString();
 	}
 
 	/**

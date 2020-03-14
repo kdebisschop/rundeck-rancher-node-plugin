@@ -8,10 +8,17 @@ import java.io.IOException;
 
 public class Storage {
 
-    private final ExecutionContext context;
+    private ExecutionContext executionContext;
 
-    public Storage(final ExecutionContext context) {
-        this.context = context;
+    public Storage() {
+    }
+
+    public Storage(final ExecutionContext executionContext) {
+        this.executionContext = executionContext;
+    }
+
+    public void setExecutionContext(ExecutionContext executionContext) {
+        this.executionContext = executionContext;
     }
 
     /**
@@ -22,10 +29,13 @@ public class Storage {
      * @throws IOException When there is an IO Exception writing to stream.
      */
     public String loadStoragePathData(final String passwordStoragePath) throws IOException {
+        if (executionContext == null) {
+            throw new IOException("ExecutionContext is not defined.");
+        }
         if (null == passwordStoragePath) {
             throw new IOException("Storage path is not defined.");
         }
-        ResourceMeta contents = context.getStorageTree().getResource(passwordStoragePath).getContents();
+        ResourceMeta contents = executionContext.getStorageTree().getResource(passwordStoragePath).getContents();
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         contents.writeContent(byteArrayOutputStream);
         return new String(byteArrayOutputStream.toByteArray());
