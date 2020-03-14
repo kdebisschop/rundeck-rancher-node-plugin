@@ -59,6 +59,9 @@ public class RancherNodeExecutorPluginTest {
     @Mock
     RancherWebSocketListener rancherWebSocketListener;
 
+    @Mock
+    RancherWebSocketListener webSocketFileCopier;
+
     Map<String, String> nodeAttributes;
 
     Map<String, Map<String, String>> dataContext;
@@ -148,7 +151,7 @@ public class RancherNodeExecutorPluginTest {
         when(executionContext.getExecutionLogger()).thenReturn(executionLogger);
         when(executionContext.getDataContext()).thenReturn(dataContext);
 
-        RancherNodeExecutorPlugin subject = new RancherNodeExecutorPlugin(rancherWebSocketListener, storage);
+        RancherNodeExecutorPlugin subject = new RancherNodeExecutorPlugin(rancherWebSocketListener, webSocketFileCopier, storage);
         NodeExecutorResult result = subject.executeCommand(executionContext, command, node);
         String message = "Process  did not return a status.";
         assertEquals(message, result.getFailureMessage());
@@ -171,7 +174,7 @@ public class RancherNodeExecutorPluginTest {
     }
 
     public void testExecutor(String fileContents) throws IOException, InterruptedException {
-        when(rancherWebSocketListener.thisGetFile(anyString(), anyString(), anyString(), anyString()))
+        when(webSocketFileCopier.thisGetFile(anyString(), anyString(), anyString(), anyString()))
                 .thenReturn(fileContents);
 
         String[] command = { "ls" };
@@ -191,7 +194,7 @@ public class RancherNodeExecutorPluginTest {
         when(executionContext.getExecutionLogger()).thenReturn(executionLogger);
         when(executionContext.getDataContext()).thenReturn(dataContext);
 
-        RancherNodeExecutorPlugin subject = new RancherNodeExecutorPlugin(rancherWebSocketListener, storage);
+        RancherNodeExecutorPlugin subject = new RancherNodeExecutorPlugin(rancherWebSocketListener, webSocketFileCopier, storage);
         subject.executeCommand(executionContext, command, node);
         verify(executionLogger, times(3)).log(anyInt(), anyString());
     }

@@ -65,15 +65,18 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
     }
 
     private RancherWebSocketListener socketListener;
+    private RancherWebSocketListener fileCopier;
     private Storage storage;
 
     public RancherNodeExecutorPlugin() {
         socketListener = new RancherWebSocketListener();
+        fileCopier = new RancherWebSocketListener();
         this.storage = new Storage();
     }
 
-    public RancherNodeExecutorPlugin(RancherWebSocketListener rancherWebSocketListener, Storage storage) {
+    public RancherNodeExecutorPlugin(RancherWebSocketListener rancherWebSocketListener, RancherWebSocketListener webSocketFileCopier, Storage storage) {
         socketListener = rancherWebSocketListener;
+        fileCopier = webSocketFileCopier;
         this.storage = storage;
     }
 
@@ -116,7 +119,7 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
                 context.getFramework());
         try {
             logger.log(DEBUG_LEVEL, "Running " + String.join(" ", command));
-            new RancherWebSocketListener().thisRunJob(url, accessKey, secretKey, command, listener, temp, timeout);
+            socketListener.thisRunJob(url, accessKey, secretKey, command, listener, temp, timeout);
             logger.log(DEBUG_LEVEL, "Ran " + String.join(" ", command));
         } catch (IOException e) {
             return NodeExecutorResultImpl.createFailure(StepFailureReason.IOFailure, e.getMessage(), node);
@@ -129,8 +132,8 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
         String file = temp + ".pid";
         logger.log(DEBUG_LEVEL, "Reading '" + file + "' on " + url);
         try {
-            socketListener.thisGetFile(url, accessKey, secretKey, file);
-            statusFileContents = socketListener.thisGetFile(url, accessKey, secretKey, file);
+            fileCopier.thisGetFile(url, accessKey, secretKey, file);
+            statusFileContents = fileCopier.thisGetFile(url, accessKey, secretKey, file);
         } catch (IOException e) {
             return NodeExecutorResultImpl.createFailure(StepFailureReason.IOFailure, e.getMessage(), node);
         } catch (InterruptedException e) {
