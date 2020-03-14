@@ -4,6 +4,7 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.ProjectManager;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
+import com.dtolabs.rundeck.core.execution.ExecutionListener;
 import com.dtolabs.rundeck.core.execution.ExecutionLogger;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
@@ -87,7 +88,7 @@ public class RancherNodeExecutorPluginTest {
     @Test
     public void serviceIsNotYetSupported() {
         RancherNodeExecutorPlugin nodeExecutorPlugin = new RancherNodeExecutorPlugin();
-        String[] command = { "ls" };
+        String[] command = {"ls"};
         nodeAttributes.put("type", "service");
         when(node.getAttributes()).thenReturn(nodeAttributes);
         NodeExecutorResult result = nodeExecutorPlugin.executeCommand(executionContext, command, node);
@@ -100,7 +101,7 @@ public class RancherNodeExecutorPluginTest {
     @Test
     public void missingKeyCreatesFailure() {
         RancherNodeExecutorPlugin nodeExecutorPlugin = new RancherNodeExecutorPlugin();
-        String[] command = { "ls" };
+        String[] command = {"ls"};
         nodeAttributes.put("type", "container");
         when(node.getAttributes()).thenReturn(nodeAttributes);
         NodeExecutorResult result = nodeExecutorPlugin.executeCommand(executionContext, command, node);
@@ -113,7 +114,7 @@ public class RancherNodeExecutorPluginTest {
     @Test
     public void missingKeyValueCreatesFailure() throws IOException {
         RancherNodeExecutorPlugin nodeExecutorPlugin = new RancherNodeExecutorPlugin();
-        String[] command = { "ls" };
+        String[] command = {"ls"};
         nodeAttributes.put("type", "container");
         nodeAttributes.put(CONFIG_ACCESSKEY_PATH, "access_key");
         nodeAttributes.put(CONFIG_SECRETKEY_PATH, "secret_key");
@@ -134,7 +135,7 @@ public class RancherNodeExecutorPluginTest {
         when(webSocketFileCopier.thisGetFile(anyString(), anyString(), anyString(), anyString()))
                 .thenReturn("");
 
-        String[] command = { "ls" };
+        String[] command = {"ls"};
         nodeAttributes.put("type", "container");
         nodeAttributes.put(CONFIG_ACCESSKEY_PATH, "access_key");
         nodeAttributes.put(CONFIG_SECRETKEY_PATH, "secret_key");
@@ -177,7 +178,7 @@ public class RancherNodeExecutorPluginTest {
         when(webSocketFileCopier.thisGetFile(anyString(), anyString(), anyString(), anyString()))
                 .thenReturn(fileContents);
 
-        String[] command = { "ls" };
+        String[] command = {"ls"};
         nodeAttributes.put("type", "container");
         nodeAttributes.put(CONFIG_ACCESSKEY_PATH, "access_key");
         nodeAttributes.put(CONFIG_SECRETKEY_PATH, "secret_key");
@@ -201,10 +202,11 @@ public class RancherNodeExecutorPluginTest {
 
     @Test
     public void testJobIOFailure() throws IOException, InterruptedException {
-        doThrow(new IOException("IO Failure")).when(rancherWebSocketListener)
-                .thisRunJob(anyString(), anyString(), anyString(), any(), any(), anyString(), anyInt());
+        String[] command = {"ls"};
 
-        String[] command = { "ls" };
+        doThrow(new IOException("IO Failure")).when(rancherWebSocketListener)
+                .thisRunJob(anyString(), anyString(), anyString(), eq(command), any(), anyString(), anyInt());
+
         nodeAttributes.put("type", "container");
         nodeAttributes.put(CONFIG_ACCESSKEY_PATH, "access_key");
         nodeAttributes.put(CONFIG_SECRETKEY_PATH, "secret_key");
@@ -231,10 +233,11 @@ public class RancherNodeExecutorPluginTest {
 
     @Test
     public void testInterruptedJob() throws IOException, InterruptedException {
-        doThrow(new InterruptedException("Interrupted")).when(rancherWebSocketListener)
-                .thisRunJob(anyString(), anyString(), anyString(), any(), any(), anyString(), anyInt());
+        String[] command = {"ls"};
 
-        String[] command = { "ls" };
+        doThrow(new InterruptedException("Interrupted")).when(rancherWebSocketListener)
+                .thisRunJob(anyString(), anyString(), anyString(), eq(command), any(), anyString(), anyInt());
+
         nodeAttributes.put("type", "container");
         nodeAttributes.put(CONFIG_ACCESSKEY_PATH, "access_key");
         nodeAttributes.put(CONFIG_SECRETKEY_PATH, "secret_key");
@@ -258,12 +261,13 @@ public class RancherNodeExecutorPluginTest {
         assertEquals(StepFailureReason.Interrupted, result.getFailureReason());
         assertEquals(-1, result.getResultCode());
     }
+
     @Test
     public void testReadIOFailure() throws IOException, InterruptedException {
-        doThrow(new IOException("IO Failure")).when(webSocketFileCopier)
-                .thisGetFile(anyString(), anyString(), anyString(), anyString());
+        when(webSocketFileCopier.thisGetFile(anyString(), anyString(), anyString(), anyString()))
+                .thenThrow(new IOException("IO Failure"));
 
-        String[] command = { "ls" };
+        String[] command = {"ls"};
         nodeAttributes.put("type", "container");
         nodeAttributes.put(CONFIG_ACCESSKEY_PATH, "access_key");
         nodeAttributes.put(CONFIG_SECRETKEY_PATH, "secret_key");
@@ -290,10 +294,10 @@ public class RancherNodeExecutorPluginTest {
 
     @Test
     public void testInterruptedRead() throws IOException, InterruptedException {
-        doThrow(new InterruptedException("Interrupted")).when(webSocketFileCopier)
-                .thisGetFile(anyString(), anyString(), anyString(), anyString());
+        when(webSocketFileCopier.thisGetFile(anyString(), anyString(), anyString(), anyString()))
+                .thenThrow(new InterruptedException("Interrupted"));
 
-        String[] command = { "ls" };
+        String[] command = {"ls"};
         nodeAttributes.put("type", "container");
         nodeAttributes.put(CONFIG_ACCESSKEY_PATH, "access_key");
         nodeAttributes.put(CONFIG_SECRETKEY_PATH, "secret_key");
