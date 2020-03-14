@@ -124,8 +124,7 @@ public class RancherWebSocketListener extends WebSocketListener {
 		String job = "( " + String.join(" ", command) + ") 2> >(while read line;do echo \"" + STDERR_TOK
 				+ " $line\";done) ;";
 		// Note that bash is required to support adding a prefix token to STDERR.
-		String[] remote = { "bash", "-c", "printf $$" + file + job + "printf ' %s' $?" + file };
-		return remote;
+		return new String[]{ "bash", "-c", "printf $$" + file + job + "printf ' %s' $?" + file };
 	}
 
 	@Override

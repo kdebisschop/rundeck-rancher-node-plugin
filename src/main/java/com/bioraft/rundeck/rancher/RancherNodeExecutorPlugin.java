@@ -125,11 +125,11 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
             return NodeExecutorResultImpl.createFailure(StepFailureReason.Interrupted, e.getMessage(), node);
         }
 
-        String output;
+        String statusFileContents;
         String file = temp + ".pid";
         logger.log(DEBUG_LEVEL, "Reading '" + file + "' on " + url);
         try {
-            output = socketListener.thisGetFile(url, accessKey, secretKey, file);
+            statusFileContents = socketListener.thisGetFile(url, accessKey, secretKey, file);
         } catch (IOException e) {
             return NodeExecutorResultImpl.createFailure(StepFailureReason.IOFailure, e.getMessage(), node);
         } catch (InterruptedException e) {
@@ -137,9 +137,9 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
             return NodeExecutorResultImpl.createFailure(StepFailureReason.Interrupted, e.getMessage(), node);
         }
 
-        String[] pidFile = output.split(" ");
+        String[] pidFile = statusFileContents.split(" ");
         if (pidFile.length < 2) {
-            String message = "Process " + output + " did not return a status.";
+            String message = "Process " + statusFileContents + " did not return a status.";
             return NodeExecutorResultImpl.createFailure(StepFailureReason.PluginFailed, message, node);
         } else if (Integer.parseInt(pidFile[1]) == 0) {
             return NodeExecutorResultImpl.createSuccess(node);
