@@ -131,7 +131,7 @@ public class RancherNodeExecutorPluginTest {
 
     @Test
     public void testExecutorEmpty() throws IOException, InterruptedException {
-        when(rancherWebSocketListener.thisGetFile(anyString(), anyString(), anyString(), anyString()))
+        when(webSocketFileCopier.thisGetFile(anyString(), anyString(), anyString(), anyString()))
                 .thenReturn("");
 
         String[] command = { "ls" };
