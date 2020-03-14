@@ -139,7 +139,7 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
 
         String[] pidFile = output.split(" ");
         if (pidFile.length < 2) {
-            String message = "Process " + output + " did not return a status";
+            String message = "Process " + output + " did not return a status.";
             return NodeExecutorResultImpl.createFailure(StepFailureReason.PluginFailed, message, node);
         } else if (Integer.parseInt(pidFile[1]) == 0) {
             return NodeExecutorResultImpl.createSuccess(node);
