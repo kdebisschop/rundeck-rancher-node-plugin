@@ -129,6 +129,7 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
         String file = temp + ".pid";
         logger.log(DEBUG_LEVEL, "Reading '" + file + "' on " + url);
         try {
+            socketListener.thisGetFile(url, accessKey, secretKey, file);
             statusFileContents = socketListener.thisGetFile(url, accessKey, secretKey, file);
         } catch (IOException e) {
             return NodeExecutorResultImpl.createFailure(StepFailureReason.IOFailure, e.getMessage(), node);
