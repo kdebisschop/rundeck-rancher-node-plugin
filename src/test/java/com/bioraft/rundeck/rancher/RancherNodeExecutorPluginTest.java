@@ -198,4 +198,123 @@ public class RancherNodeExecutorPluginTest {
         subject.executeCommand(executionContext, command, node);
         verify(executionLogger, times(3)).log(anyInt(), anyString());
     }
+
+    @Test
+    public void testJobIOFailure() throws IOException, InterruptedException {
+        doThrow(new IOException("IO Failure")).when(rancherWebSocketListener)
+                .thisRunJob(anyString(), anyString(), anyString(), any(), any(), anyString(), anyInt());
+
+        String[] command = { "ls" };
+        nodeAttributes.put("type", "container");
+        nodeAttributes.put(CONFIG_ACCESSKEY_PATH, "access_key");
+        nodeAttributes.put(CONFIG_SECRETKEY_PATH, "secret_key");
+        nodeAttributes.put("execute", "execute");
+        nodeAttributes.put(RANCHER_CONFIG_EXECUTOR_TIMEOUT, "30");
+        when(node.getAttributes()).thenReturn(nodeAttributes);
+
+        when(storage.loadStoragePathData(nodeAttributes.get(CONFIG_ACCESSKEY_PATH))).thenReturn("access");
+        when(storage.loadStoragePathData(nodeAttributes.get(CONFIG_SECRETKEY_PATH))).thenReturn("secret");
+
+        when(executionContext.getFramework()).thenReturn(framework);
+        when(framework.getFrameworkProjectMgr()).thenReturn(projectManager);
+
+        when(executionContext.getExecutionLogger()).thenReturn(executionLogger);
+        when(executionContext.getDataContext()).thenReturn(dataContext);
+
+        RancherNodeExecutorPlugin subject = new RancherNodeExecutorPlugin(rancherWebSocketListener, webSocketFileCopier, storage);
+        NodeExecutorResult result = subject.executeCommand(executionContext, command, node);
+        String message = "IO Failure";
+        assertEquals(message, result.getFailureMessage());
+        assertEquals(StepFailureReason.IOFailure, result.getFailureReason());
+        assertEquals(-1, result.getResultCode());
+    }
+
+    @Test
+    public void testInterruptedJob() throws IOException, InterruptedException {
+        doThrow(new InterruptedException("Interrupted")).when(rancherWebSocketListener)
+                .thisRunJob(anyString(), anyString(), anyString(), any(), any(), anyString(), anyInt());
+
+        String[] command = { "ls" };
+        nodeAttributes.put("type", "container");
+        nodeAttributes.put(CONFIG_ACCESSKEY_PATH, "access_key");
+        nodeAttributes.put(CONFIG_SECRETKEY_PATH, "secret_key");
+        nodeAttributes.put("execute", "execute");
+        nodeAttributes.put(RANCHER_CONFIG_EXECUTOR_TIMEOUT, "30");
+        when(node.getAttributes()).thenReturn(nodeAttributes);
+
+        when(storage.loadStoragePathData(nodeAttributes.get(CONFIG_ACCESSKEY_PATH))).thenReturn("access");
+        when(storage.loadStoragePathData(nodeAttributes.get(CONFIG_SECRETKEY_PATH))).thenReturn("secret");
+
+        when(executionContext.getFramework()).thenReturn(framework);
+        when(framework.getFrameworkProjectMgr()).thenReturn(projectManager);
+
+        when(executionContext.getExecutionLogger()).thenReturn(executionLogger);
+        when(executionContext.getDataContext()).thenReturn(dataContext);
+
+        RancherNodeExecutorPlugin subject = new RancherNodeExecutorPlugin(rancherWebSocketListener, webSocketFileCopier, storage);
+        NodeExecutorResult result = subject.executeCommand(executionContext, command, node);
+        String message = "Interrupted";
+        assertEquals(message, result.getFailureMessage());
+        assertEquals(StepFailureReason.Interrupted, result.getFailureReason());
+        assertEquals(-1, result.getResultCode());
+    }
+    @Test
+    public void testReadIOFailure() throws IOException, InterruptedException {
+        doThrow(new IOException("IO Failure")).when(webSocketFileCopier)
+                .thisGetFile(anyString(), anyString(), anyString(), anyString());
+
+        String[] command = { "ls" };
+        nodeAttributes.put("type", "container");
+        nodeAttributes.put(CONFIG_ACCESSKEY_PATH, "access_key");
+        nodeAttributes.put(CONFIG_SECRETKEY_PATH, "secret_key");
+        nodeAttributes.put("execute", "execute");
+        nodeAttributes.put(RANCHER_CONFIG_EXECUTOR_TIMEOUT, "30");
+        when(node.getAttributes()).thenReturn(nodeAttributes);
+
+        when(storage.loadStoragePathData(nodeAttributes.get(CONFIG_ACCESSKEY_PATH))).thenReturn("access");
+        when(storage.loadStoragePathData(nodeAttributes.get(CONFIG_SECRETKEY_PATH))).thenReturn("secret");
+
+        when(executionContext.getFramework()).thenReturn(framework);
+        when(framework.getFrameworkProjectMgr()).thenReturn(projectManager);
+
+        when(executionContext.getExecutionLogger()).thenReturn(executionLogger);
+        when(executionContext.getDataContext()).thenReturn(dataContext);
+
+        RancherNodeExecutorPlugin subject = new RancherNodeExecutorPlugin(rancherWebSocketListener, webSocketFileCopier, storage);
+        NodeExecutorResult result = subject.executeCommand(executionContext, command, node);
+        String message = "IO Failure";
+        assertEquals(message, result.getFailureMessage());
+        assertEquals(StepFailureReason.IOFailure, result.getFailureReason());
+        assertEquals(-1, result.getResultCode());
+    }
+
+    @Test
+    public void testInterruptedRead() throws IOException, InterruptedException {
+        doThrow(new InterruptedException("Interrupted")).when(webSocketFileCopier)
+                .thisGetFile(anyString(), anyString(), anyString(), anyString());
+
+        String[] command = { "ls" };
+        nodeAttributes.put("type", "container");
+        nodeAttributes.put(CONFIG_ACCESSKEY_PATH, "access_key");
+        nodeAttributes.put(CONFIG_SECRETKEY_PATH, "secret_key");
+        nodeAttributes.put("execute", "execute");
+        nodeAttributes.put(RANCHER_CONFIG_EXECUTOR_TIMEOUT, "30");
+        when(node.getAttributes()).thenReturn(nodeAttributes);
+
+        when(storage.loadStoragePathData(nodeAttributes.get(CONFIG_ACCESSKEY_PATH))).thenReturn("access");
+        when(storage.loadStoragePathData(nodeAttributes.get(CONFIG_SECRETKEY_PATH))).thenReturn("secret");
+
+        when(executionContext.getFramework()).thenReturn(framework);
+        when(framework.getFrameworkProjectMgr()).thenReturn(projectManager);
+
+        when(executionContext.getExecutionLogger()).thenReturn(executionLogger);
+        when(executionContext.getDataContext()).thenReturn(dataContext);
+
+        RancherNodeExecutorPlugin subject = new RancherNodeExecutorPlugin(rancherWebSocketListener, webSocketFileCopier, storage);
+        NodeExecutorResult result = subject.executeCommand(executionContext, command, node);
+        String message = "Interrupted";
+        assertEquals(message, result.getFailureMessage());
+        assertEquals(StepFailureReason.Interrupted, result.getFailureReason());
+        assertEquals(-1, result.getResultCode());
+    }
 }
