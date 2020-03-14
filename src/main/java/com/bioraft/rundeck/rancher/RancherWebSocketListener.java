@@ -152,7 +152,6 @@ public class RancherWebSocketListener extends WebSocketListener {
 						   ExecutionListener listener, String temp, int timeout) throws IOException, InterruptedException {
 		String[] cmd = remoteCommand(command, temp);
 		this.runJob(url, accessKey, secretKey, listener, cmd, timeout);
-		client.dispatcher().executorService().shutdown();
 	}
 
 	/**

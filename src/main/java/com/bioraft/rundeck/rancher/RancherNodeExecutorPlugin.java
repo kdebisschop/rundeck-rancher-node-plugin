@@ -116,7 +116,7 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
                 context.getFramework());
         try {
             logger.log(DEBUG_LEVEL, "Running " + String.join(" ", command));
-            socketListener.thisRunJob(url, accessKey, secretKey, command, listener, temp, timeout);
+            new RancherWebSocketListener().thisRunJob(url, accessKey, secretKey, command, listener, temp, timeout);
             logger.log(DEBUG_LEVEL, "Ran " + String.join(" ", command));
         } catch (IOException e) {
             return NodeExecutorResultImpl.createFailure(StepFailureReason.IOFailure, e.getMessage(), node);
