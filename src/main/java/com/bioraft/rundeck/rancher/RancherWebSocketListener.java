@@ -167,9 +167,9 @@ public class RancherWebSocketListener extends WebSocketListener {
 	public String thisGetFile(String url, String accessKey, String secretKey, String file)
 			throws IOException, InterruptedException {
 		String[] command = { "cat", file };
-		StringBuilder output = new StringBuilder();
-		this.run(url, accessKey, secretKey, output, command);
-		return output.toString();
+		StringBuilder stringBuilder = new StringBuilder();
+		this.run(url, accessKey, secretKey, stringBuilder, command);
+		return stringBuilder.toString();
 	}
 
 	/**
