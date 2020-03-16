@@ -86,21 +86,31 @@ public class RancherNodeExecutorPluginTest {
 
     @Test
     public void serviceIsNotYetSupported() throws IOException, InterruptedException {
-        when(webSocketFileCopier.thisGetFile(anyString(), anyString(), anyString(), anyString()))
-                .thenReturn("123 0");
         String[] command = {"ls"};
-        String instance = "1i10";
+        String instance1 = "1i10";
+        String instance2 = "1i11";
+        String expectedUrl1 = "https://rancher.example.com/v2-beta/projects/1a10/containers/" + instance1 + "/?action=execute";
+        String expectedUrl2 = "https://rancher.example.com/v2-beta/projects/1a10/containers/" + instance2 + "/?action=execute";
+        String instanceIds = instance1 + "," + instance2;
+        String accessKey = "access";
+        String secretKey = "secret";
+
         nodeAttributes.put("type", "service");
         nodeAttributes.put(CONFIG_ACCESSKEY_PATH, "access_key");
         nodeAttributes.put(CONFIG_SECRETKEY_PATH, "secret_key");
-//        nodeAttributes.put("execute", "execute");
         nodeAttributes.put(RANCHER_CONFIG_EXECUTOR_TIMEOUT, "30");
         nodeAttributes.put(NODE_ATT_SELF, "https://rancher.example.com/v2-beta/projects/1a10/services/1s56");
-        nodeAttributes.put("instanceIds", instance);
+        nodeAttributes.put("instanceIds", instanceIds);
+
         when(node.getAttributes()).thenReturn(nodeAttributes);
 
-        when(storage.loadStoragePathData(nodeAttributes.get(CONFIG_ACCESSKEY_PATH))).thenReturn("access");
-        when(storage.loadStoragePathData(nodeAttributes.get(CONFIG_SECRETKEY_PATH))).thenReturn("secret");
+        when(webSocketFileCopier.thisGetFile(eq(expectedUrl1), eq(accessKey), eq(secretKey), anyString()))
+                .thenReturn("123 0");
+        when(webSocketFileCopier.thisGetFile(eq(expectedUrl2), eq(accessKey), eq(secretKey), anyString()))
+                .thenReturn("123 0");
+
+        when(storage.loadStoragePathData(nodeAttributes.get(CONFIG_ACCESSKEY_PATH))).thenReturn(accessKey);
+        when(storage.loadStoragePathData(nodeAttributes.get(CONFIG_SECRETKEY_PATH))).thenReturn(secretKey);
 
         when(executionContext.getFramework()).thenReturn(framework);
         when(framework.getFrameworkProjectMgr()).thenReturn(projectManager);
@@ -110,10 +120,10 @@ public class RancherNodeExecutorPluginTest {
 
         RancherNodeExecutorPlugin subject = new RancherNodeExecutorPlugin(rancherWebSocketListener, webSocketFileCopier, storage);
         subject.executeCommand(executionContext, command, node);
-        verify(executionLogger, times(3)).log(anyInt(), anyString());
-        String expectedUrl = "https://rancher.example.com/v2-beta/projects/1a10/containers/" + instance + "/?action=execute";
-        verify(rancherWebSocketListener, times(1)).thisRunJob(eq(expectedUrl), anyString(), anyString(), any(), any(), anyString(), anyInt());
-
+        verify(executionLogger, times(6)).log(anyInt(), anyString());
+        verify(rancherWebSocketListener, times(2)).thisRunJob(any(), eq(accessKey), eq(secretKey), any(), any(), anyString(), anyInt());
+        verify(webSocketFileCopier, times(1)).thisGetFile(eq(expectedUrl1), anyString(), anyString(), anyString());
+        verify(webSocketFileCopier, times(1)).thisGetFile(eq(expectedUrl2), anyString(), anyString(), anyString());
     }
 
     @Test
