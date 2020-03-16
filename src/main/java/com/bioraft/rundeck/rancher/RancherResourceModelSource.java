@@ -24,6 +24,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import com.dtolabs.rundeck.core.resources.ResourceModelSource;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceException;
 import com.fasterxml.jackson.databind.JsonNode;
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
@@ -401,6 +402,10 @@ public class RancherResourceModelSource implements ResourceModelSource {
 			// Storage path for Rancher API secret key.
 			String secretKeyPath = CONFIG_SECRETKEY_PATH;
 			nodeEntry.setAttribute(secretKeyPath, configuration.getProperty(secretKeyPath));
+			StringBuffer instanceIds = new StringBuffer();
+			node.path("instanceIds").elements()
+					.forEachRemaining(instance -> instanceIds.append(instance.asText()).append(","));
+			nodeEntry.setAttribute("instanceIds", StringUtils.chomp(instanceIds.toString(), ","));
 			nodeEntry.setAttribute(NODE_ATT_SELF, node.path(NODE_ATT_LINKS).path(NODE_ATT_SELF).asText());
 			return nodeEntry;
 		}
