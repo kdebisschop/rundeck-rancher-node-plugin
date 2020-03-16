@@ -106,11 +106,6 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
         this.node = node;
         Map<String, String> nodeAttributes = node.getAttributes();
 
-        if (nodeAttributes.get("type").equals("service")) {
-            String message = "Node executor is not currently supported for services";
-            return NodeExecutorResultImpl.createFailure(StepFailureReason.PluginFailed, message, node);
-        }
-
         try {
             storage.setExecutionContext(context);
             accessKey = storage.loadStoragePathData(nodeAttributes.get(CONFIG_ACCESSKEY_PATH));
