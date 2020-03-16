@@ -125,10 +125,12 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
                 context.getFramework());
 
         if (nodeAttributes.get("type").equals("service")) {
+            // "self": "https://rancher.example.com/v2-beta/projects/1a10/services/1s56"
+            // "execute": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i234/?action=execute",
             String self = nodeAttributes.get(NODE_ATT_SELF);
             String[] instanceIds = nodeAttributes.get("instanceIds").split(",");
             for (String instance: instanceIds) {
-                String url = self + "" + instance;
+                String url = self.replaceFirst("/services/[0-9]+s[0-9]+", "/containers/" + instance + "/?action=execute");
                 return runJob(url, command, temp, timeout);
             }
             String message = "Node executor is not currently supported for services";

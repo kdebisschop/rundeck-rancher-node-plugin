@@ -85,16 +85,35 @@ public class RancherNodeExecutorPluginTest {
     }
 
     @Test
-    public void serviceIsNotYetSupported() {
-        RancherNodeExecutorPlugin nodeExecutorPlugin = new RancherNodeExecutorPlugin();
+    public void serviceIsNotYetSupported() throws IOException, InterruptedException {
+        when(webSocketFileCopier.thisGetFile(anyString(), anyString(), anyString(), anyString()))
+                .thenReturn("123 0");
         String[] command = {"ls"};
+        String instance = "1i10";
         nodeAttributes.put("type", "service");
+        nodeAttributes.put(CONFIG_ACCESSKEY_PATH, "access_key");
+        nodeAttributes.put(CONFIG_SECRETKEY_PATH, "secret_key");
+//        nodeAttributes.put("execute", "execute");
+        nodeAttributes.put(RANCHER_CONFIG_EXECUTOR_TIMEOUT, "30");
+        nodeAttributes.put(NODE_ATT_SELF, "https://rancher.example.com/v2-beta/projects/1a10/services/1s56");
+        nodeAttributes.put("instanceIds", instance);
         when(node.getAttributes()).thenReturn(nodeAttributes);
-        NodeExecutorResult result = nodeExecutorPlugin.executeCommand(executionContext, command, node);
-        String message = "Node executor is not currently supported for services";
-        assertEquals(message, result.getFailureMessage());
-        assertEquals(StepFailureReason.PluginFailed, result.getFailureReason());
-        assertEquals(-1, result.getResultCode());
+
+        when(storage.loadStoragePathData(nodeAttributes.get(CONFIG_ACCESSKEY_PATH))).thenReturn("access");
+        when(storage.loadStoragePathData(nodeAttributes.get(CONFIG_SECRETKEY_PATH))).thenReturn("secret");
+
+        when(executionContext.getFramework()).thenReturn(framework);
+        when(framework.getFrameworkProjectMgr()).thenReturn(projectManager);
+
+        when(executionContext.getExecutionLogger()).thenReturn(executionLogger);
+        when(executionContext.getDataContext()).thenReturn(dataContext);
+
+        RancherNodeExecutorPlugin subject = new RancherNodeExecutorPlugin(rancherWebSocketListener, webSocketFileCopier, storage);
+        subject.executeCommand(executionContext, command, node);
+        verify(executionLogger, times(3)).log(anyInt(), anyString());
+        String expectedUrl = "https://rancher.example.com/v2-beta/projects/1a10/containers/" + instance + "/?action=execute";
+        verify(rancherWebSocketListener, times(1)).thisRunJob(eq(expectedUrl), anyString(), anyString(), any(), any(), anyString(), anyInt());
+
     }
 
     @Test
