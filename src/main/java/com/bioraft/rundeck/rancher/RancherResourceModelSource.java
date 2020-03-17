@@ -402,7 +402,7 @@ public class RancherResourceModelSource implements ResourceModelSource {
 			// Storage path for Rancher API secret key.
 			String secretKeyPath = CONFIG_SECRETKEY_PATH;
 			nodeEntry.setAttribute(secretKeyPath, configuration.getProperty(secretKeyPath));
-			StringBuffer instanceIds = new StringBuffer();
+			StringBuilder instanceIds = new StringBuilder();
 			node.path("instanceIds").elements()
 					.forEachRemaining(instance -> instanceIds.append(instance.asText()).append(","));
 			nodeEntry.setAttribute("instanceIds", StringUtils.chomp(instanceIds.toString(), ","));
