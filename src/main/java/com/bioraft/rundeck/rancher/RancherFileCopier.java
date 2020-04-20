@@ -116,10 +116,6 @@ public class RancherFileCopier implements FileCopier, Describable {
 
         Map<String, String> nodeAttributes = node.getAttributes();
 
-//        if (nodeAttributes.get("type").equals("service")) {
-//            String message = "File copier is not currently supported for services";
-//            throw new FileCopierException(message, UNSUPPORTED_NODE_TYPE);
-//        }
 
         String remoteFile = getRemoteFile(destinationPath, context, node, scriptFile);
 
@@ -142,7 +138,8 @@ public class RancherFileCopier implements FileCopier, Describable {
 
         try {
             String result;
-            if (searchPath == null || searchPath.equals("")) {
+            // Use API for multiple containers for now, because we do not have externalId list in service-type of node.
+            if (searchPath == null || searchPath.equals("") || nodeAttributes.get("type").equals("service")) {
                 result = copyViaApi(context, nodeAttributes, localTempFile, remoteFile);
             } else {
                 CliCopier cliCopier = new CliCopier(localTempFile, searchPath, context, nodeAttributes);
