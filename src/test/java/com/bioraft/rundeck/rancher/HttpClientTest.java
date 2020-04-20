@@ -1,5 +1,6 @@
 package com.bioraft.rundeck.rancher;
 
+import com.dtolabs.rundeck.core.execution.ExecutionLogger;
 import com.fasterxml.jackson.databind.JsonNode;
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
@@ -13,11 +14,10 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 import static com.bioraft.rundeck.rancher.TestHelper.*;
+import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class HttpClientTest {
@@ -26,6 +26,9 @@ public class HttpClientTest {
 
     @Mock
     Call call;
+
+    @Mock
+    ExecutionLogger logger;
 
     HttpClient subject;
 
@@ -121,12 +124,54 @@ public class HttpClientTest {
     }
 
     @Test(expected = IOException.class)
-    public void testPostMethodReturns301() throws IOException {
+    public void testPostMethodReturns301NoLooger() throws IOException {
         String url = "https://api.example.com/";
         String text = "{\"key\": \"value\"}";
         when(call.execute()).thenReturn(response(text, 301));
         JsonNode json = subject.post(url, text);
         assertEquals(1, json.size());
         assertEquals("value", json.get("key").asText());
+    }
+
+    @Test
+    public void testPostMethodReturns301() throws IOException {
+        subject.setLogger(logger);
+        String url = "https://api.example.com/";
+        String text = "{\"key\": \"value\"}";
+        when(call.execute()).thenReturn(response(text, 301));
+        try {
+            subject.post(url, text);
+            fail("This post should have thrown an exception");
+        } catch (IOException e) {
+            verify(logger, times(1)).log(anyInt(), anyString());
+        }
+    }
+
+    @Test
+    public void testPostMethodReturns301NoBody() throws IOException {
+        subject.setLogger(logger);
+        String url = "https://api.example.com/";
+        String text = "{\"key\": \"value\"}";
+        when(call.execute()).thenReturn(response(null, 301));
+        try {
+            subject.post(url, text);
+            fail("This post should have thrown an exception");
+        } catch (IOException e) {
+            verify(logger, times(0)).log(anyInt(), anyString());
+        }
+    }
+
+    @Test
+    public void testPostMethodReturns301NotJsonContent() throws IOException {
+        subject.setLogger(logger);
+        String url = "https://api.example.com/";
+        String text = "{\"key\": \"value\"}";
+        when(call.execute()).thenReturn(response("not json", 301));
+        try {
+            subject.post(url, text);
+            fail("This post should have thrown an exception");
+        } catch (IOException e) {
+            verify(logger, times(1)).log(anyInt(), anyString());
+        }
     }
 }

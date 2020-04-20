@@ -77,7 +77,7 @@ public class RancherAddService implements StepPlugin {
     @PluginProperty(title = "Secret IDs", description = "List of secrets IDs, space or comma separated")
     private String secrets;
 
-    private HttpClient client;
+    private final HttpClient client;
 
     public RancherAddService () {
         this.client = new HttpClient();

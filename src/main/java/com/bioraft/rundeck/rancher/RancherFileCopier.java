@@ -235,7 +235,7 @@ public class RancherFileCopier implements FileCopier, Describable {
             try {
                 String instance = nodeAttributes.get("externalId");
                 String[] command = {"rancher", "docker", "cp", path, instance + ":" + remoteFile};
-                logger.log(DEBUG_LEVEL, "CMD: '" + String.join(" ", command) + "'");
+                logger.log(DEBUG_LEVEL, "OS Copy: '" + String.join(" ", command) + "'");
                 this.toOneHostByCli(instance, remoteFile, nodeAttributes);
             } catch (IOException e) {
                 throw new FileCopierException("Child process IO Exception", IO_EXCEPTION, e);
@@ -252,7 +252,7 @@ public class RancherFileCopier implements FileCopier, Describable {
             String[] command = {"rancher", "docker", "cp", path, instance + ":" + remoteFile};
             ProcessBuilder builder = new ProcessBuilder();
             Map<String, String> environment = builder.environment();
-            logger.log(DEBUG_LEVEL, "CMD: '" + String.join(" ", command) + "'");
+            logger.log(DEBUG_LEVEL, "CLI Copy: '" + String.join(" ", command) + "'");
             environment.put("PATH", searchPath);
             environment.put("RANCHER_ENVIRONMENT", nodeAttributes.get("environment"));
             environment.put("RANCHER_DOCKER_HOST", nodeAttributes.get("hostname"));
@@ -260,7 +260,6 @@ public class RancherFileCopier implements FileCopier, Describable {
             environment.put("RANCHER_ACCESS_KEY", accessKey);
             environment.put("RANCHER_SECRET_KEY", secretKey);
             builder.command(command);
-            logger.log(DEBUG_LEVEL, "CMD: '" + String.join(" ", command) + "'");
             builder.directory(new File(System.getProperty("java.io.tmpdir")));
             Process process = builder.start();
             StreamGobbler streamGobbler = new StreamGobbler(process.getInputStream(), System.out::println);

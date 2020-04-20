@@ -1,8 +1,6 @@
 package com.bioraft.rundeck.rancher;
 
 import com.dtolabs.rundeck.core.execution.ExecutionLogger;
-import com.dtolabs.rundeck.core.execution.workflow.LoggerWithContext;
-import com.dtolabs.rundeck.plugins.PluginLogger;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.*;
