@@ -15,7 +15,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.any;
 import static com.bioraft.rundeck.rancher.TestHelper.*;
 import static org.mockito.Mockito.*;
 

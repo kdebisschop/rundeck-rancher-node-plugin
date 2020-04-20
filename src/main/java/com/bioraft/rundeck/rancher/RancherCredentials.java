@@ -9,8 +9,8 @@ import static com.bioraft.rundeck.rancher.Constants.CONFIG_ACCESSKEY_PATH;
 import static com.bioraft.rundeck.rancher.Constants.CONFIG_SECRETKEY_PATH;
 
 public class RancherCredentials {
-    private String accessKey;
-    private String secretKey;
+    private final String accessKey;
+    private final String secretKey;
 
     public RancherCredentials(ExecutionContext context, Map<String, String> nodeAttributes) throws IOException {
         Storage storage = new Storage(context);
