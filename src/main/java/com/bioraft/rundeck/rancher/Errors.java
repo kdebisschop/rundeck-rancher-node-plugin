@@ -33,7 +33,6 @@ public class Errors {
 
     public enum ErrorCause implements FailureReason {
         UNSUPPORTED_OPERATING_SYSTEM,
-        UNSUPPORTED_NODE_TYPE,
         INVALID_CONFIGURATION,
         INVALID_JSON,
         IO_EXCEPTION,
@@ -48,7 +47,6 @@ public class Errors {
         INTERRUPTED,
         INVALID_STACK_NAME,
         INVALID_ENVIRONMENT_NAME,
-        AUTHENTICATION_FAILURE,
         CONNECTION_FAILURE
     }
 }

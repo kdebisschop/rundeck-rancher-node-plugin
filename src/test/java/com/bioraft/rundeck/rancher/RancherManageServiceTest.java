@@ -163,15 +163,13 @@ public class RancherManageServiceTest {
     }
 
     @Test(expected = NodeStepException.class)
-    public void testNoKey() throws IOException, NodeStepException {
+    public void testNoKey() throws NodeStepException {
         cfg.put("action", "restart");
         map.remove(CONFIG_ACCESSKEY_PATH);
-//        ObjectMapper mapper = new ObjectMapper();
-
-//        String text = readFromInputStream(getResourceStream("service.json"));
-//        ObjectNode json1 = (ObjectNode) mapper.readTree(text);
-
-//        when(client.get(any())).thenReturn(json1);
+        // ObjectMapper mapper = new ObjectMapper();
+        // String text = readFromInputStream(getResourceStream("service.json"));
+        // ObjectNode json1 = (ObjectNode) mapper.readTree(text);
+        // when(client.get(any())).thenReturn(json1);
 
         try {
             RancherManageService subject = new RancherManageService(client);

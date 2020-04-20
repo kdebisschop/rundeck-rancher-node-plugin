@@ -23,7 +23,7 @@ public class TestHelper {
             return null;
         }
     }
-    
+
     private static String getResourceStream(String resource) {
         String path = "src/test/resources/" + resource;
         try {

@@ -64,9 +64,9 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
         DESC = builder.build();
     }
 
-    private RancherWebSocketListener socketListener;
-    private RancherWebSocketListener fileCopier;
-    private Storage storage;
+    private final RancherWebSocketListener socketListener;
+    private final RancherWebSocketListener fileCopier;
+    private final Storage storage;
     private String accessKey;
     private String secretKey;
     private ExecutionListener listener;
