@@ -1,5 +1,6 @@
 package com.bioraft.rundeck.rancher;
 
+import com.dtolabs.rundeck.core.execution.ExecutionLogger;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.*;
@@ -8,10 +9,14 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
 
+import static com.dtolabs.rundeck.core.Constants.DEBUG_LEVEL;
+
 public class HttpClient {
 
     private String accessKey;
     private String secretKey;
+
+    private ExecutionLogger logger;
     protected final OkHttpClient client;
 
     public HttpClient() {
@@ -30,6 +35,10 @@ public class HttpClient {
         this.secretKey = secretKey;
     }
 
+    public void setLogger(ExecutionLogger logger) {
+        this.logger = logger;
+    }
+
     protected JsonNode get(String url) throws IOException {
         return this.get(url, null);
     }
@@ -44,7 +53,8 @@ public class HttpClient {
         Response response = client.newCall(builder.build()).execute();
         // Since URL comes from the Rancher server itself, assume there are no redirects.
         if (response.code() >= 300) {
-            throw new IOException("API get failed" + response.message());
+            logError(response);
+            throw new IOException("API get failed: " + response.message());
         }
         ObjectMapper mapper = new ObjectMapper();
         if (response.body() == null) {
@@ -66,12 +76,36 @@ public class HttpClient {
         Response response = client.newCall(builder.build()).execute();
         // Since URL comes from the Rancher server itself, assume there are no redirects.
         if (response.code() >= 300) {
-            throw new IOException("API post failed" + response.message());
+            logError(response);
+            throw new IOException("API post failed: " + response.message());
         }
         ObjectMapper mapper = new ObjectMapper();
         if (response.body() == null) {
             return mapper.readTree("");
         }
         return mapper.readTree(response.body().string());
+    }
+
+    private void logError(Response response) {
+        if (logger == null) {
+            return;
+        }
+        ResponseBody body = response.body();
+        if (body != null) {
+            String text;
+            try {
+                text = body.string();
+            } catch (IOException e) {
+                return;
+            }
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                JsonNode node = mapper.readTree(text);
+                logger.log(DEBUG_LEVEL, node.toPrettyString());
+            } catch (IOException e) {
+                logger.log(DEBUG_LEVEL, text);
+            }
+            body.close();
+        }
     }
 }

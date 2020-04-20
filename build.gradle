@@ -77,10 +77,11 @@ configurations {
 dependencies {
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.10.1'
     
-    implementation group: 'com.squareup.okhttp3', name: 'okhttp', version: '3.13.1'
+    implementation group: 'com.squareup.okhttp3', name: 'okhttp', version: '3.12.0'
 
     implementation (
-        'org.rundeck:rundeck-core:3.2.+',
+        'org.rundeck:rundeck-core:3.2.4-20200318',
+        'org.rundeck:rundeck-storage-api:3.2.4-20200318',
     )
 	
     testImplementation group: 'junit', name: 'junit', version:'4.12'

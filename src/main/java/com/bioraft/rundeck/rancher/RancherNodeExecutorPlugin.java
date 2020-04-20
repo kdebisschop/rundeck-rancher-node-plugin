@@ -67,13 +67,28 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
     private RancherWebSocketListener socketListener;
     private RancherWebSocketListener fileCopier;
     private Storage storage;
+    private String accessKey;
+    private String secretKey;
+    private ExecutionListener listener;
+    private ExecutionLogger logger;
+    private INodeEntry node;
 
+    /**
+     * Constructor called by RunDeck.
+     */
     public RancherNodeExecutorPlugin() {
         socketListener = new RancherWebSocketListener();
         fileCopier = new RancherWebSocketListener();
         this.storage = new Storage();
     }
 
+    /**
+     * Constructor used for injecting unit testing mocks.
+     *
+     * @param rancherWebSocketListener Socket used to execute the command.
+     * @param webSocketFileCopier      Socket used to fetch the PID + status file.
+     * @param storage                  Rancher secret storage service.
+     */
     public RancherNodeExecutorPlugin(RancherWebSocketListener rancherWebSocketListener, RancherWebSocketListener webSocketFileCopier, Storage storage) {
         socketListener = rancherWebSocketListener;
         fileCopier = webSocketFileCopier;
@@ -88,15 +103,9 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
     @Override
     public NodeExecutorResult executeCommand(final ExecutionContext context, final String[] command,
                                              final INodeEntry node) {
+        this.node = node;
         Map<String, String> nodeAttributes = node.getAttributes();
 
-        if (nodeAttributes.get("type").equals("service")) {
-            String message = "Node executor is not currently supported for services";
-            return NodeExecutorResultImpl.createFailure(StepFailureReason.PluginFailed, message, node);
-        }
-
-        String accessKey;
-        String secretKey;
         try {
             storage.setExecutionContext(context);
             accessKey = storage.loadStoragePathData(nodeAttributes.get(CONFIG_ACCESSKEY_PATH));
@@ -105,11 +114,8 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
             return NodeExecutorResultImpl.createFailure(StepFailureReason.IOFailure, e.getMessage(), node);
         }
 
-        ExecutionListener listener = context.getExecutionListener();
-
-        ExecutionLogger logger = context.getExecutionLogger();
-
-        String url = nodeAttributes.get("execute");
+        listener = context.getExecutionListener();
+        logger = context.getExecutionLogger();
 
         Map<String, String> jobContext = context.getDataContext().get("job");
         String temp = this.baseName(command, jobContext);
@@ -117,6 +123,28 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
         int timeout = ResolverUtil.resolveIntProperty(RANCHER_CONFIG_EXECUTOR_TIMEOUT, 300, node,
                 context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
                 context.getFramework());
+
+        if (nodeAttributes.get("type").equals("service")) {
+            // "self": "https://rancher.example.com/v2-beta/projects/1a10/services/1s56"
+            // "execute": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i234/?action=execute",
+            String self = nodeAttributes.get(NODE_ATT_SELF);
+            String[] instanceIds = nodeAttributes.get("instanceIds").split(",");
+            NodeExecutorResult result = NodeExecutorResultImpl.createFailure(StepFailureReason.PluginFailed, "No containers in node", node);
+            for (String instance: instanceIds) {
+                String url = self.replaceFirst("/services/[0-9]+s[0-9]+", "/containers/" + instance + "/?action=execute");
+                result = runJob(url, command, temp, timeout);
+                if (!result.isSuccess()) {
+                    break;
+                }
+            }
+            return result;
+        } else {
+            String url = nodeAttributes.get("execute");
+            return runJob(url, command, temp, timeout);
+        }
+    }
+
+    private NodeExecutorResult runJob(String url, String[] command, String temp, int timeout) {
         try {
             logger.log(DEBUG_LEVEL, "Running " + String.join(" ", command));
             socketListener.thisRunJob(url, accessKey, secretKey, command, listener, temp, timeout);

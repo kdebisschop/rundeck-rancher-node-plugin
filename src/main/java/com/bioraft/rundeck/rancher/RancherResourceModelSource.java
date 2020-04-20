@@ -24,6 +24,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import com.dtolabs.rundeck.core.resources.ResourceModelSource;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceException;
 import com.fasterxml.jackson.databind.JsonNode;
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
@@ -237,7 +238,7 @@ public class RancherResourceModelSource implements ResourceModelSource {
 		protected final NodeEntryImpl nodeEntry;
 
 		// Tag set for the node being built.
-		protected final HashSet<String> tagset;
+		protected final HashSet<String> tagSet;
 
 		// Labels read from the node.
 		protected JsonNode labels;
@@ -245,9 +246,9 @@ public class RancherResourceModelSource implements ResourceModelSource {
 		public RancherNode() {
 			nodeEntry = new NodeEntryImpl();
 			if (tags == null) {
-				tagset = new HashSet<>();
+				tagSet = new HashSet<>();
 			} else {
-				tagset = new HashSet<>(Arrays.asList(tags.split("\\s*,\\s*")));
+				tagSet = new HashSet<>(Arrays.asList(tags.split("\\s*,\\s*")));
 			}
 		}
 
@@ -262,7 +263,7 @@ public class RancherResourceModelSource implements ResourceModelSource {
 				String[] parts = stackService.split("/");
 				nodeEntry.setAttribute("stack", parts[0]);
 				nodeEntry.setAttribute("service", parts[1]);
-				tagset.add(parts[1]);
+				tagSet.add(parts[1]);
 			}
 
 			if (labels.hasNonNull(NODE_LABEL_STACK_NAME)) {
@@ -283,9 +284,9 @@ public class RancherResourceModelSource implements ResourceModelSource {
 				this.setTagForLabel(label, value);
 			}
 			if (node.hasNonNull(NODE_IMAGE_UUID)) {
-				tagset.add(node.get(NODE_IMAGE_UUID).asText().replaceFirst("^[^/]+/", ""));
+				tagSet.add(node.get(NODE_IMAGE_UUID).asText().replaceFirst("^[^/]+/", ""));
 			}
-			nodeEntry.setTags(tagset);
+			nodeEntry.setTags(tagSet);
 		}
 
 		/**
@@ -330,7 +331,7 @@ public class RancherResourceModelSource implements ResourceModelSource {
 		 */
 		private void setTagForLabel(String label, String value) {
 			if (tagInclude.length() > 0 && label.matches(tagInclude)) {
-				tagset.add(value);
+				tagSet.add(value);
 			}
 		}
 
@@ -401,6 +402,10 @@ public class RancherResourceModelSource implements ResourceModelSource {
 			// Storage path for Rancher API secret key.
 			String secretKeyPath = CONFIG_SECRETKEY_PATH;
 			nodeEntry.setAttribute(secretKeyPath, configuration.getProperty(secretKeyPath));
+			StringBuilder instanceIds = new StringBuilder();
+			node.path("instanceIds").elements()
+					.forEachRemaining(instance -> instanceIds.append(instance.asText()).append(","));
+			nodeEntry.setAttribute("instanceIds", StringUtils.chomp(instanceIds.toString(), ","));
 			nodeEntry.setAttribute(NODE_ATT_SELF, node.path(NODE_ATT_LINKS).path(NODE_ATT_SELF).asText());
 			return nodeEntry;
 		}
