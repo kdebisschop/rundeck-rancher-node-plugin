@@ -35,8 +35,7 @@ import java.util.Map;
 
 import static com.bioraft.rundeck.rancher.Constants.*;
 import static com.bioraft.rundeck.rancher.Errors.ErrorCause.*;
-import static com.dtolabs.rundeck.core.Constants.ERR_LEVEL;
-import static com.dtolabs.rundeck.core.Constants.INFO_LEVEL;
+import static com.dtolabs.rundeck.core.Constants.*;
 import static com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory.FRAMEWORK_PREFIX;
 import static com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory.PROJECT_PREFIX;
 import static com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants.CODE_SYNTAX_MODE;
@@ -78,7 +77,7 @@ public class RancherAddService implements StepPlugin {
     @PluginProperty(title = "Secret IDs", description = "List of secrets IDs, space or comma separated")
     private String secrets;
 
-    final HttpClient client;
+    private HttpClient client;
 
     public RancherAddService () {
         this.client = new HttpClient();
@@ -123,6 +122,7 @@ public class RancherAddService implements StepPlugin {
         Framework framework = context.getFramework();
         String project = context.getFrameworkProject();
         PluginLogger logger = context.getLogger();
+        client.setLogger(logger);
 
         String endpoint = cfgFromProjectOrFramework(framework, project, RANCHER_CONFIG_ENDPOINT);
         String spec = endpoint + (new Strings()).apiPath(environmentId, "/services");
@@ -168,16 +168,21 @@ public class RancherAddService implements StepPlugin {
             throw new StepException("Stack does not exist: " + stackName, INVALID_CONFIGURATION);
         }
 
+        ObjectMapper mapper = new ObjectMapper();
         try {
-            Map<String, Object> map = ImmutableMap.<String, Object>builder()
+            Map<String, Object> map = ImmutableMap.<String, Object>builder().put("type", "service")
                     .put("assignServiceIpAddress", false).put("startOnCreate", true).put("name", serviceName)
-                    .put("stackId", stackId).put("rancherCompose", "").put("launchConfig", mapBuilder.build()).build();
+                    .put("scale", 1).put("serviceIndexStrategy", "deploymentUnitBased")
+                    .put("launchConfig", mapBuilder.build())
+                    .put("stackId", stackId).build();
+            String payload = mapper.writeValueAsString(map);
+            logger.log(DEBUG_LEVEL, mapper.readTree(payload).toPrettyString());
             JsonNode serviceResult = client.post(spec, map);
             logger.log(INFO_LEVEL, "Success!");
             logger.log(INFO_LEVEL, "New service ID:" + serviceResult.path("id").asText());
             logger.log(INFO_LEVEL, "New service name:" + serviceResult.path("name").asText());
         } catch (IOException e) {
-            throw new StepException("Failed posting to " + spec, e, INVALID_CONFIGURATION);
+            throw new StepException("Failed at " + spec + "\n" + e.getMessage(), e, INVALID_CONFIGURATION);
         }
     }
 
