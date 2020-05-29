@@ -77,6 +77,12 @@ public class RancherAddService implements StepPlugin {
     @PluginProperty(title = "Secret IDs", description = "List of secrets IDs, space or comma separated")
     private String secrets;
 
+    @PluginProperty(title = "Ports", description = "JSON array Lines of \"port\" or \"external:internal\"")
+    @RenderingOption(key = DISPLAY_TYPE_KEY, value = DISPLAY_CODE)
+    @RenderingOption(key = CODE_SYNTAX_MODE, value = SYNTAX_MODE_JSON)
+    private String ports;
+
+
     private final HttpClient client;
 
     public RancherAddService () {
@@ -144,6 +150,7 @@ public class RancherAddService implements StepPlugin {
         mapBuilder.put("networkMode", "managed");
 
         addJsonData(OPT_DATA_VOLUMES, (new Strings()).ensureStringIsJsonArray(dataVolumes), mapBuilder);
+        addJsonData(OPT_CONTAINER_PORTS, (new Strings()).ensureStringIsJsonArray(ports), mapBuilder);
         addJsonData(OPT_ENV_VARS, (new Strings()).ensureStringIsJsonObject(environment), mapBuilder);
         addJsonData(OPT_LABELS, (new Strings()).ensureStringIsJsonObject(labels), mapBuilder);
         addSecrets(mapBuilder);
