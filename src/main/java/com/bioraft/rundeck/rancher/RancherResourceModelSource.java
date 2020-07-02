@@ -25,8 +25,7 @@ import com.dtolabs.rundeck.core.resources.ResourceModelSource;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceException;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.util.*;
@@ -135,15 +134,15 @@ public class RancherResourceModelSource implements ResourceModelSource {
 			environmentName = this.getEnvironmentName(environmentId);
 		} catch (IOException e) {
 			environmentName = environmentId;
-			logger.log(Level.WARN, "Failed getting environment name");
-			logger.log(Level.WARN, e.getMessage());
+			logger.warn("Failed getting environment name");
+			logger.warn(e.getMessage());
 		}
 
 		if (configuration.getProperty(CONFIG_NODE_TYPE_INCLUDE_CONTAINER, "true").equals("true")) {
 			try {
 				data = this.getContainers(environmentId);
 			} catch (IOException e) {
-				logger.log(Level.WARN, e.getMessage());
+				logger.warn(e.getMessage());
 				return;
 			}
 			for (JsonNode node : data) {
@@ -161,7 +160,7 @@ public class RancherResourceModelSource implements ResourceModelSource {
 					addServiceNode(node, environmentName, logger);
 				}
 			} catch (IOException e) {
-				logger.log(Level.WARN, e.getMessage());
+				logger.warn(e.getMessage());
 			}
 		}
 	}
@@ -187,7 +186,7 @@ public class RancherResourceModelSource implements ResourceModelSource {
 			}
 			iNodeEntries.putNode(nodeEntry);
 		} catch (IllegalArgumentException | NullPointerException e) {
-			logger.log(Level.WARN, e.getMessage());
+			logger.warn(e.getMessage());
 		}
 	}
 
@@ -197,7 +196,7 @@ public class RancherResourceModelSource implements ResourceModelSource {
 			NodeEntryImpl nodeEntry = rancherNode.getNodeEntry(environmentName, node);
 			iNodeEntries.putNode(nodeEntry);
 		} catch (IllegalArgumentException | NullPointerException e) {
-			logger.log(Level.WARN, e.getMessage());
+			logger.warn(e.getMessage());
 		}
 	}
 
