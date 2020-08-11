@@ -108,6 +108,7 @@ public class RancherWebSocketListener extends WebSocketListener {
 	public static void runJob(String url, String accessKey, String secretKey, String[] command,
 			ExecutionListener listener, String temp, int timeout) throws IOException, InterruptedException {
 		String[] cmd = remoteCommand(command, temp);
+		listener.ignoreErrors(true);
 		(new RancherWebSocketListener()).runJob(url, accessKey, secretKey, listener, cmd, timeout);
 	}
 
