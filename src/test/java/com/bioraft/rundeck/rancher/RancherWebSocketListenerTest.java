@@ -13,6 +13,7 @@ import org.mockito.MockitoAnnotations;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
+import static com.bioraft.rundeck.rancher.Constants.STDERR_TOKEN;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.*;
@@ -61,11 +62,11 @@ public class RancherWebSocketListenerTest {
         int timeout = 1;
         MockResponse mockedResponse = new MockResponse();
         mockedResponse.setResponseCode(200);
-        mockedResponse.setBody("{\"url\":\"" + url + "\", \"token\":\"abcdef\"}");
+        mockedResponse.setBody("{\"url\":\"" + url + "\", \"token\":\"6chars\"}");
         RancherWebSocketListener serverListener = new RancherWebSocketListener();
         MockResponse upgrade = new MockResponse().withWebSocketUpgrade(serverListener);
         mockWebServer.enqueue(mockedResponse);
-        mockWebServer.enqueue(upgrade.setBody("abcdefghijklmnop"));
+        mockWebServer.enqueue(upgrade.setBody("6chars-plus-more"));
         mockWebServer.takeRequest(200, TimeUnit.MILLISECONDS);
         mockWebServer.enqueue(mockedResponse);
         doNothing().when(listener).log(anyInt(), anyString());
@@ -121,41 +122,41 @@ public class RancherWebSocketListenerTest {
     @Test
     public void testLogDockerStream() {
         RancherWebSocketListener subject = new RancherWebSocketListener(listener, new StringBuilder());
-        byte[] bytes = "abcdef".getBytes();
+        byte[] bytes = "6chars".getBytes();
         doNothing().when(listener).log(anyInt(), anyString());
         subject.logDockerStream(bytes);
         // Buffer is designed to add a line feed at end of message.
-        verify(listener, times(1)).log(2, "abcdef\n");
+        verify(listener, times(1)).log(2, "6chars\n");
     }
 
     @Test
     public void testLogDockerStreamStderr() {
         RancherWebSocketListener subject = new RancherWebSocketListener(listener, new StringBuilder());
-        byte[] bytes = ("STDERR_6v9ZvwThpU1FtyrlIBf4UIC8" + "abcde\n").getBytes();
+        byte[] bytes = (STDERR_TOKEN + "chars\n").getBytes();
         doNothing().when(listener).log(anyInt(), anyString());
         subject.logDockerStream(bytes);
         // Buffer is designed to add a line feed at end of message.
-        verify(listener, times(1)).log(1, "abcde\n");
+        verify(listener, times(1)).log(1, "chars\n");
     }
 
     @Test
     public void testLogDockerStreamMixed() {
         RancherWebSocketListener subject = new RancherWebSocketListener(listener, new StringBuilder());
-        byte[] bytes = ("STDERR_6v9ZvwThpU1FtyrlIBf4UIC8" + "abcde\nabcde\n").getBytes();
+        byte[] bytes = (STDERR_TOKEN + "chars\nchars\n").getBytes();
         doNothing().when(listener).log(anyInt(), anyString());
         subject.logDockerStream(bytes);
         // Buffer is designed to add a line feed at end of message.
-        verify(listener, times(1)).log(2, "abcde\n");
+        verify(listener, times(1)).log(2, "chars\n");
     }
 
     @Test
     public void testLogDockerStreamMixed2() {
         RancherWebSocketListener subject = new RancherWebSocketListener(listener, new StringBuilder());
-        byte[] bytes = ("abcde\n" + "STDERR_6v9ZvwThpU1FtyrlIBf4UIC8" + "abcde\n").getBytes();
+        byte[] bytes = ("chars\n" + STDERR_TOKEN + "chars\n").getBytes();
         doNothing().when(listener).log(anyInt(), anyString());
         subject.logDockerStream(bytes);
         // Buffer is designed to add a line feed at end of message.
-        verify(listener, times(1)).log(2, "abcde\n");
+        verify(listener, times(1)).log(2, "chars\n");
     }
 
     @Test
@@ -180,8 +181,8 @@ public class RancherWebSocketListenerTest {
     public void testLogDockerStreamStderrWithNoListener() {
         StringBuilder stringBuilder = new StringBuilder();
         RancherWebSocketListener subject = new RancherWebSocketListener(null, stringBuilder);
-        byte[] bytes = ("STDERR_6v9ZvwThpU1FtyrlIBf4UIC8" + "aaa").getBytes();
+        byte[] bytes = (STDERR_TOKEN + "aaa").getBytes();
         subject.logDockerStream(bytes);
-        assertEquals("STDERR_6v9ZvwThpU1FtyrlIBf4UIC8aaa", stringBuilder.toString());
+        assertEquals(STDERR_TOKEN + "aaa", stringBuilder.toString());
     }
 }

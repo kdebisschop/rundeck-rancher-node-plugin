@@ -30,10 +30,12 @@ java {
 }
 
 compileJava {
+    options.release.set(8)
     options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
 }
 
 compileTestJava {
+    options.release.set(8)
     options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
 }
 
@@ -84,8 +86,8 @@ configurations {
 
 dependencies {
     implementation (
-        'org.rundeck:rundeck-core:3.3.+',
-        'org.rundeck:rundeck-storage-api:3.3.+',
+        'org.rundeck:rundeck-core:3.3.4-20201007',
+        'org.rundeck:rundeck-storage-api:3.3.4-20201007',
         'com.fasterxml.jackson.core:jackson-databind:2.10.1',
         'com.squareup.okhttp3:okhttp:3.14.7',
         'org.apache.logging.log4j:log4j-core:2.13.2',

@@ -46,14 +46,14 @@
     "launchConfig": {
         "type": "launchConfig",
         "dataVolumes": [
-            "/clientdata/mysite_dev/files:/var/www/html/sites/mysite/files",
+            "/clientdata/my-site_dev/files:/var/www/html/sites/my-site/files",
             "/clientdata/shared:/var/shared:ro",
-            "/var/backups/mysql/daily/raft3_prod_mysite:/var/restore:ro"
+            "/var/backups/mysql/daily/raft3_prod_my-site:/var/restore:ro"
         ],
         "environment": {
-            "DOMAIN": "mysite.development.example.com",
+            "DOMAIN": "my-site.development.example.com",
             "ENVIRONMENT": "development",
-            "SITE": "mysite"
+            "SITE": "my-site"
         },
         "healthCheck": {
             "type": "instanceHealthCheck",
@@ -72,9 +72,9 @@
         "labels": {
             "com.example.group": "dev",
             "com.example.service": "frontend",
-            "com.example.site": "mysite",
+            "com.example.site": "my-site",
             "io.rancher.service.hash": "0123456789012345678901234567890123456789",
-            "com.example.description": "mysite.development.example.com"
+            "com.example.description": "my-site.development.example.com"
         },
         "logConfig": {
             "type": "logConfig"
@@ -152,15 +152,15 @@
             "launchConfig": {
                 "type": "launchConfig",
                 "dataVolumes": [
-                    "/clientdata/mysite_dev/files:/var/www/html/sites/mysite/files",
+                    "/clientdata/my-site_dev/files:/var/www/html/sites/my-site/files",
                     "/clientdata/shared:/var/shared:ro",
-                    "/var/backups/mysql/daily/raft3_prod_mysite:/var/restore:ro"
+                    "/var/backups/mysql/daily/raft3_prod_my-site:/var/restore:ro"
                 ],
                 "environment": {
                     "BASE_DOMAIN": "example.com",
-                    "DOMAIN": "mysite.development.example.com",
+                    "DOMAIN": "my-site.development.example.com",
                     "ENVIRONMENT": "development",
-                    "SITE": "mysite"
+                    "SITE": "my-site"
                 },
                 "healthCheck": {
                     "type": "instanceHealthCheck",
@@ -179,9 +179,9 @@
                 "labels": {
                     "com.example.group": "dev",
                     "com.example.service": "frontend",
-                    "com.example.site": "mysite",
+                    "com.example.site": "my-site",
                     "io.rancher.service.hash": "0123456789012345678901234567890123456789",
-                    "com.example.description": "mysite.development.example.com"
+                    "com.example.description": "my-site.development.example.com"
                 },
                 "logConfig": {
                     "type": "logConfig"
@@ -215,15 +215,15 @@
             "previousLaunchConfig": {
                 "type": "launchConfig",
                 "dataVolumes": [
-                    "/clientdata/mysite_dev/files:/var/www/html/sites/mysite/files",
+                    "/clientdata/my-site_dev/files:/var/www/html/sites/my-site/files",
                     "/clientdata/shared:/var/shared:ro",
-                    "/var/backups/mysql/daily/raft3_prod_mysite:/var/restore:ro"
+                    "/var/backups/mysql/daily/raft3_prod_my-site:/var/restore:ro"
                 ],
                 "environment": {
                     "BASE_DOMAIN": "example.com",
-                    "DOMAIN": "mysite.development.example.com",
+                    "DOMAIN": "my-site.development.example.com",
                     "ENVIRONMENT": "development",
-                    "SITE": "mysite"
+                    "SITE": "my-site"
                 },
                 "healthCheck": {
                     "type": "instanceHealthCheck",
@@ -242,9 +242,9 @@
                 "labels": {
                     "com.example.group": "dev",
                     "com.example.service": "frontend",
-                    "com.example.site": "mysite",
+                    "com.example.site": "my-site",
                     "io.rancher.service.hash": "0123456789012345678901234567890123456789",
-                    "com.example.description": "mysite.development.example.com"
+                    "com.example.description": "my-site.development.example.com"
                 },
                 "logConfig": {
                     "type": "logConfig"

@@ -34,6 +34,9 @@ public class Constants {
 
     public static final int INTERVAL_MILLIS = 2000;
 
+    @SuppressWarnings("SpellCheckingInspection")
+    public static final String STDERR_TOKEN = "STDERR_6v9ZvwThpU1FtyrlIBf4UIC8";
+
     // These are fields in JSON from Rancher API.
     public static final String NODE_ID = "id";
     public static final String NODE_NAME = "name";

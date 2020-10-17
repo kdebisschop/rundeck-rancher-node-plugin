@@ -33,12 +33,14 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Base64;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import static com.bioraft.rundeck.rancher.Constants.STDERR_TOKEN;
 import static com.dtolabs.rundeck.core.Constants.ERR_LEVEL;
 
 /**
@@ -49,10 +51,8 @@ import static com.dtolabs.rundeck.core.Constants.ERR_LEVEL;
  */
 public class RancherWebSocketListener extends WebSocketListener {
 
-	// These are used to reconstruct STDERR since it is lost in the stream from
-	// Rancher.
-	private static final String STDERR_TOK = "STDERR_6v9ZvwThpU1FtyrlIBf4UIC8";
-	private static final int STDERR_TOKLEN = STDERR_TOK.length();
+	// These are used to reconstruct STDERR since it is lost in the stream from Rancher.
+	private static final int STDERR_TOKEN_LENGTH = STDERR_TOKEN.length();
 
 	// Log listener from Rundeck.
 	private ExecutionListener listener;
@@ -124,7 +124,7 @@ public class RancherWebSocketListener extends WebSocketListener {
 		String file = temp + ".pid; ";
 		// Prefix STDERR lines with STDERR_TOK to decode in logging step.
 		String cmd = String.join(" ", command);
-		String job = "( " + cmd + " ) 2> >(while read line;do echo \"" + STDERR_TOK + "$line\";done)";
+		String job = "( " + cmd + " ) 2> >(while read line;do echo \"" + STDERR_TOKEN + "$line\";done)";
 		// Note that bash is required to support adding a prefix token to STDERR.
 		return new String[]{ "bash", "-c", "printf $$ >>" + file + job + ";printf ' %s' $? >>" + file };
 	}
@@ -289,15 +289,15 @@ public class RancherWebSocketListener extends WebSocketListener {
 
 		int encodedSize = encoded.length();
 		int chunkSize = 5000;
-		String redirector = ">";
+		String redirection = ">";
 		for (int i = 0; i < encodedSize; i = i + chunkSize) {
 			String text = encoded.substring(i, Math.min(i + chunkSize, encodedSize));
 			// The command cats a HEREDOC to the desired file. Note the quote that ensures
 			// the contents are not interpreted as shell variables.
 			String[] command = { "sh", "-c",
-					"cat <<'" + marker + "'" + redirector + "/tmp/" + marker + "\n" + text + "\n" + marker };
+					"cat <<'" + marker + "'" + redirection + "/tmp/" + marker + "\n" + text + "\n" + marker };
 			this.runCommand(command, 50);
-			redirector = ">>";
+			redirection = ">>";
 		}
 
 		String[] command = { "sh", "-c", "base64 -d /tmp/" + marker + " > " + file + "; rm /tmp/" + marker };
@@ -394,14 +394,14 @@ public class RancherWebSocketListener extends WebSocketListener {
 		BufferedReader stringReader;
 		try (MessageReader reader = new MessageReader(ByteSource.wrap(bytes).openStream())) {
 			while ((message = reader.nextMessage()) != null) {
-				// If logging to RunDeck, we send lines beginning with STRDERR_TOK to ERR_LEVEL.
-				// To do that, we make a BufferedReader and process it line-by-line in log
-				// function.
+				// If logging to RunDeck, we send lines beginning with STDERR_TOK to ERR_LEVEL.
+				// To do that, we make a BufferedReader and process it line-by-line in log function.
+				String nextMessage = new String(message.content.array(), StandardCharsets.UTF_8);
 				if (listener != null) {
-					stringReader = new BufferedReader(new StringReader(new String(message.content.array())));
+					stringReader = new BufferedReader(new StringReader(nextMessage));
 					log(stringReader);
 				} else {
-					output.append(new String(message.content.array()));
+					output.append(nextMessage);
 				}
 				nextHeader = reader.nextHeader();
 			}
@@ -420,8 +420,8 @@ public class RancherWebSocketListener extends WebSocketListener {
 	private void log(BufferedReader stringReader) throws IOException {
 		String line;
 		while ((line = stringReader.readLine()) != null) {
-			if (line.startsWith(STDERR_TOK)) {
-				this.log(Constants.WARN_LEVEL, line.substring(STDERR_TOKLEN) + "\n");
+			if (line.startsWith(STDERR_TOKEN)) {
+				this.log(Constants.WARN_LEVEL, line.substring(STDERR_TOKEN_LENGTH) + "\n");
 			} else {
 				this.log(Constants.INFO_LEVEL, line + "\n");
 			}
