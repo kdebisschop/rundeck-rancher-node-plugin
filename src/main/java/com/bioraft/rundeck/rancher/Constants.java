@@ -74,7 +74,10 @@ public class Constants {
     public static final String DISPLAY_CODE = "CODE";
     public static final String SYNTAX_MODE_JSON = "json";
 
-    public static final String PATH_PROJECTS = "/projects/";
+    // Project path in Rancher.
+    public static final String FILE_SEP = System.getProperty("file.separator");
+    public static final String PATH_PROJECTS = FILE_SEP + "projects" + FILE_SEP;
+
     public static final String JSON_PAGINATION = "pagination";
 
     public static final String OPT_DATA_VOLUMES = "dataVolumes";
