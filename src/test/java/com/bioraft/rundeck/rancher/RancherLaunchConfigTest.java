@@ -34,7 +34,7 @@ public class RancherLaunchConfigTest {
     public void setUp() throws Exception {
         reference = (ObjectNode) readFromInputStream(getResourceStream());
         objectNode = (ObjectNode) readFromInputStream(getResourceStream());
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
     }
 
     @Test

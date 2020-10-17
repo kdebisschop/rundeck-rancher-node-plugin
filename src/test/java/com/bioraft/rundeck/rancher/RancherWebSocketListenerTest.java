@@ -29,7 +29,7 @@ public class RancherWebSocketListenerTest {
 
     @Before
     public void setup() throws IOException {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
         mockWebServer = new MockWebServer();
         mockWebServer.start();
     }

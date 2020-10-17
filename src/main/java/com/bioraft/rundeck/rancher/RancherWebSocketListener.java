@@ -52,11 +52,14 @@ public class RancherWebSocketListener extends WebSocketListener {
 	// These are used to reconstruct STDERR since it is lost in the stream from
 	// Rancher.
 	private static final String STDERR_TOK = "STDERR_6v9ZvwThpU1FtyrlIBf4UIC8";
-	private static final int STDERR_TOKLEN = STDERR_TOK.length() + 1;
+	private static final int STDERR_TOKLEN = STDERR_TOK.length();
+
 	// Log listener from Rundeck.
 	private ExecutionListener listener;
+
 	// A buffer used to accumulate output from the Rancher message stream.
 	private StringBuilder output;
+
 	// Try to use a single HTTP client across methods.
 	private OkHttpClient client;
 
@@ -80,8 +83,7 @@ public class RancherWebSocketListener extends WebSocketListener {
 
 	private int currentOutputChannel = -1;
 
-	public RancherWebSocketListener() {
-	}
+	public RancherWebSocketListener() { }
 
 	public RancherWebSocketListener(OkHttpClient client) {
 		this.client = client;
@@ -108,7 +110,6 @@ public class RancherWebSocketListener extends WebSocketListener {
 	public static void runJob(String url, String accessKey, String secretKey, String[] command,
 			ExecutionListener listener, String temp, int timeout) throws IOException, InterruptedException {
 		String[] cmd = remoteCommand(command, temp);
-		listener.ignoreErrors(true);
 		(new RancherWebSocketListener()).runJob(url, accessKey, secretKey, listener, cmd, timeout);
 	}
 
@@ -120,12 +121,12 @@ public class RancherWebSocketListener extends WebSocketListener {
 	 * @return The command vector to be sent to the remote server.
 	 */
 	private static String[] remoteCommand(String[] command, String temp) {
-		String file = " >>" + temp + ".pid; ";
+		String file = temp + ".pid; ";
 		// Prefix STDERR lines with STDERR_TOK to decode in logging step.
-		String job = "( " + String.join(" ", command) + ") 2> >(while read line;do echo \"" + STDERR_TOK
-				+ " $line\";done) ;";
+		String cmd = String.join(" ", command);
+		String job = "( " + cmd + " ) 2> >(while read line;do echo \"" + STDERR_TOK + "$line\";done)";
 		// Note that bash is required to support adding a prefix token to STDERR.
-		return new String[]{ "bash", "-c", "printf $$" + file + job + "printf ' %s' $?" + file };
+		return new String[]{ "bash", "-c", "printf $$ >>" + file + job + ";printf ' %s' $? >>" + file };
 	}
 
 	@Override
@@ -420,7 +421,7 @@ public class RancherWebSocketListener extends WebSocketListener {
 		String line;
 		while ((line = stringReader.readLine()) != null) {
 			if (line.startsWith(STDERR_TOK)) {
-				this.log(Constants.WARN_LEVEL, line.substring(STDERR_TOKLEN - 1) + "\n");
+				this.log(Constants.WARN_LEVEL, line.substring(STDERR_TOKLEN) + "\n");
 			} else {
 				this.log(Constants.INFO_LEVEL, line + "\n");
 			}
