@@ -66,7 +66,7 @@ public class RancherAddServiceTest extends PluginStepTest {
 
 	@Before
 	public void implSetUp() {
-		MockitoAnnotations.initMocks(this);
+		MockitoAnnotations.openMocks(this);
 		setUp();
 	}
 

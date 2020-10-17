@@ -82,7 +82,6 @@ public class RancherAddService implements StepPlugin {
     @RenderingOption(key = CODE_SYNTAX_MODE, value = SYNTAX_MODE_JSON)
     private String ports;
 
-
     private final HttpClient client;
 
     public RancherAddService () {
@@ -124,6 +123,8 @@ public class RancherAddService implements StepPlugin {
         labels = (String) configuration.getOrDefault(OPT_LABELS, defaultString(labels));
 
         secrets = (String) configuration.getOrDefault(OPT_SECRETS, defaultString(secrets));
+
+        ports = (String) configuration.getOrDefault(OPT_CONTAINER_PORTS, defaultString(ports));
 
         Framework framework = context.getFramework();
         String project = context.getFrameworkProject();

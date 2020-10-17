@@ -4,9 +4,9 @@
         "/source1:/mountpoint1"
     ],
     "environment": {
-        "DOMAIN": "mysite.development.example.com",
+        "DOMAIN": "my-site.development.example.com",
         "ENVIRONMENT": "development",
-        "SITE": "mysite"
+        "SITE": "my-site"
     },
     "healthCheck": {
         "type": "instanceHealthCheck",
@@ -25,9 +25,9 @@
     "labels": {
         "com.example.group": "dev",
         "com.example.service": "frontend",
-        "com.example.site": "mysite",
+        "com.example.site": "my-site",
         "io.rancher.service.hash": "0123456789012345678901234567890123456789",
-        "com.example.description": "mysite.development.example.com"
+        "com.example.description": "my-site.development.example.com"
     },
     "logConfig": {
         "type": "logConfig"

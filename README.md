@@ -64,7 +64,7 @@ Features:
 ### Rancher File Copier
 
 Copies files to a node. Can be configured to use Rancher CLI if it is installed and
-available. Otherwise assembles file from Base64-encoded parts transmitted via Rancher
+available. Otherwise, assembles files from Base64-encoded parts transmitted via Rancher
 API.
 
 To distribute to all containers in a stack's service, omit the filter for "seen".

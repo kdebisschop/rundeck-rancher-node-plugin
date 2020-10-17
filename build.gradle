@@ -29,6 +29,16 @@ java {
     targetCompatibility = JavaVersion.VERSION_1_8
 }
 
+compileJava {
+    options.release.set(8)
+    options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+}
+
+compileTestJava {
+    options.release.set(8)
+    options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+}
+
 defaultTasks 'clean','test','jacocoTestReport','build'
 ext.rundeckPluginVersion = '1.2'
 ext.pluginClassNames='com.bioraft.rundeck.rancher.RancherNodeExecutorPlugin,' +
@@ -75,23 +85,19 @@ configurations {
 }
 
 dependencies {
-    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.10.1'
-    
-    implementation group: 'com.squareup.okhttp3', name: 'okhttp', version: '3.12.0'
-
-    implementation group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.13.2'
-    implementation group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.13.2'
-
     implementation (
-        'org.rundeck:rundeck-core:3.3.+',
-        'org.rundeck:rundeck-storage-api:3.3.+',
+        'com.fasterxml.jackson.core:jackson-databind:2.10.1',
+        'com.squareup.okhttp3:okhttp:3.14.9',
+        'org.apache.logging.log4j:log4j-api:2.13.2',
+        'org.apache.logging.log4j:log4j-core:2.13.2',
+        'org.rundeck:rundeck-core:3.3.4-20201007',
+        'org.rundeck:rundeck-storage-api:3.3.4-20201007',
     )
-	
-    testImplementation group: 'junit', name: 'junit', version:'4.12'
-
     testImplementation (
-            'org.mockito:mockito-core:3.+',
-            'com.squareup.okhttp3:mockwebserver:3.13.1'
+        'com.squareup.okhttp3:mockwebserver:3.11.0',
+        'junit:junit:4.12',
+        'org.mockito:mockito-core:3.+',
+        'org.slf4j:slf4j-simple:1.7.30+',
     )
 }
 
@@ -128,5 +134,5 @@ jar {
 }
 
 wrapper {
-    gradleVersion = '6.5.1'
+    gradleVersion = '6.6.1'
 }

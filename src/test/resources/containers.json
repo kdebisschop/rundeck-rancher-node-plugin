@@ -34,7 +34,7 @@
                 "proxy": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i234/?action=proxy"
             },
             "baseType": "instance",
-            "name": "mysite-dev-frontend-1",
+            "name": "my-site-dev-frontend-1",
             "state": "running",
             "accountId": "1a10",
             "blkioDeviceOptions": null,
@@ -60,9 +60,9 @@
                 "/run/secrets": "1v356188"
             },
             "dataVolumes": [
-                "/clientdata/mysite_dev/files:/var/www/html/sites/mysite/files",
+                "/clientdata/my-site_dev/files:/var/www/html/sites/my-site/files",
                 "/clientdata/shared:/var/shared:ro",
-                "abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef:/run/secrets"
+                "6chars6chars6chars6chars6chars6chars6chars6chars:/run/secrets"
             ],
             "dataVolumesFrom": null,
             "deploymentUnitUuid": "00000000-0000-0000-0000-000000000000",
@@ -74,20 +74,20 @@
             ],
             "dnsOpt": null,
             "dnsSearch": [
-                "mysite-dev.rancher.internal",
-                "frontend.mysite-dev.rancher.internal",
+                "my-site-dev.rancher.internal",
+                "frontend.my-site-dev.rancher.internal",
                 "rancher.internal"
             ],
             "domainName": null,
             "entryPoint": null,
             "environment": {
                 "BASE_DOMAIN": "example.com",
-                "DOMAIN": "mysite.development.example.com",
+                "DOMAIN": "my-site.development.example.com",
                 "ENVIRONMENT": "development",
-                "SITE": "mysite"
+                "SITE": "my-site"
             },
             "expose": null,
-            "externalId": "abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef",
+            "externalId": "6chars6chars6chars6chars6chars6chars6chars6chars",
             "extraHosts": null,
             "firstRunning": "2019-12-28T05:24:56Z",
             "firstRunningTS": 1577510696000,
@@ -122,22 +122,22 @@
             "kind": "container",
             "labels": {
                 "io.rancher.service.deployment.unit": "00000000-0000-0000-0000-000000000000",
-                "io.rancher.stack_service.name": "mysite-dev/frontend",
+                "io.rancher.stack_service.name": "my-site-dev/frontend",
                 "io.rancher.service.launch.config": "io.rancher.service.primary.launch.config",
                 "com.example.service": "frontend",
-                "io.rancher.project.name": "mysite-dev",
-                "io.rancher.project_service.name": "mysite-dev/frontend",
-                "com.example.description": "mysite.development.example.com",
+                "io.rancher.project.name": "my-site-dev",
+                "io.rancher.project_service.name": "my-site-dev/frontend",
+                "com.example.description": "my-site.development.example.com",
                 "com.example.group": "dev",
-                "io.rancher.stack.name": "mysite-dev",
+                "io.rancher.stack.name": "my-site-dev",
                 "io.rancher.service.hash": "0123456789012345678901234567890123456789",
-                "com.example.site": "mysite",
+                "com.example.site": "my-site",
                 "io.rancher.container.ip": "10.0.0.11/16",
                 "io.rancher.container.uuid": "00000000-0000-0000-0000-000000000000",
                 "io.rancher.cni.network": "ipsec",
                 "io.rancher.cni.wait": "true",
                 "io.rancher.container.mac_address": "11:22:33:44:55:66",
-                "io.rancher.container.name": "mysite-dev-frontend-1"
+                "io.rancher.container.name": "my-site-dev-frontend-1"
             },
             "logConfig": {
                 "type": "logConfig"
@@ -152,7 +152,7 @@
                 {
                     "type": "mountEntry",
                     "volumeName": "/clientdata/shared",
-                    "instanceName": "mysite-dev-frontend-1",
+                    "instanceName": "my-site-dev-frontend-1",
                     "path": "/var/shared",
                     "permission": "ro",
                     "instanceId": "1i234",
@@ -160,8 +160,8 @@
                 },
                 {
                     "type": "mountEntry",
-                    "volumeName": "abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef",
-                    "instanceName": "mysite-dev-frontend-1",
+                    "volumeName": "6chars6chars6chars6chars6chars6chars6chars6chars",
+                    "instanceName": "my-site-dev-frontend-1",
                     "path": "/run/secrets",
                     "permission": "rw",
                     "instanceId": "1i234",
@@ -279,7 +279,7 @@
                 "proxy": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i456/?action=proxy"
             },
             "baseType": "instance",
-            "name": "mysite-dev-frontend-2",
+            "name": "my-site-dev-frontend-2",
             "state": "running",
             "accountId": "1a10",
             "blkioDeviceOptions": null,
@@ -305,9 +305,9 @@
                 "/run/secrets": "1v356188"
             },
             "dataVolumes": [
-                "/clientdata/mysite_dev/files:/var/www/html/sites/mysite/files",
+                "/clientdata/my-site_dev/files:/var/www/html/sites/my-site/files",
                 "/clientdata/shared:/var/shared:ro",
-                "abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef:/run/secrets"
+                "6chars6chars6chars6chars6chars6chars6chars6chars:/run/secrets"
             ],
             "dataVolumesFrom": null,
             "deploymentUnitUuid": "00000000-0000-0000-0000-000000000000",
@@ -319,17 +319,17 @@
             ],
             "dnsOpt": null,
             "dnsSearch": [
-                "mysite-dev.rancher.internal",
-                "frontend.mysite-dev.rancher.internal",
+                "my-site-dev.rancher.internal",
+                "frontend.my-site-dev.rancher.internal",
                 "rancher.internal"
             ],
             "domainName": null,
             "entryPoint": null,
             "environment": {
                 "BASE_DOMAIN": "example.com",
-                "DOMAIN": "mysite.development.example.com",
+                "DOMAIN": "my-site.development.example.com",
                 "ENVIRONMENT": "development",
-                "SITE": "mysite"
+                "SITE": "my-site"
             },
             "expose": null,
             "externalId": "abc123abc123abc123abc123abc123abc123abc123",
@@ -367,22 +367,22 @@
             "kind": "container",
             "labels": {
                 "io.rancher.service.deployment.unit": "00000000-0000-0000-0000-000000000000",
-                "io.rancher.stack_service.name": "mysite-dev/frontend",
+                "io.rancher.stack_service.name": "my-site-dev/frontend",
                 "io.rancher.service.launch.config": "io.rancher.service.primary.launch.config",
                 "com.example.service": "frontend",
-                "io.rancher.project.name": "mysite-dev",
-                "io.rancher.project_service.name": "mysite-dev/frontend",
-                "com.example.description": "mysite.development.example.com",
+                "io.rancher.project.name": "my-site-dev",
+                "io.rancher.project_service.name": "my-site-dev/frontend",
+                "com.example.description": "my-site.development.example.com",
                 "com.example.group": "dev",
-                "io.rancher.stack.name": "mysite-dev",
+                "io.rancher.stack.name": "my-site-dev",
                 "io.rancher.service.hash": "0123456789012345678901234567890123456789",
-                "com.example.site": "mysite",
+                "com.example.site": "my-site",
                 "io.rancher.container.ip": "10.0.0.11/16",
                 "io.rancher.container.uuid": "00000000-0000-0000-0000-000000000000",
                 "io.rancher.cni.network": "ipsec",
                 "io.rancher.cni.wait": "true",
                 "io.rancher.container.mac_address": "11:22:33:44:55:66",
-                "io.rancher.container.name": "mysite-dev-frontend-1"
+                "io.rancher.container.name": "my-site-dev-frontend-1"
             },
             "logConfig": {
                 "type": "logConfig"
@@ -397,7 +397,7 @@
                 {
                     "type": "mountEntry",
                     "volumeName": "/clientdata/shared",
-                    "instanceName": "mysite-dev-frontend-1",
+                    "instanceName": "my-site-dev-frontend-1",
                     "path": "/var/shared",
                     "permission": "ro",
                     "instanceId": "1i456",
@@ -405,8 +405,8 @@
                 },
                 {
                     "type": "mountEntry",
-                    "volumeName": "abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef",
-                    "instanceName": "mysite-dev-frontend-1",
+                    "volumeName": "6chars6chars6chars6chars6chars6chars6chars6chars",
+                    "instanceName": "my-site-dev-frontend-1",
                     "path": "/run/secrets",
                     "permission": "rw",
                     "instanceId": "1i456",
@@ -524,7 +524,7 @@
                 "proxy": "https://rancher.example.com/v2-beta/projects/1a10/containers/1i678/?action=proxy"
             },
             "baseType": "instance",
-            "name": "mysite-dev-frontend-3",
+            "name": "my-site-dev-frontend-3",
             "state": "stopped",
             "accountId": "1a10",
             "blkioDeviceOptions": null,
@@ -550,9 +550,9 @@
                 "/run/secrets": "1v356188"
             },
             "dataVolumes": [
-                "/clientdata/mysite_dev/files:/var/www/html/sites/mysite/files",
+                "/clientdata/my-site_dev/files:/var/www/html/sites/my-site/files",
                 "/clientdata/shared:/var/shared:ro",
-                "abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef:/run/secrets"
+                "6chars6chars6chars6chars6chars6chars6chars6chars:/run/secrets"
             ],
             "dataVolumesFrom": null,
             "deploymentUnitUuid": "00000000-0000-0000-0000-000000000000",
@@ -564,17 +564,17 @@
             ],
             "dnsOpt": null,
             "dnsSearch": [
-                "mysite-dev.rancher.internal",
-                "frontend.mysite-dev.rancher.internal",
+                "my-site-dev.rancher.internal",
+                "frontend.my-site-dev.rancher.internal",
                 "rancher.internal"
             ],
             "domainName": null,
             "entryPoint": null,
             "environment": {
                 "BASE_DOMAIN": "example.com",
-                "DOMAIN": "mysite.development.example.com",
+                "DOMAIN": "my-site.development.example.com",
                 "ENVIRONMENT": "development",
-                "SITE": "mysite"
+                "SITE": "my-site"
             },
             "expose": null,
             "externalId": "123456123456123456123456123456123456123456",
@@ -612,22 +612,22 @@
             "kind": "container",
             "labels": {
                 "io.rancher.service.deployment.unit": "00000000-0000-0000-0000-000000000000",
-                "io.rancher.stack_service.name": "mysite-dev/frontend",
+                "io.rancher.stack_service.name": "my-site-dev/frontend",
                 "io.rancher.service.launch.config": "io.rancher.service.primary.launch.config",
                 "com.example.service": "frontend",
-                "io.rancher.project.name": "mysite-dev",
-                "io.rancher.project_service.name": "mysite-dev/frontend",
-                "com.example.description": "mysite.development.example.com",
+                "io.rancher.project.name": "my-site-dev",
+                "io.rancher.project_service.name": "my-site-dev/frontend",
+                "com.example.description": "my-site.development.example.com",
                 "com.example.group": "dev",
-                "io.rancher.stack.name": "mysite-dev",
+                "io.rancher.stack.name": "my-site-dev",
                 "io.rancher.service.hash": "0123456789012345678901234567890123456789",
-                "com.example.site": "mysite",
+                "com.example.site": "my-site",
                 "io.rancher.container.ip": "10.0.0.11/16",
                 "io.rancher.container.uuid": "00000000-0000-0000-0000-000000000000",
                 "io.rancher.cni.network": "ipsec",
                 "io.rancher.cni.wait": "true",
                 "io.rancher.container.mac_address": "11:22:33:44:55:66",
-                "io.rancher.container.name": "mysite-dev-frontend-1"
+                "io.rancher.container.name": "my-site-dev-frontend-1"
             },
             "logConfig": {
                 "type": "logConfig"
@@ -642,7 +642,7 @@
                 {
                     "type": "mountEntry",
                     "volumeName": "/clientdata/shared",
-                    "instanceName": "mysite-dev-frontend-1",
+                    "instanceName": "my-site-dev-frontend-1",
                     "path": "/var/shared",
                     "permission": "ro",
                     "instanceId": "1i678",
@@ -650,8 +650,8 @@
                 },
                 {
                     "type": "mountEntry",
-                    "volumeName": "abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef",
-                    "instanceName": "mysite-dev-frontend-1",
+                    "volumeName": "6chars6chars6chars6chars6chars6chars6chars6chars",
+                    "instanceName": "my-site-dev-frontend-1",
                     "path": "/run/secrets",
                     "permission": "rw",
                     "instanceId": "1i678",
@@ -795,9 +795,9 @@
                 "/run/secrets": "1v356188"
             },
             "dataVolumes": [
-                "/clientdata/mysite_dev/files:/var/www/html/sites/mysite/files",
+                "/clientdata/my-site_dev/files:/var/www/html/sites/my-site/files",
                 "/clientdata/shared:/var/shared:ro",
-                "abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef:/run/secrets"
+                "6chars6chars6chars6chars6chars6chars6chars6chars:/run/secrets"
             ],
             "dataVolumesFrom": null,
             "deploymentUnitUuid": "00000000-0000-0000-0000-000000000000",
@@ -809,17 +809,17 @@
             ],
             "dnsOpt": null,
             "dnsSearch": [
-                "mysite-dev.rancher.internal",
-                "frontend.mysite-dev.rancher.internal",
+                "my-site-dev.rancher.internal",
+                "frontend.my-site-dev.rancher.internal",
                 "rancher.internal"
             ],
             "domainName": null,
             "entryPoint": null,
             "environment": {
                 "BASE_DOMAIN": "example.com",
-                "DOMAIN": "mysite.development.example.com",
+                "DOMAIN": "my-site.development.example.com",
                 "ENVIRONMENT": "development",
-                "SITE": "mysite"
+                "SITE": "my-site"
             },
             "expose": null,
             "externalId": "123456123456123456123456123456123456123456",
@@ -871,7 +871,7 @@
                 {
                     "type": "mountEntry",
                     "volumeName": "/clientdata/shared",
-                    "instanceName": "mysite-dev-frontend-1",
+                    "instanceName": "my-site-dev-frontend-1",
                     "path": "/var/shared",
                     "permission": "ro",
                     "instanceId": "1i001",
@@ -879,8 +879,8 @@
                 },
                 {
                     "type": "mountEntry",
-                    "volumeName": "abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef",
-                    "instanceName": "mysite-dev-frontend-1",
+                    "volumeName": "6chars6chars6chars6chars6chars6chars6chars6chars",
+                    "instanceName": "my-site-dev-frontend-1",
                     "path": "/run/secrets",
                     "permission": "rw",
                     "instanceId": "1i001",
@@ -1024,9 +1024,9 @@
                 "/run/secrets": "1v356188"
             },
             "dataVolumes": [
-                "/clientdata/mysite_dev/files:/var/www/html/sites/mysite/files",
+                "/clientdata/my-site_dev/files:/var/www/html/sites/my-site/files",
                 "/clientdata/shared:/var/shared:ro",
-                "abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef:/run/secrets"
+                "6chars6chars6chars6chars6chars6chars6chars6chars:/run/secrets"
             ],
             "dataVolumesFrom": null,
             "deploymentUnitUuid": "00000000-0000-0000-0000-000000000000",
@@ -1038,17 +1038,17 @@
             ],
             "dnsOpt": null,
             "dnsSearch": [
-                "mysite-dev.rancher.internal",
-                "frontend.mysite-dev.rancher.internal",
+                "my-site-dev.rancher.internal",
+                "frontend.my-site-dev.rancher.internal",
                 "rancher.internal"
             ],
             "domainName": null,
             "entryPoint": null,
             "environment": {
                 "BASE_DOMAIN": "example.com",
-                "DOMAIN": "mysite.development.example.com",
+                "DOMAIN": "my-site.development.example.com",
                 "ENVIRONMENT": "development",
-                "SITE": "mysite"
+                "SITE": "my-site"
             },
             "expose": null,
             "externalId": "123456123456123456123456123456123456123456",
@@ -1100,7 +1100,7 @@
                 {
                     "type": "mountEntry",
                     "volumeName": "/clientdata/shared",
-                    "instanceName": "mysite-dev-frontend-1",
+                    "instanceName": "my-site-dev-frontend-1",
                     "path": "/var/shared",
                     "permission": "ro",
                     "instanceId": "1i002",
@@ -1108,8 +1108,8 @@
                 },
                 {
                     "type": "mountEntry",
-                    "volumeName": "abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef",
-                    "instanceName": "mysite-dev-frontend-1",
+                    "volumeName": "6chars6chars6chars6chars6chars6chars6chars6chars",
+                    "instanceName": "my-site-dev-frontend-1",
                     "path": "/run/secrets",
                     "permission": "rw",
                     "instanceId": "1i002",

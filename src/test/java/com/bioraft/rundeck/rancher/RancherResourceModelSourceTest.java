@@ -68,7 +68,7 @@ public class RancherResourceModelSourceTest {
 		configuration.setProperty(CONFIG_SECRETKEY, "secretKey");
 		configuration.setProperty(CONFIG_ACCESSKEY_PATH, "keys/rancher/access.key");
 		configuration.setProperty(CONFIG_SECRETKEY_PATH, "keys/rancher/secret.key");
-		configuration.setProperty(CONFIG_STACK_FILTER, "mysite-dev");
+		configuration.setProperty(CONFIG_STACK_FILTER, "my-site-dev");
 		configuration.setProperty(CONFIG_LIMIT_ONE_CONTAINER, "true");
 		configuration.setProperty(CONFIG_HANDLE_SYSTEM, "Exclude");
 		configuration.setProperty(CONFIG_HANDLE_GLOBAL, "Exclude");
@@ -125,11 +125,11 @@ public class RancherResourceModelSourceTest {
 		assertEquals(1, nodeList.getNodes().size());
 		Iterator<INodeEntry> iterator = nodeList.iterator();
 		INodeEntry node = iterator.next();
-		assertEquals("myEnvironment_mysite-dev-frontend-1", node.getNodename());
+		assertEquals("myEnvironment_my-site-dev-frontend-1", node.getNodename());
 		assertEquals("1h70", node.getHostname());
 		assertEquals("root", node.getUsername());
 		Map<String, String> attributes = node.getAttributes();
-		assertEquals("abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef", attributes.get("externalId"));
+		assertEquals("6chars6chars6chars6chars6chars6chars6chars6chars", attributes.get("externalId"));
 		assertEquals("running", attributes.get("state"));
 		assertFalse(iterator.hasNext());
 	}
@@ -353,23 +353,23 @@ public class RancherResourceModelSourceTest {
 				",\"environment\": \"" + environment + "\"" + //
 				",\"image\": \"image" + "1" + "\"" + //
 				",\"labels\": {\n" +
-				"    \"com.example.description\": \"mysite.development.example.com\",\n" +
+				"    \"com.example.description\": \"my-site.development.example.com\",\n" +
 				"    \"com.example.group\": \"dev\",\n" +
 				"    \"com.example.service\": \"frontend\",\n" +
-				"    \"com.example.site\": \"mysite\",\n" +
+				"    \"com.example.site\": \"my-site\",\n" +
 				"    \"io.rancher.cni.network\": \"ipsec\",\n" +
 				"    \"io.rancher.cni.wait\": \"true\",\n" +
-				"    \"io.rancher.project.name\": \"mysite-dev\",\n" +
-				"    \"io.rancher.project_service.name\": \"mysite-dev/frontend\",\n" +
+				"    \"io.rancher.project.name\": \"my-site-dev\",\n" +
+				"    \"io.rancher.project_service.name\": \"my-site-dev/frontend\",\n" +
 				"    \"io.rancher.service.deployment.unit\": \"00000000-0000-0000-0000-000000000000\",\n" +
-				"    \"io.rancher.stack_service.name\": \"mysite-dev/frontend\",\n" +
+				"    \"io.rancher.stack_service.name\": \"my-site-dev/frontend\",\n" +
 				"    \"io.rancher.service.hash\": \"0123456789012345678901234567890123456789\",\n" +
 				"    \"io.rancher.service.launch.config\": \"io.rancher.service.primary.launch.config\",\n" +
-				"    \"io.rancher.stack.name\": \"mysite-dev\",\n" +
+				"    \"io.rancher.stack.name\": \"my-site-dev\",\n" +
 				"    \"io.rancher.container.ip\": \"10.0.0.11/16\",\n" +
 				"    \"io.rancher.container.uuid\": \"00000000-0000-0000-0000-000000000000\",\n" +
 				"    \"io.rancher.container.mac_address\": \"11:22:33:44:55:66\",\n" +
-				"    \"io.rancher.container.name\": \"mysite-dev-frontend-1\"\n" +
+				"    \"io.rancher.container.name\": \"my-site-dev-frontend-1\"\n" +
 				"}\n" + //
 				",\"" + accessKeyPath + "\": \"" + accessKeyPath + "1" + "\"" + //
 				",\"" + secretKeyPath + "\": \"" + secretKeyPath + "1" + "\"" + //
