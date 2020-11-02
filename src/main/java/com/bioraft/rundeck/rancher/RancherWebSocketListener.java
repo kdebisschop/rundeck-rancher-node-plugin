@@ -122,7 +122,7 @@ public class RancherWebSocketListener extends WebSocketListener {
 	 */
 	private static String[] remoteCommand(String[] command, String temp) {
 		String file = temp + ".pid; ";
-		// Prefix STDERR lines with STDERR_TOK to decode in logging step.
+		// Prefix STDERR lines with STDERR_TOKEN to decode in logging step.
 		String cmd = String.join(" ", command);
 		String job = "( " + cmd + " ) 2> >(while read line;do echo \"" + STDERR_TOKEN + "$line\";done)";
 		// Note that bash is required to support adding a prefix token to STDERR.
