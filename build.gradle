@@ -14,6 +14,10 @@ sonarqube {
     }
 }
 
+jacoco {
+    toolVersion = "0.8.6"
+}
+
 jacocoTestReport {
     reports {
         xml.enabled true
@@ -87,16 +91,16 @@ configurations {
 dependencies {
     implementation (
         'com.fasterxml.jackson.core:jackson-databind:2.10.1',
-        'com.squareup.okhttp3:okhttp:3.14.9',
+        'com.squareup.okhttp3:okhttp:3.14.7',
         'org.apache.logging.log4j:log4j-api:2.13.2',
         'org.apache.logging.log4j:log4j-core:2.13.2',
-        'org.rundeck:rundeck-core:3.3.4-20201007',
-        'org.rundeck:rundeck-storage-api:3.3.4-20201007',
+        'org.rundeck:rundeck-core:3.3.6-20201111',
+        'org.rundeck:rundeck-storage-api:3.3.6-20201111',
     )
     testImplementation (
         'com.squareup.okhttp3:mockwebserver:3.11.0',
         'junit:junit:4.12',
-        'org.mockito:mockito-core:3.+',
+        'org.mockito:mockito-core:3.6+',
         'org.slf4j:slf4j-simple:1.7.30+',
     )
 }
@@ -134,5 +138,5 @@ jar {
 }
 
 wrapper {
-    gradleVersion = '6.6.1'
+    gradleVersion = '6.7.1'
 }

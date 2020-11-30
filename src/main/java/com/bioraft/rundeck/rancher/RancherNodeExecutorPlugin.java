@@ -27,7 +27,6 @@ import com.dtolabs.rundeck.core.execution.ExecutionLogger;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
-import com.dtolabs.rundeck.core.execution.utils.ResolverUtil;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
@@ -120,9 +119,13 @@ public class RancherNodeExecutorPlugin implements NodeExecutor, Describable {
         Map<String, String> jobContext = context.getDataContext().get("job");
         String temp = this.baseName(command, jobContext);
 
-        int timeout = ResolverUtil.resolveIntProperty(RANCHER_CONFIG_EXECUTOR_TIMEOUT, 300, node,
-                context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
-                context.getFramework());
+        int timeout = IResolverUtil.resolveIntProperty(
+                RANCHER_CONFIG_EXECUTOR_TIMEOUT,
+                300,
+                node,
+                context.getIFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
+                context.getIFramework()
+        );
 
         if (nodeAttributes.get("type").equals("service")) {
             // "self": "https://rancher.example.com/v2-beta/projects/1a10/services/1s56"

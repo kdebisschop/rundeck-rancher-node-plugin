@@ -111,7 +111,7 @@ public class RancherNodeExecutorPluginTest {
         when(storage.loadStoragePathData(nodeAttributes.get(CONFIG_ACCESSKEY_PATH))).thenReturn(accessKey);
         when(storage.loadStoragePathData(nodeAttributes.get(CONFIG_SECRETKEY_PATH))).thenReturn(secretKey);
 
-        when(executionContext.getFramework()).thenReturn(framework);
+        when(executionContext.getIFramework()).thenReturn(framework);
         when(framework.getFrameworkProjectMgr()).thenReturn(projectManager);
 
         when(executionContext.getExecutionLogger()).thenReturn(executionLogger);
@@ -173,7 +173,7 @@ public class RancherNodeExecutorPluginTest {
         when(storage.loadStoragePathData(nodeAttributes.get(CONFIG_ACCESSKEY_PATH))).thenReturn("access");
         when(storage.loadStoragePathData(nodeAttributes.get(CONFIG_SECRETKEY_PATH))).thenReturn("secret");
 
-        when(executionContext.getFramework()).thenReturn(framework);
+        when(executionContext.getIFramework()).thenReturn(framework);
         when(framework.getFrameworkProjectMgr()).thenReturn(projectManager);
 
         when(executionContext.getExecutionLogger()).thenReturn(executionLogger);
@@ -216,7 +216,7 @@ public class RancherNodeExecutorPluginTest {
         when(storage.loadStoragePathData(nodeAttributes.get(CONFIG_ACCESSKEY_PATH))).thenReturn("access");
         when(storage.loadStoragePathData(nodeAttributes.get(CONFIG_SECRETKEY_PATH))).thenReturn("secret");
 
-        when(executionContext.getFramework()).thenReturn(framework);
+        when(executionContext.getIFramework()).thenReturn(framework);
         when(framework.getFrameworkProjectMgr()).thenReturn(projectManager);
 
         when(executionContext.getExecutionLogger()).thenReturn(executionLogger);
@@ -244,7 +244,7 @@ public class RancherNodeExecutorPluginTest {
         when(storage.loadStoragePathData(nodeAttributes.get(CONFIG_ACCESSKEY_PATH))).thenReturn("access");
         when(storage.loadStoragePathData(nodeAttributes.get(CONFIG_SECRETKEY_PATH))).thenReturn("secret");
 
-        when(executionContext.getFramework()).thenReturn(framework);
+        when(executionContext.getIFramework()).thenReturn(framework);
         when(framework.getFrameworkProjectMgr()).thenReturn(projectManager);
 
         when(executionContext.getExecutionLogger()).thenReturn(executionLogger);
@@ -275,7 +275,7 @@ public class RancherNodeExecutorPluginTest {
         when(storage.loadStoragePathData(nodeAttributes.get(CONFIG_ACCESSKEY_PATH))).thenReturn("access");
         when(storage.loadStoragePathData(nodeAttributes.get(CONFIG_SECRETKEY_PATH))).thenReturn("secret");
 
-        when(executionContext.getFramework()).thenReturn(framework);
+        when(executionContext.getIFramework()).thenReturn(framework);
         when(framework.getFrameworkProjectMgr()).thenReturn(projectManager);
 
         when(executionContext.getExecutionLogger()).thenReturn(executionLogger);
@@ -305,7 +305,7 @@ public class RancherNodeExecutorPluginTest {
         when(storage.loadStoragePathData(nodeAttributes.get(CONFIG_ACCESSKEY_PATH))).thenReturn("access");
         when(storage.loadStoragePathData(nodeAttributes.get(CONFIG_SECRETKEY_PATH))).thenReturn("secret");
 
-        when(executionContext.getFramework()).thenReturn(framework);
+        when(executionContext.getIFramework()).thenReturn(framework);
         when(framework.getFrameworkProjectMgr()).thenReturn(projectManager);
 
         when(executionContext.getExecutionLogger()).thenReturn(executionLogger);
@@ -335,7 +335,7 @@ public class RancherNodeExecutorPluginTest {
         when(storage.loadStoragePathData(nodeAttributes.get(CONFIG_ACCESSKEY_PATH))).thenReturn("access");
         when(storage.loadStoragePathData(nodeAttributes.get(CONFIG_SECRETKEY_PATH))).thenReturn("secret");
 
-        when(executionContext.getFramework()).thenReturn(framework);
+        when(executionContext.getIFramework()).thenReturn(framework);
         when(framework.getFrameworkProjectMgr()).thenReturn(projectManager);
 
         when(executionContext.getExecutionLogger()).thenReturn(executionLogger);

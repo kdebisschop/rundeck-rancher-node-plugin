@@ -26,7 +26,9 @@ package com.bioraft.rundeck.rancher;
 
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.common.IRundeckProject;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionLogger;
 import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
@@ -129,11 +131,13 @@ public class RancherFileCopier implements FileCopier, Describable {
         String message = "copying file: '" + absPath + "' to: '" + node.getNodename() + ":" + remoteFile + "'";
         logger.log(DEBUG_LEVEL, message);
 
-        Framework framework = context.getFramework();
-        String project = context.getFrameworkProject();
-        String searchPath = framework.getProjectProperty(project, PROJ_RANCHER_CLI_PATH);
-        if ((searchPath == null || searchPath.equals("")) && framework.hasProperty(FMWK_RANCHER_CLI_PATH)) {
-            searchPath = framework.getProperty(FMWK_RANCHER_CLI_PATH);
+        IFramework framework = context.getIFramework();
+        IRundeckProject project = framework.getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject());
+        String searchPath = "";
+        if (project.hasProperty(PROJ_RANCHER_CLI_PATH)) {
+            searchPath = project.getProperty(PROJ_RANCHER_CLI_PATH);
+        } else if (framework.getPropertyLookup().hasProperty(FMWK_RANCHER_CLI_PATH)) {
+            searchPath = framework.getPropertyLookup().getProperty(FMWK_RANCHER_CLI_PATH);
         }
 
         try {
@@ -162,10 +166,14 @@ public class RancherFileCopier implements FileCopier, Describable {
             String identity = null != context.getDataContext() && null != context.getDataContext().get("job")
                     ? context.getDataContext().get("job").get("execid")
                     : null;
-            return BaseFileCopier.generateRemoteFilepathForNode(node,
-                    context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
-                    context.getFramework(), (null != scriptFile ? scriptFile.getName() : "dispatch-script"), null,
-                    identity);
+            return BaseFileCopier.generateRemoteFilepathForNode(
+                    node,
+                    context.getIFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
+                    context.getIFramework(),
+                    (null != scriptFile ? scriptFile.getName() : "dispatch-script"),
+                    null,
+                    identity
+            );
         } else {
             return destinationPath;
         }
