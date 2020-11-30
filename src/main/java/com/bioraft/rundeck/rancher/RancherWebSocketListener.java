@@ -123,7 +123,7 @@ public class RancherWebSocketListener extends WebSocketListener {
 	private static String[] remoteCommand(String[] command, String temp) {
 		String file = temp + ".pid; ";
 		// Prefix STDERR lines with STDERR_TOKEN to decode in logging step.
-		String cmd = "( " + String.join(" ", command) + "\" 3>&1 1>&2 2>&3 ) ";
+		String cmd = "( " + String.join(" ", command) + " ) 3>&1 1>&2 2>&3 3>&- ";
 		String job = cmd + "| while IFS= read -r line || [ -n \"$line\" ]; do echo " + STDERR_TOKEN + "$line ; done";
 		return new String[]{ "sh", "-c", "printf $$ >>" + file + job + ";printf ' %s' $? >>" + file };
 	}
