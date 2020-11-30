@@ -2,6 +2,7 @@ package com.bioraft.rundeck.rancher;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.common.IRundeckProject;
 import com.dtolabs.rundeck.core.common.ProjectManager;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
@@ -23,14 +24,15 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.bioraft.rundeck.rancher.Constants.CONFIG_ACCESSKEY_PATH;
-import static com.bioraft.rundeck.rancher.Constants.CONFIG_SECRETKEY_PATH;
+import static com.bioraft.rundeck.rancher.Constants.*;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class RancherFileCopierTest {
+
+    static final String PROJECT_NAME = "mock";
 
     @Mock
     INodeEntry node;
@@ -59,8 +61,8 @@ public class RancherFileCopierTest {
     @Mock
     ProjectManager projectManager;
 
-//    @Mock
-//    IRundeckProject rundeckProject;
+    @Mock
+    IRundeckProject rundeckProject;
 
     @Mock
     IPropertyLookup propertyLookup;
@@ -73,7 +75,13 @@ public class RancherFileCopierTest {
         when(storageTree.getResource(anyString())).thenReturn(treeResource);
         when(executionContext.getStorageTree()).thenReturn(storageTree);
         when(executionContext.getExecutionLogger()).thenReturn(logger);
-        when(executionContext.getFramework()).thenReturn(framework);
+        when(executionContext.getIFramework()).thenReturn(framework);
+        when(executionContext.getFrameworkProject()).thenReturn(PROJECT_NAME);
+        when(framework.getFrameworkProjectMgr()).thenReturn(projectManager);
+        when(framework.getPropertyLookup()).thenReturn(propertyLookup);
+        when(projectManager.getFrameworkProject(PROJECT_NAME)).thenReturn(rundeckProject);
+        when(rundeckProject.hasProperty(PROJ_RANCHER_CLI_PATH)).thenReturn(false);
+        when(propertyLookup.hasProperty(FMWK_RANCHER_CLI_PATH)).thenReturn(false);
 //        when(framework.getProjectProperty(anyString(), anyString())).thenReturn("");
 
 //        when(framework.createFrameworkNode()).thenReturn(host);
