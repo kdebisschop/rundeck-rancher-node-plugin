@@ -124,7 +124,7 @@ public class RancherWebSocketListener extends WebSocketListener {
 		String file = temp + ".pid; ";
 		// Prefix STDERR lines with STDERR_TOKEN to decode in logging step.
 		String cmd = String.join(" ", command);
-		String job = "( " + cmd + " ) 2> >(while read line;do echo \"" + STDERR_TOKEN + "$line\";done)";
+		String job = "( " + cmd + " ) 2> >(sed 's/^/" + STDERR_TOKEN + "/')";
 		// Note that bash is required to support adding a prefix token to STDERR.
 		return new String[]{ "bash", "-c", "printf $$ >>" + file + job + ";printf ' %s' $? >>" + file };
 	}
@@ -143,6 +143,11 @@ public class RancherWebSocketListener extends WebSocketListener {
 	public void onClosing(WebSocket webSocket, int code, String reason) {
 		this.log(Constants.VERBOSE_LEVEL, reason);
 		webSocket.close(code, reason);
+	}
+
+	@Override
+	public void onClosed(WebSocket webSocket, int code, String reason) {
+		this.log(Constants.VERBOSE_LEVEL, reason);
 	}
 
 	@Override
@@ -397,9 +402,10 @@ public class RancherWebSocketListener extends WebSocketListener {
 				// If logging to RunDeck, we send lines beginning with STDERR_TOK to ERR_LEVEL.
 				// To do that, we make a BufferedReader and process it line-by-line in log function.
 				String nextMessage = new String(message.content.array(), StandardCharsets.UTF_8);
-				if (listener != null) {
+				if (null != listener) {
 					stringReader = new BufferedReader(new StringReader(nextMessage));
 					log(stringReader);
+					stringReader.close();
 				} else {
 					output.append(nextMessage);
 				}
@@ -407,6 +413,10 @@ public class RancherWebSocketListener extends WebSocketListener {
 			}
 		} catch (IOException e) {
 			log(ERR_LEVEL, e.getMessage());
+		}
+		if (output.length() > 0 && null != listener) {
+			log(currentOutputChannel, output.toString());
+			output = new StringBuilder();
 		}
 	}
 
@@ -420,16 +430,19 @@ public class RancherWebSocketListener extends WebSocketListener {
 	private void log(BufferedReader stringReader) throws IOException {
 		String line;
 		while ((line = stringReader.readLine()) != null) {
+			if (output.length() > 0) {
+				log(currentOutputChannel, output.toString());
+				output = new StringBuilder();
+			}
 			if (line.startsWith(STDERR_TOKEN)) {
-				this.log(Constants.WARN_LEVEL, line.substring(STDERR_TOKEN_LENGTH) + "\n");
+				log(Constants.WARN_LEVEL, line.substring(STDERR_TOKEN_LENGTH));
+			} else if (line.contains(STDERR_TOKEN)) {
+				log(Constants.INFO_LEVEL, line.substring(0, line.indexOf(STDERR_TOKEN)));
+				log(Constants.WARN_LEVEL, line.substring(line.indexOf(STDERR_TOKEN) + STDERR_TOKEN_LENGTH));
 			} else {
-				this.log(Constants.INFO_LEVEL, line + "\n");
+				log(Constants.INFO_LEVEL, line);
 			}
 		}
-		if (output.length() > 0) {
-			listener.log(currentOutputChannel, output.toString());
-		}
-		output = new StringBuilder();
 	}
 
 	/**
@@ -440,18 +453,16 @@ public class RancherWebSocketListener extends WebSocketListener {
 	 * @param message The message to log.
 	 */
 	private void log(int level, String message) {
-		if (listener != null) {
-			if (currentOutputChannel == -1) {
-				currentOutputChannel = level;
-			} else if (currentOutputChannel != level) {
-				if (output.length() > 0) {
-					listener.log(currentOutputChannel, output.toString());
-				}
-				currentOutputChannel = level;
-				output = new StringBuilder();
-			}
+		if (null != listener && output.length() > 0) {
+			listener.log(currentOutputChannel, output.toString());
+			output = new StringBuilder();
 		}
-		output.append(message);
+		currentOutputChannel = level;
+		if (null != listener) {
+			listener.log(level, message);
+		} else {
+			output.append(message);
+		}
 	}
 
 }

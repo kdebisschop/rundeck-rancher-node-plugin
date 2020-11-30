@@ -126,37 +126,65 @@ public class RancherWebSocketListenerTest {
         doNothing().when(listener).log(anyInt(), anyString());
         subject.logDockerStream(bytes);
         // Buffer is designed to add a line feed at end of message.
-        verify(listener, times(1)).log(2, "6chars\n");
+        verify(listener, times(1)).log(2, "6chars");
     }
 
     @Test
     public void testLogDockerStreamStderr() {
         RancherWebSocketListener subject = new RancherWebSocketListener(listener, new StringBuilder());
-        byte[] bytes = (STDERR_TOKEN + "chars\n").getBytes();
+        byte[] bytes = (STDERR_TOKEN + "string1\n" + STDERR_TOKEN + "string2\n" + STDERR_TOKEN + "string3\n").getBytes();
         doNothing().when(listener).log(anyInt(), anyString());
         subject.logDockerStream(bytes);
         // Buffer is designed to add a line feed at end of message.
-        verify(listener, times(1)).log(1, "chars\n");
+        verify(listener, times(1)).log(1, "string1");
+        verify(listener, times(1)).log(1, "string2");
+        verify(listener, times(1)).log(1, "string3");
     }
 
     @Test
     public void testLogDockerStreamMixed() {
         RancherWebSocketListener subject = new RancherWebSocketListener(listener, new StringBuilder());
-        byte[] bytes = (STDERR_TOKEN + "chars\nchars\n").getBytes();
+        byte[] bytes = (STDERR_TOKEN + "string1\nstring2\nstring3\n").getBytes();
         doNothing().when(listener).log(anyInt(), anyString());
         subject.logDockerStream(bytes);
         // Buffer is designed to add a line feed at end of message.
-        verify(listener, times(1)).log(2, "chars\n");
+        verify(listener, times(1)).log(1, "string1");
+        verify(listener, times(1)).log(2, "string2");
+        verify(listener, times(1)).log(2, "string3");
     }
 
     @Test
     public void testLogDockerStreamMixed2() {
         RancherWebSocketListener subject = new RancherWebSocketListener(listener, new StringBuilder());
-        byte[] bytes = ("chars\n" + STDERR_TOKEN + "chars\n").getBytes();
+        byte[] bytes = ("string1\n" + STDERR_TOKEN + "string2\n").getBytes();
         doNothing().when(listener).log(anyInt(), anyString());
         subject.logDockerStream(bytes);
         // Buffer is designed to add a line feed at end of message.
-        verify(listener, times(1)).log(2, "chars\n");
+        verify(listener, times(1)).log(2, "string1");
+        verify(listener, times(1)).log(1, "string2");
+    }
+
+    @Test
+    public void testLogDockerStreamMixed3() {
+        RancherWebSocketListener subject = new RancherWebSocketListener(listener, new StringBuilder());
+        byte[] bytes = ("string1" + STDERR_TOKEN + "string2\n").getBytes();
+        doNothing().when(listener).log(anyInt(), anyString());
+        subject.logDockerStream(bytes);
+        // Buffer is designed to add a line feed at end of message.
+        verify(listener, times(1)).log(2, "string1");
+        verify(listener, times(1)).log(1, "string2");
+    }
+
+    @Test
+    public void testLogDockerStreamMixed4() {
+        RancherWebSocketListener subject = new RancherWebSocketListener(listener, new StringBuilder());
+        byte[] bytes = ("string1" + STDERR_TOKEN + "string2\n" + STDERR_TOKEN + "string3").getBytes();
+        doNothing().when(listener).log(anyInt(), anyString());
+        subject.logDockerStream(bytes);
+        // Buffer is designed to add a line feed at end of message.
+        verify(listener, times(1)).log(2, "string1");
+        verify(listener, times(1)).log(1, "string2");
+        verify(listener, times(1)).log(1, "string3");
     }
 
     @Test
