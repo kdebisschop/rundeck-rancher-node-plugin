@@ -38,7 +38,7 @@ public class Storage {
         ResourceMeta contents = executionContext.getStorageTree().getResource(passwordStoragePath).getContents();
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         contents.writeContent(byteArrayOutputStream);
-        return new String(byteArrayOutputStream.toByteArray());
+        return byteArrayOutputStream.toString();
     }
 
 }

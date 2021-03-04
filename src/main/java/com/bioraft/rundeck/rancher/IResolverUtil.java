@@ -65,6 +65,7 @@ public class IResolverUtil {
             try {
                 value = Integer.parseInt(string);
             } catch (NumberFormatException e) {
+                return defaultValue;
             }
         }
         return value;
@@ -85,6 +86,7 @@ public class IResolverUtil {
             try {
                 value = Long.parseLong(string);
             } catch (NumberFormatException e) {
+                return defaultValue;
             }
         }
         return value;
