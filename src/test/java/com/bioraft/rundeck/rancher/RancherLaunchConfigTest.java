@@ -285,7 +285,7 @@ public class RancherLaunchConfigTest {
     public void addSameSecrets() throws NodeStepException {
         verify(logger,never()).log(anyInt(), anyString());
         RancherLaunchConfig rancherLaunchConfig = new RancherLaunchConfig(name, objectNode, logger);
-        rancherLaunchConfig.setSecrets("1se2");
+        rancherLaunchConfig.setSecrets("1se2", "");
         assertEquals(reference, rancherLaunchConfig.update());
     }
 
@@ -296,7 +296,7 @@ public class RancherLaunchConfigTest {
     public void addBothSameSecrets() throws NodeStepException {
         verify(logger,never()).log(anyInt(), anyString());
         RancherLaunchConfig rancherLaunchConfig = new RancherLaunchConfig(name, objectNode, logger);
-        rancherLaunchConfig.setSecrets("1se1,1se2");
+        rancherLaunchConfig.setSecrets("1se1,1se2", "");
         assertEquals(reference, rancherLaunchConfig.update());
     }
 
@@ -308,7 +308,7 @@ public class RancherLaunchConfigTest {
         objectNode.remove("secrets");
         verify(logger,never()).log(anyInt(), anyString());
         RancherLaunchConfig rancherLaunchConfig = new RancherLaunchConfig(name, objectNode, logger);
-        rancherLaunchConfig.setSecrets("1se1,1se2");
+        rancherLaunchConfig.setSecrets("1se1,1se2", "");
         assertEquals(reference, rancherLaunchConfig.update());
     }
 
@@ -321,7 +321,7 @@ public class RancherLaunchConfigTest {
         objectNode.put("secrets", (Short) null);
         verify(logger,never()).log(anyInt(), anyString());
         RancherLaunchConfig rancherLaunchConfig = new RancherLaunchConfig(name, objectNode, logger);
-        rancherLaunchConfig.setSecrets("1se1,1se2");
+        rancherLaunchConfig.setSecrets("1se1,1se2", "");
         assertEquals(reference, rancherLaunchConfig.update());
     }
 
@@ -333,7 +333,7 @@ public class RancherLaunchConfigTest {
         objectNode.putArray("secrets");
         verify(logger,never()).log(anyInt(), anyString());
         RancherLaunchConfig rancherLaunchConfig = new RancherLaunchConfig(name, objectNode, logger);
-        rancherLaunchConfig.setSecrets("1se1,1se2");
+        rancherLaunchConfig.setSecrets("1se1,1se2", "");
         assertEquals(reference, rancherLaunchConfig.update());
     }
 
