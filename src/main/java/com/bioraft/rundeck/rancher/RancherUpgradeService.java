@@ -86,6 +86,9 @@ public class RancherUpgradeService implements NodeStepPlugin {
 	@PluginProperty(title = "Secrets", description = "Keys for secrets separated by commas or spaces")
 	private String secrets;
 
+	@PluginProperty(title = "Secrets to Remove", description = "Keys for secrets separated by commas or spaces")
+	private String removeSecrets;
+
 	@PluginProperty(title = "Start before stopping", description = "Start new container(s) before stopping old", required = true, defaultValue = "true")
 	private Boolean startFirst;
 
@@ -162,6 +165,7 @@ public class RancherUpgradeService implements NodeStepPlugin {
 		dataVolumes = (String) cfg.getOrDefault("dataVolumes", defaultString(dataVolumes));
 		labels = (String) cfg.getOrDefault("labels", defaultString(labels));
 		secrets = (String) cfg.getOrDefault("secrets", defaultString(secrets));
+		removeSecrets = (String) cfg.getOrDefault("removeSecrets", defaultString(removeSecrets));
 		removeEnvironment = (String) cfg.getOrDefault("removeEnvironment", defaultString(removeEnvironment));
 		removeLabels = (String) cfg.getOrDefault("removeLabels", defaultString(removeLabels));
 
@@ -169,7 +173,7 @@ public class RancherUpgradeService implements NodeStepPlugin {
 		rancherLaunchConfig.setEnvironment(environment);
 		rancherLaunchConfig.setDataVolumes(dataVolumes);
 		rancherLaunchConfig.setLabels(labels);
-		rancherLaunchConfig.setSecrets(secrets);
+		rancherLaunchConfig.setSecrets(secrets, removeSecrets);
 		rancherLaunchConfig.removeEnvironment(removeEnvironment);
 		rancherLaunchConfig.removeLabels(removeLabels);
 

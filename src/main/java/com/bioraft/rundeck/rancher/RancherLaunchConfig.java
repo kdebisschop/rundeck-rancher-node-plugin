@@ -28,8 +28,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import static com.bioraft.rundeck.rancher.Constants.OPT_DATA_VOLUMES;
-import static com.bioraft.rundeck.rancher.Constants.OPT_SECRETS;
+import static com.bioraft.rundeck.rancher.Constants.*;
 import static com.bioraft.rundeck.rancher.Errors.ErrorCause.*;
 
 /**
@@ -53,6 +52,8 @@ public class RancherLaunchConfig {
 	private String secrets = "";
 
 	private Map<String, String> secretMap;
+
+	private Map<String, String> removeSecretMap;
 
 	private final String nodeName;
 
@@ -107,13 +108,20 @@ public class RancherLaunchConfig {
 		this.removeLabels = removeLabels;
 	}
 
-	public void setSecrets(String secrets) {
+	public void setSecrets(String secrets, String remove) {
 		this.secrets = secrets;
+		secretMap = new HashMap<>();
+		removeSecretMap = new HashMap<>();
 		if (secrets != null && secrets.trim().length() > 0) {
 			// Add in the new or replacement secrets specified in the step.
-			secretMap = new HashMap<>();
-			for (String secretId : secrets.split("[,; ]+")) {
+			for (String secretId : secrets.split(PERMISSIVE_WHITESPACE_REGEX)) {
 				secretMap.put(secretId, secretId);
+			}
+		}
+		if (remove != null && remove.trim().length() > 0) {
+			// Add in the new or replacement secrets specified in the step.
+			for (String secretId : remove.split(PERMISSIVE_WHITESPACE_REGEX)) {
+				removeSecretMap.put(secretId, secretId);
 			}
 		}
 	}
@@ -207,9 +215,11 @@ public class RancherLaunchConfig {
 			}
 
 			// Add in the new or replacement secrets specified in the step.
-			for (String secretId : secrets.split("[,; ]+")) {
-				secretsArray.add((new Strings()).buildSecret(secretId));
-				logger.log(Constants.INFO_LEVEL, "Adding secret map to " + secretId);
+			for (String secretId : secrets.split(PERMISSIVE_WHITESPACE_REGEX)) {
+				if (!removeSecretMap.containsKey(secretId)) {
+					secretsArray.add((new Strings()).buildSecret(secretId));
+					logger.log(Constants.INFO_LEVEL, "Adding secret map to " + secretId);
+				}
 			}
 		}
 	}
@@ -217,7 +227,8 @@ public class RancherLaunchConfig {
 	private void copyOldSecrets(Iterator<JsonNode> elements, ArrayNode secretsArray) {
 		while (elements.hasNext()) {
 			JsonNode secretObject = elements.next();
-			if (!secretMap.containsKey(secretObject.path("secretId").asText())) {
+			String key = secretObject.path("secretId").asText();
+			if (!secretMap.containsKey(key) && !removeSecretMap.containsKey(key)) {
 				secretsArray.add(secretObject);
 			}
 		}
@@ -226,7 +237,7 @@ public class RancherLaunchConfig {
 	/**
 	 * Add or replace secrets.
 	 *
-	 * @throws NodeStepException when secret JSON is malformed (passed up from {@see this.buildSecret()}.
+	 * @throws NodeStepException when secret JSON is malformed (passed up from {@see this.buildSecret()}).
 	 */
 	private void setMountArray(String newData) throws NodeStepException {
 		if (newData != null && newData.length() > 0) {

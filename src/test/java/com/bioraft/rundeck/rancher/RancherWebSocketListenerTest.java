@@ -77,27 +77,6 @@ public class RancherWebSocketListenerTest {
         // verify(listener, times(0)).log(anyInt(), anyString());
     }
 
-//    @Test(expected = IOException.class)
-//    public void throwExceptionWhenTokenFails() throws IOException, InterruptedException {
-//        String url = mockWebServer.url("/v2-beta/").toString();
-//        String accessKey = "access";
-//        String secretKey = "secret";
-//        String[] command = {"ls"};
-//        String temp = "";
-//        int timeout = 1;
-//        MockResponse mockedResponse = new MockResponse();
-//        mockedResponse.setResponseCode(200);
-//        mockedResponse.setBody("");
-//        mockWebServer.enqueue(mockedResponse);
-//        MockResponse upgrade = new MockResponse()
-//                .setStatus("HTTP/1.1 101 Switching Protocols")
-//                .setHeader("Connection", "Upgrade")
-//                .setHeader("Upgrade", "websocket")
-//                .setHeader("Sec-WebSocket-Accept", "null");
-//        mockWebServer.enqueue(upgrade);
-//        RancherWebSocketListener.runJob(url, accessKey, secretKey, command, listener, temp, timeout);
-//    }
-
     @Test(expected = IOException.class)
     public void throwExceptionWhenTokenInvalid() throws IOException, InterruptedException {
         String url = mockWebServer.url("/v2-beta/").toString();

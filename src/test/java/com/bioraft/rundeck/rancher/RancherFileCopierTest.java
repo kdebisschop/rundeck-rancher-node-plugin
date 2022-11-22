@@ -82,11 +82,6 @@ public class RancherFileCopierTest {
         when(projectManager.getFrameworkProject(PROJECT_NAME)).thenReturn(rundeckProject);
         when(rundeckProject.hasProperty(PROJ_RANCHER_CLI_PATH)).thenReturn(false);
         when(propertyLookup.hasProperty(FMWK_RANCHER_CLI_PATH)).thenReturn(false);
-//        when(framework.getProjectProperty(anyString(), anyString())).thenReturn("");
-
-//        when(framework.createFrameworkNode()).thenReturn(host);
-//        when(framework.getProperty(anyString())).thenReturn("/tmp/");
-//        when(host.getOsFamily()).thenReturn("unix");
     }
 
     private void setUpContainer() {
@@ -170,34 +165,13 @@ public class RancherFileCopierTest {
         String destination = "/tmp/file.txt";
         subject.copyFile(executionContext, file, node, destination);
     }
-
-//    @Test(expected = FileCopierException.class)
-//    public void throwListenerExceptionIfInterrupted() throws FileCopierException, InterruptedException, IOException {
-//        this.setUpContainer();
-//        File file = new File(
-//                Objects.requireNonNull(getClass().getClassLoader().getResource("stack.json")).getFile()
-//        );
-//        doThrow(new InterruptedException()).when(listener).putFile(anyString(), anyString(), anyString(), eq(file), anyString());
-//        RancherFileCopier subject = new RancherFileCopier(listener);
-//        String destination = "/tmp/file.txt";
-//        subject.copyFile(executionContext, file, node, destination);
-//
-//    }
-
+    
     @Test
     public void testCopyFileToContainerNoPath() throws FileCopierException, IOException, InterruptedException {
         this.setUpContainer();
 
-//        when(rundeckProject.hasProperty("project.project.file-copy-destination-dir")).thenReturn(true);
-//        when(rundeckProject.getProperty("project.project.file-copy-destination-dir")).thenReturn("/tmp");
-//
-//        when(propertyLookup.hasProperty("framework.framework.file-copy-destination-dir")).thenReturn(true);
-//        when(propertyLookup.getProperty("framework.framework.file-copy-destination-dir")).thenReturn("/tmp");
-
         when(framework.getPropertyLookup()).thenReturn(propertyLookup);
         when(framework.getFrameworkProjectMgr()).thenReturn(projectManager);
-
-//        when(projectManager.getFrameworkProject(anyString())).thenReturn(rundeckProject);
 
         RancherFileCopier subject = new RancherFileCopier(listener);
         File file = new File(

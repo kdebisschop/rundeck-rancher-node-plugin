@@ -58,6 +58,9 @@ public class Constants {
     public static final String NODE_ATT_ACTIONS = "actions";
     public static final String NODE_ATT_SELF = "self";
 
+    // Splits services by whitespace, comma, or semicolon.
+    public static final String PERMISSIVE_WHITESPACE_REGEX = "[,; ]+";
+
     public static final String NODE_LINK_SERVICES = "services";
 
     public static final String STATE_ACTIVE = "active";
@@ -87,6 +90,7 @@ public class Constants {
     public static final String OPT_IMAGE_UUID = "imageUuid";
     public static final String OPT_LABELS = "labels";
     public static final String OPT_SECRETS = "secrets";
+    public static final String OPT_REMOVE_SECRETS = "removeSecrets";
     public static final String OPT_SERVICE_NAME = "serviceName";
     public static final String OPT_STACK_NAME = "stackName";
 

@@ -20,8 +20,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -64,10 +63,19 @@ public class RancherAddServiceTest extends PluginStepTest {
 	@Captor
 	ArgumentCaptor<Map<String, Object>> captor;
 
+	private AutoCloseable closeable;
+	
 	@Before
-	public void implSetUp() {
-		MockitoAnnotations.openMocks(this);
-		setUp();
+	public void implSetUp() throws Exception {
+		try (AutoCloseable closeable = MockitoAnnotations.openMocks(this)) {
+			this.closeable = closeable;
+			setUp();
+		}
+	}
+	
+	@After
+	public void closeService() throws Exception {
+		this.closeable.close();
 	}
 
 	@Test
@@ -83,9 +91,8 @@ public class RancherAddServiceTest extends PluginStepTest {
 		when(cfg.getOrDefault(eq(OPT_SERVICE_NAME), any())).thenReturn(serviceName);
 		when(cfg.getOrDefault(eq(OPT_IMAGE_UUID), any())).thenReturn(imageUuid);
 
-		when(framework.getProperty(eq(FMWK_RANCHER_ENDPOINT))).thenReturn("https://rancher.example.com/v1");
-		when(framework.getProperty(eq(FMWK_RANCHER_ACCESSKEY_PATH))).thenReturn(null);
-//		when(framework.getProperty(eq(FMWK_RANCHER_SECRETKEY_PATH))).thenReturn(null);
+		when(framework.getProperty(FMWK_RANCHER_ENDPOINT)).thenReturn("https://rancher.example.com/v1");
+		when(framework.getProperty(FMWK_RANCHER_ACCESSKEY_PATH)).thenReturn(null);
 
 		when(pluginStepContext.getFramework()).thenReturn(framework);
 		when(pluginStepContext.getFrameworkProject()).thenReturn(projectName);
@@ -112,7 +119,7 @@ public class RancherAddServiceTest extends PluginStepTest {
 		when(cfg.getOrDefault(eq(OPT_IMAGE_UUID), any())).thenReturn(imageUuid);
 
 		JsonNode stack = readFromInputStream(getResourceStream("stack.json"));
-		when(client.get(eq(stackIdRequest))).thenReturn(stack);
+		when(client.get(stackIdRequest)).thenReturn(stack);
 
 		JsonNode service = readFromInputStream(getResourceStream("service.json"));
 		when(client.post(anyString(), anyMap())).thenReturn(service);
@@ -120,7 +127,7 @@ public class RancherAddServiceTest extends PluginStepTest {
 		upgrade = new RancherAddService(client);
 		upgrade.executeStep(ctx, cfg);
 
-		verify(client, times(1)).get(eq(stackIdRequest));
+		verify(client, times(1)).get(stackIdRequest);
 		verify(client, times(0)).get(anyString(), anyMap());
 		verify(client, times(1)).post(eq(upgradePostUrl), captor.capture());
 		Map<String, Object> postMap = captor.getValue();
@@ -171,10 +178,7 @@ public class RancherAddServiceTest extends PluginStepTest {
 
 		JsonNode notFound = readFromInputStream(getResourceStream("not-found.json"));
 		when(client.get(anyString())).thenReturn(notFound);
-
-//		JsonNode noStacks = readFromInputStream(getResourceStream("no-stacks.json"));
-//		when(client.get(anyString(), anyMap())).thenReturn(noStacks);
-
+		
 		upgrade = new RancherAddService(client);
 		upgrade.executeStep(ctx, cfg);
 
@@ -218,9 +222,6 @@ public class RancherAddServiceTest extends PluginStepTest {
 		notFound.put("type", "error");
 		when(client.get(anyString())).thenThrow(new IOException());
 
-//		JsonNode noStacks = readFromInputStream(getResourceStream("no-stacks.json"));
-//		when(client.get(anyString(), anyMap())).thenReturn(noStacks);
-
 		upgrade = new RancherAddService(client);
 		upgrade.executeStep(ctx, cfg);
 
@@ -232,9 +233,6 @@ public class RancherAddServiceTest extends PluginStepTest {
 	@Test(expected = StepException.class)
 	public void throwExceptionWhenStackIsNotSet() throws StepException, IOException {
 		when(cfg.getOrDefault(eq(OPT_STACK_NAME), any())).thenReturn("");
-//		when(cfg.getOrDefault(eq(OPT_ENV_IDS), any())).thenReturn(envIds);
-//		when(cfg.getOrDefault(eq(OPT_SERVICE_NAME), any())).thenReturn(serviceName);
-//		when(cfg.getOrDefault(eq(OPT_IMAGE_UUID), any())).thenReturn(imageUuid);
 		runSuccess();
 	}
 
@@ -242,8 +240,6 @@ public class RancherAddServiceTest extends PluginStepTest {
 	public void throwExceptionWhenEnvironmentIdIsNotSet() throws StepException, IOException {
 		when(cfg.getOrDefault(eq(OPT_STACK_NAME), any())).thenReturn(stackName);
 		when(cfg.getOrDefault(eq(OPT_ENV_IDS), any())).thenReturn("");
-//		when(cfg.getOrDefault(eq(OPT_SERVICE_NAME), any())).thenReturn(serviceName);
-//		when(cfg.getOrDefault(eq(OPT_IMAGE_UUID), any())).thenReturn(imageUuid);
 		runSuccess();
 	}
 
@@ -252,7 +248,6 @@ public class RancherAddServiceTest extends PluginStepTest {
 		when(cfg.getOrDefault(eq(OPT_STACK_NAME), any())).thenReturn(stackName);
 		when(cfg.getOrDefault(eq(OPT_ENV_IDS), any())).thenReturn(envIds);
 		when(cfg.getOrDefault(eq(OPT_SERVICE_NAME), any())).thenReturn("");
-//		when(cfg.getOrDefault(eq(OPT_IMAGE_UUID), any())).thenReturn(imageUuid);
 		runSuccess();
 	}
 
@@ -271,8 +266,8 @@ public class RancherAddServiceTest extends PluginStepTest {
 		when(cfg.getOrDefault(eq(OPT_ENV_IDS), any())).thenReturn(envIds);
 		when(cfg.getOrDefault(eq(OPT_SERVICE_NAME), any())).thenReturn(serviceName);
 		when(cfg.getOrDefault(eq(OPT_IMAGE_UUID), any())).thenReturn(imageUuid);
-		String volume = "/volume:/mountpoint:ro";
-		String volume2 = "/volume2:/mountpoint2";
+		String volume = "/volume:/mountPoint:ro";
+		String volume2 = "/volume2:/mountPoint2";
 		when(cfg.getOrDefault(eq(OPT_DATA_VOLUMES), any())).thenReturn("[\"" + volume + "\",\"" + volume2 + "\"]");
 		runSuccess();
 		assertEquals(volume, getPostMapLaunchConfig().get(OPT_DATA_VOLUMES).elements().next().asText());
@@ -352,12 +347,12 @@ public class RancherAddServiceTest extends PluginStepTest {
 
 		// When given a stack, first look for a matching stack ID.
 		JsonNode notFound = readFromInputStream(getResourceStream("not-found.json"));
-		when(client.get(eq(stackIdRequest))).thenReturn(notFound);
+		when(client.get(stackIdRequest)).thenReturn(notFound);
 
 		// If there is no matching ID, then look for a matching name.
 		JsonNode stacks = readFromInputStream(getResourceStream("stacks.json"));
 		String stackId = stacks.get("data").elements().next().get("id").asText();
-		when(client.get(eq(stackNameRequest))).thenReturn(stacks);
+		when(client.get(stackNameRequest)).thenReturn(stacks);
 
 		JsonNode service = readFromInputStream(getResourceStream("service.json"));
 		when(client.post(anyString(), anyMap())).thenReturn(service);
@@ -365,8 +360,8 @@ public class RancherAddServiceTest extends PluginStepTest {
 		upgrade = new RancherAddService(client);
 		upgrade.executeStep(ctx, cfg);
 
-		verify(client, times(1)).get(eq(stackIdRequest));
-		verify(client, times(1)).get(eq(stackNameRequest));
+		verify(client, times(1)).get(stackIdRequest);
+		verify(client, times(1)).get(stackNameRequest);
 		verify(client, times(1)).post(eq(upgradePostUrl), captor.capture());
 
 		postMap = captor.getValue();

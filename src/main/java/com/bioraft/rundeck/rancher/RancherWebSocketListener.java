@@ -197,7 +197,6 @@ public class RancherWebSocketListener extends WebSocketListener {
 
 	/**
 	 * Runs a command and passes output back to an external listener.
-	 * 
 	 * Exit status is read after completion from the job's PID file in /tmp.
 	 *
 	 * @param url The URL the listener should use to launch the job.
@@ -219,9 +218,9 @@ public class RancherWebSocketListener extends WebSocketListener {
 		this.listener = listener;
 		this.nextHeader = new byte[0];
 
-		// Even though we are passing data back to an external listener, we need to
-		// buffer
-		// the message stream so we can pick out lines that are part of STDERR.
+		// Even though we are passing data back to an external listener, we
+		// need to buffer the message stream so we can pick out lines that
+		// are part of STDERR.
 		output = new StringBuilder();
 
 		client.newWebSocket(this.buildRequest(true), this);
@@ -234,7 +233,6 @@ public class RancherWebSocketListener extends WebSocketListener {
 
 	/**
 	 * Runs a command, capturing output in a StringBuffer injected on invocation.
-	 * 
 	 * This is used to get the contents of the PID file when the job ends and
 	 * determine the exit status.
 	 *
@@ -266,8 +264,7 @@ public class RancherWebSocketListener extends WebSocketListener {
 
 	/**
 	 * Put a file onto the server.
-	 * 
-	 * Neither STDIN or STDOUT are attached. The file is sent as a payload with the
+	 * Neither STDIN nor STDOUT are attached. The file is sent as a payload with the
 	 * post command.
 	 *
 	 * @param url The URL the listener should use to launch the job.

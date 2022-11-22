@@ -27,8 +27,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.bioraft.rundeck.rancher.Constants.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -162,26 +161,22 @@ public class RancherManageServiceTest {
         verify(client, times(1)).post(any(), eq(""));
     }
 
-    @Test(expected = NodeStepException.class)
-    public void testNoKey() throws NodeStepException {
+    @Test
+    public void testNoKey() {
         cfg.put("action", "restart");
         map.remove(CONFIG_ACCESSKEY_PATH);
-        // ObjectMapper mapper = new ObjectMapper();
-        // String text = readFromInputStream(getResourceStream("service.json"));
-        // ObjectNode json1 = (ObjectNode) mapper.readTree(text);
-        // when(client.get(any())).thenReturn(json1);
 
         try {
             RancherManageService subject = new RancherManageService(client);
             subject.executeNodeStep(ctx, cfg, node);
+            fail();
         } catch (NodeStepException e) {
             assertEquals("Could not get secret storage path", e.getMessage());
-            throw e;
         }
     }
 
-    @Test(expected = NodeStepException.class)
-    public void testUnsupportedAction() throws IOException, NodeStepException {
+    @Test
+    public void testUnsupportedAction() throws IOException {
         cfg.put("action", "unsupported");
         ObjectMapper mapper = new ObjectMapper();
 
@@ -193,14 +188,14 @@ public class RancherManageServiceTest {
         try {
             RancherManageService subject = new RancherManageService(client);
             subject.executeNodeStep(ctx, cfg, node);
+            fail();
         } catch (NodeStepException e) {
             assertEquals("Invalid action: unsupported", e.getMessage());
-            throw e;
         }
     }
 
-    @Test(expected = NodeStepException.class)
-    public void testEmptyUrl() throws IOException, NodeStepException {
+    @Test
+    public void testEmptyUrl() throws IOException {
         cfg.put("action", "restart");
         ObjectMapper mapper = new ObjectMapper();
 
@@ -214,14 +209,14 @@ public class RancherManageServiceTest {
         try {
             RancherManageService subject = new RancherManageService(client);
             subject.executeNodeStep(ctx, cfg, node);
+            fail();
         } catch (NodeStepException e) {
             assertEquals("No restart URL found", e.getMessage());
-            throw e;
         }
     }
 
-    @Test(expected = NodeStepException.class)
-    public void testNoServiceDefinition() throws IOException, NodeStepException {
+    @Test
+    public void testNoServiceDefinition() throws IOException {
         cfg.put("action", "restart");
 
         when(client.get(any())).thenThrow(new IOException());
@@ -229,14 +224,14 @@ public class RancherManageServiceTest {
         try {
             RancherManageService subject = new RancherManageService(client);
             subject.executeNodeStep(ctx, cfg, node);
+            fail();
         } catch (NodeStepException e) {
             assertEquals("Could not get service definition", e.getMessage());
-            throw e;
         }
     }
 
-    @Test(expected = NodeStepException.class)
-    public void testActivateAlreadyActive() throws IOException, NodeStepException {
+    @Test
+    public void testActivateAlreadyActive() throws IOException {
         map.put("type", "container");
         cfg.put("action", "activate");
 
@@ -249,14 +244,14 @@ public class RancherManageServiceTest {
         try {
             RancherManageService subject = new RancherManageService(client);
             subject.executeNodeStep(ctx, cfg, node);
+            fail();
         } catch (NodeStepException e) {
             assertEquals("Service state is already active", e.getMessage());
-            throw e;
         }
     }
 
-    @Test(expected = NodeStepException.class)
-    public void testDeactivateAlreadyInactive() throws IOException, NodeStepException {
+    @Test
+    public void testDeactivateAlreadyInactive() throws IOException {
         cfg.put("action", "deactivate");
 
         ObjectMapper mapper = new ObjectMapper();
@@ -269,9 +264,9 @@ public class RancherManageServiceTest {
         try {
             RancherManageService subject = new RancherManageService(client);
             subject.executeNodeStep(ctx, cfg, node);
+            fail();
         } catch (NodeStepException e) {
             assertEquals("Service state must be running, was inactive", e.getMessage());
-            throw e;
         }
     }
 

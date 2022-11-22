@@ -68,7 +68,7 @@ public class RancherResourceModelSource implements ResourceModelSource {
 	// Track how many times each stack_service has been seen.
 	Map<String, Integer> seen;
 
-	// Map stack IDs to names once to reduce API calls.
+	// Map stack IDs to stack names once to reduce API calls.
 	HashMap<String, String> stackNames = new HashMap<>();
 
 	/**
@@ -426,7 +426,6 @@ public class RancherResourceModelSource implements ResourceModelSource {
 
 	/**
 	 * Count the number of containers are in each service for each stack.
-	 *
 	 * By constructing a node filter of "seen:1" we can run on only one container in
 	 * a service even when we are not limiting the project node set to the one
 	 * container per service.

@@ -33,7 +33,6 @@ import java.nio.ByteBuffer;
 /**
  * Reads a message from Rancher transmitting a portion of a Docker multiplexed
  * stream.
- * 
  * To use this class, instantiate with an InputStream, read nextMessage() until
  * the stream is exhausted, then prepend nextHeader to the next message from
  * Rancher.
@@ -94,7 +93,7 @@ public class MessageReader implements Closeable {
 			final int frameSize = header.getInt(FRAME_SIZE_OFFSET);
 			
 			// If the Docker frame extends into the next Rancher message, the log
-			// message will consist of the rest of the buffer and we need to
+			// message will consist of the rest of the buffer, and we need to
 			// calculate how much of the Docker frame is in the next Rancher
 			// message. Otherwise, just send the frame (which moves the buffer 
 			// pointer forward to prepare for the next call of nextMessage()).
@@ -144,7 +143,7 @@ public class MessageReader implements Closeable {
 	public void close() throws IOException {
 		// RancherWebSocketListener will close the stream and release the connection
 		// after we read all the data.
-		// We cannot call the stream's close method because it an instance of
+		// We cannot call the stream's close method because it is an instance of
 		// UncloseableInputStream, where close is a no-op.
 		copy(stream, nullOutputStream());
 	}
