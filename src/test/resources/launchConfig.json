@@ -1,7 +1,7 @@
 {
     "type": "launchConfig",
     "dataVolumes": [
-        "/source1:/mountpoint1"
+        "/source1:/mountPoint1"
     ],
     "environment": {
         "DOMAIN": "my-site.development.example.com",

@@ -53,8 +53,6 @@ public class RancherLaunchConfig {
 
 	private Map<String, String> secretMap;
 
-	private String removeSecrets = "";
-	
 	private Map<String, String> removeSecretMap;
 
 	private final String nodeName;
@@ -110,9 +108,8 @@ public class RancherLaunchConfig {
 		this.removeLabels = removeLabels;
 	}
 
-	public void setSecrets(String secrets, String removeSecrets) {
+	public void setSecrets(String secrets, String remove) {
 		this.secrets = secrets;
-		this.removeSecrets = removeSecrets;
 		secretMap = new HashMap<>();
 		removeSecretMap = new HashMap<>();
 		if (secrets != null && secrets.trim().length() > 0) {
@@ -121,9 +118,9 @@ public class RancherLaunchConfig {
 				secretMap.put(secretId, secretId);
 			}
 		}
-		if (removeSecrets != null && removeSecrets.trim().length() > 0) {
+		if (remove != null && remove.trim().length() > 0) {
 			// Add in the new or replacement secrets specified in the step.
-			for (String secretId : removeSecrets.split(PERMISSIVE_WHITESPACE_REGEX)) {
+			for (String secretId : remove.split(PERMISSIVE_WHITESPACE_REGEX)) {
 				removeSecretMap.put(secretId, secretId);
 			}
 		}
@@ -219,8 +216,10 @@ public class RancherLaunchConfig {
 
 			// Add in the new or replacement secrets specified in the step.
 			for (String secretId : secrets.split(PERMISSIVE_WHITESPACE_REGEX)) {
-				secretsArray.add((new Strings()).buildSecret(secretId));
-				logger.log(Constants.INFO_LEVEL, "Adding secret map to " + secretId);
+				if (!removeSecretMap.containsKey(secretId)) {
+					secretsArray.add((new Strings()).buildSecret(secretId));
+					logger.log(Constants.INFO_LEVEL, "Adding secret map to " + secretId);
+				}
 			}
 		}
 	}
@@ -238,7 +237,7 @@ public class RancherLaunchConfig {
 	/**
 	 * Add or replace secrets.
 	 *
-	 * @throws NodeStepException when secret JSON is malformed (passed up from {@see this.buildSecret()}.
+	 * @throws NodeStepException when secret JSON is malformed (passed up from {@see this.buildSecret()}).
 	 */
 	private void setMountArray(String newData) throws NodeStepException {
 		if (newData != null && newData.length() > 0) {

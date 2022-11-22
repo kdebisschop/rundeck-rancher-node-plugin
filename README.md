@@ -36,7 +36,7 @@ Configuration:
 
 Note:
 
-Note that Rancher uses container ID to to construct the URL used to make API requests.
+Note that Rancher uses container ID to construct the URL used to make API requests.
 When services are upgraded, new containers are created so the API urls used in the
 node operations cannot work anymore. The container does not exist, so the URL will
 fail. As long nodes are defined by containers, there is probably no way to avoid this.
@@ -54,7 +54,7 @@ in the same job context.
 
 ### Rancher Node Executor
 
-Executes jobs on remote Docker containers managed by the Rancher host.
+Execute jobs on remote Docker containers managed by the Rancher host.
 
 Features:
 
@@ -63,7 +63,7 @@ Features:
 
 ### Rancher File Copier
 
-Copies files to a node. Can be configured to use Rancher CLI if it is installed and
+Copy files to a node. Can be configured to use Rancher CLI if it is installed and
 available. Otherwise, assembles files from Base64-encoded parts transmitted via Rancher
 API.
 
@@ -103,9 +103,12 @@ Adds a service to an existing stack. Required inputs:
 Optional inputs:
 
  - Data volumes
- - OS environment
+ - OS environment variables
  - Service labels
  - Secrets
+ - OS environment variables to remove
+ - Service labels to remove
+ - Secrets to remove
 
 ### Manage Service
 
